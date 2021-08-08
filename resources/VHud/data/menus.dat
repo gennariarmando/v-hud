@@ -1,0 +1,30 @@
+# file created by DK22Pac
+############################################################ Description #############################################################
+# Type:
+#   Type TITLE checks only GXT title.
+#   Type INT also checks last interior name, it could be used to determ where player is situated if GXT title for few places are same.
+# Menu title gxt:
+#   Name of gxt key which is used for menu
+# Interior name:
+#   Name of interior where menu is opened. This option is needed only for INT type, don't use it with TITLE type.
+#   Use '_' instead of ' ' for this name.
+# Items type:
+#   This is used to select special icons for menu.
+#   Type WEAP uses menu_weapons texture
+#   Type CLOT uses menu_clothes texture
+#   Type CAR uses menu_car texture
+#   Use type NOTUSED if menu has no special icons to be used
+# Logo tex path
+#   The main logo will be placed at center of title box
+# Pattern tex path
+#   Background texture will fill title box
+######################################################################################################################################
+# Type # Menu title gxt # Interior name # Items type (if needed) # logo tex path # pattern tex path
+  TITLE  AMMUN                            WEAP                     menus\ammu-nation.png menus\ammu-nation_pattern.png
+  TITLE  AMMUN1                           WEAP                     menus\ammu-nation.png menus\ammu-nation_pattern.png
+  TITLE  AMMUN2                           WEAP                     menus\ammu-nation.png menus\ammu-nation_pattern.png
+  TITLE  AMMUN3                           WEAP                     menus\ammu-nation.png menus\ammu-nation_pattern.png
+  TITLE  AMMUN4                           WEAP                     menus\ammu-nation.png menus\ammu-nation_pattern.png
+  TITLE  AMMUN5                           WEAP                     menus\ammu-nation.png menus\ammu-nation_pattern.png
+  INT    CLOTCHO          Binco           CLOT                     menus\binco.png       menus\binco_pattern.png
+  TITLE  CSPAWN                           NOTUSED                  menus\car_spawner.png menus\car_spawner_pattern.png

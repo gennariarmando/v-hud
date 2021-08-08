@@ -1,0 +1,7 @@
+# sound ids from eAudioEvents
+# names are skipped, only numbers are read
+#                  # enable         # id                  # volume change
+SWITCH_ON              1              14                      -5.0
+SWITCH_OFF             0               7                      -0.5
+CHANGE_SLOT            1              38                      -0.5
+CHANGE_WEAPON          1              41                      -20.0

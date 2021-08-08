@@ -1,0 +1,283 @@
+# Weapon selector data file
+SLOT # melee
+    num_weapons 19
+    WEAPON
+        id 0
+        name WEAP0
+        texture unarmed
+		crosshair none
+    END
+    WEAPON
+        id 1
+        name WEAP1
+        texture brass_knuckles
+		crosshair none
+    END
+    WEAPON
+        id 2
+        name WEAP2
+        texture golf_club
+		crosshair none
+    END
+    WEAPON
+        id 3
+        name WEAP3
+        texture night_stick
+		crosshair none
+    END
+    WEAPON
+        id 4
+        name WEAP4
+        texture knife
+		crosshair none
+    END
+    WEAPON
+        id 5
+        name WEAP5
+        texture baseball_bat
+		crosshair none
+    END
+    WEAPON
+        id 6
+        name WEAP6
+        texture shovel
+		crosshair none
+    END
+    WEAPON
+        id 7
+        name WEAP7
+        texture pool_cue
+		crosshair none
+    END
+    WEAPON
+        id 8
+        name WEAP8
+        texture katana
+		crosshair none
+    END
+    WEAPON
+        id 9
+        name WEAP9
+        texture chainsaw
+		crosshair none
+    END
+    WEAPON
+        id 10
+        name WEAP10
+        texture dildo_1
+		crosshair none
+    END
+    WEAPON
+        id 11
+        name WEAP11
+        texture dildo_2
+		crosshair none
+    END
+    WEAPON
+        id 12
+        name WEAP12
+        texture vibe_1
+		crosshair none
+    END
+    WEAPON
+        id 13
+        name WEAP13
+        texture vibe_2
+		crosshair none
+    END
+    WEAPON
+        id 14
+        name WEAP14
+        texture flowers
+		crosshair none
+    END
+    WEAPON
+        id 15
+        name WEAP15
+        texture cane
+		crosshair none
+    END
+    WEAPON
+        id 43
+        name WEAP43
+        texture camera
+		crosshair none
+    END
+    WEAPON
+        id 44
+        name WEAP44
+        texture nightvision_goggles
+		crosshair none
+    END
+    WEAPON
+        id 45
+        name WEAP45
+        texture thermal_goggles
+		crosshair none
+    END
+END
+SLOT # shotguns
+    num_weapons 3
+    WEAPON
+        id 25
+        name WEAP25
+        texture shotgun
+		crosshair shotgun
+    END
+    WEAPON
+        id 26
+        name WEAP26
+        texture sawn_off
+		crosshair shotgun
+    END
+    WEAPON
+        id 27
+        name WEAP27
+        texture spas_12
+		crosshair shotgun
+    END
+END
+SLOT # heavy weapons
+    num_weapon 5
+    WEAPON
+        id 35
+        name WEAP35
+        texture rpg
+		crosshair rocket
+    END
+    WEAPON
+        id 36
+        name WEAP36
+        texture missile_launcher
+		crosshair rocket
+    END
+    WEAPON
+        id 38
+        name WEAP38
+        texture minigun
+		crosshair assault
+    END
+    WEAPON
+        id 37
+        name WEAP37
+        texture flame_thrower
+		crosshair assault
+    END
+    WEAPON
+        id 42
+        name WEAP42
+        texture fire_extinguisher
+		crosshair none
+    END
+END
+SLOT # projectiles
+    num_weapon 6
+    WEAPON
+        id 16
+        name WEAP16
+        texture grenade
+		crosshair none
+    END
+    WEAPON
+        id 17
+        name WEAP17
+        texture tear_gas
+		crosshair none
+    END
+    WEAPON
+        id 18
+        name WEAP18
+        texture molotov
+		crosshair none
+    END
+    WEAPON
+        id 39
+        name WEAP39
+        texture sachet_charge
+		crosshair none
+    END
+	WEAPON
+        id 40
+        name WEAP40
+        texture detonator
+		crosshair none
+    END
+	WEAPON
+        id 41
+        name WEAP41
+        texture spray_paint
+		crosshair none
+    END
+END
+SLOT # pistols
+    num_weapon 3
+    WEAPON
+        id 22
+        name WEAP22
+        texture pistol
+		crosshair pistol
+    END
+    WEAPON
+        id 23
+        name WEAP23
+        texture silenced_pistol
+		crosshair pistol
+    END
+    WEAPON
+        id 24
+        name WEAP24
+        texture desert_eagle
+		crosshair pistol
+    END
+END
+SLOT # uzi
+    num_weapon 3
+    WEAPON
+        id 28
+        name WEAP28
+        texture micro_uzi
+		crosshair smg
+    END
+    WEAPON
+        id 29
+        name WEAP29
+        texture mp5
+		crosshair smg
+    END
+    WEAPON
+        id 32
+        name WEAP32
+        texture tec_9
+		crosshair smg
+    END
+END
+SLOT # machineguns
+    num_weapon 2
+    WEAPON
+        id 30
+        name WEAP30
+        texture ak-47
+		crosshair assault
+    END
+    WEAPON
+        id 31
+        name WEAP31
+        texture m4
+		crosshair assault
+    END
+END
+SLOT # rifles
+    num_weapon 2
+    WEAPON
+        id 33
+        name WEAP33
+        texture rifle
+		crosshair pistol
+    END
+    WEAPON
+        id 34
+        name WEAP34
+        texture sniper_rifle
+		crosshair sniper
+    END
+END

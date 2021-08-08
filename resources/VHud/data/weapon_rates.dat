@@ -1,0 +1,61 @@
+# fire rate statistics
+# how many weapons are present here. First weapon in list is assigned to 
+# eWeaponType #0 (WEAPON_UNARMED), and so on...
+################################################
+NUM_WEAPONS 46
+################################################
+# max value for rate
+################################################
+MAX_RATE 1500.0
+################################################
+# average rate for firing 10 shots (delay between shots in ms)
+# these values are used only for displaying weapon stats in weapon selector
+################################################
+# name (unused) skill 1  skill 2  skill 3
+################################################
+UNARMED         500.0    500.0    500.0
+BRASSKNUCKLE    500.0    500.0    500.0
+GOLFCLUB        500.0    500.0    500.0
+NIGHTSTICK      500.0    500.0    500.0
+KNIFE           500.0    500.0    500.0
+BASEBALLBAT     500.0    500.0    500.0
+SHOVEL          500.0    500.0    500.0
+POOLCUE         500.0    500.0    500.0
+KATANA          500.0    500.0    500.0
+CHAINSAW         50.0     50.0     50.0
+DILDO1          500.0    500.0    500.0
+DILDO2          500.0    500.0    500.0
+VIBE1           500.0    500.0    500.0
+VIBE2           500.0    500.0    500.0
+FLOWERS         500.0    500.0    500.0
+CANE            500.0    500.0    500.0
+GRENADE         800.0    800.0    800.0
+TEARGAS         800.0    800.0    800.0
+MOLOTOV         800.0    800.0    800.0
+ROCKET            0.0      0.0      0.0
+ROCKET_HS         0.0      0.0      0.0
+FREEFALL_BOMB   800.0    800.0    800.0
+PISTOL          200.0    200.0    200.0
+PISTOL_SILENCED 300.0    300.0    300.0
+DESERT_EAGLE    800.0    800.0    800.0
+SHOTGUN        1000.0   1000.0   1000.0
+SAWNOFF         600.0    600.0    600.0
+SPAS12          800.0    800.0    800.0
+MICRO_UZI        60.0     60.0     60.0
+MP5              90.0     90.0     90.0
+AK47            120.0    120.0    120.0
+M4              120.0    120.0    120.0
+TEC9             60.0     60.0     60.0
+COUNTRYRIFLE   1200.0   1200.0   1200.0
+SNIPERRIFLE    1100.0   1100.0   1100.0
+RLAUNCHER      1000.0   1000.0   1000.0
+RLAUNCHER_HS   1000.0   1000.0   1000.0
+FTHROWER       1000.0   1000.0   1000.0
+MINIGUN         200.0    200.0    200.0
+SATCHEL_CHARGE  800.0    800.0    800.0
+DETONATOR         0.0      0.0      0.0
+SPRAYCAN         15.0     15.0     15.0
+EXTINGUISHER     20.0     20.0     20.0
+CAMERA          700.0    700.0    700.0
+NIGHTVISION       0.0      0.0      0.0
+INFRARED          0.0      0.0      0.0

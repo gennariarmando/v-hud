@@ -1,0 +1,70 @@
+# HUD.DAT
+# this file contains inital display settings for each HUD component
+
+# NOTE: please ensure these are within the safe-areas!!!
+
+# items that have ';' at the start of their names are DEBUG items
+
+# ----------------------------------------------------------------------------------------------------------
+# -HUD ITEM NAME-              -POSITION-       -SIZE-        -COLOUR-                   -ALPHA-
+# ----------------------------------------------------------------------------------------------------------
+HUD_RADAR                     230.5  158.5     158.5  97.0     HUD_COLOUR_PURE_WHITE      225
+HUD_RADAR_RECT                 96.0  244.0     366.0  72.0     HUD_COLOUR_WHITE           50
+HUD_RADAR_MASK                 71.5  256.0     389.5  61.0     HUD_COLOUR_WHITE           255
+
+HUD_RADAR_DAMAGE               96.0  244.0     366.0  72.0     HUD_COLOUR_RADAR_DAMAGE    80
+
+HUD_RADAR_FOREGROUND           89.0  264.0     373.0  52.8     HUD_COLOUR_WHITE           0
+HUD_RADAR_BACKGROUND           96.0   72.0     366.0  55.0     HUD_COLOUR_BLACK           150
+HUD_RADAR_BACKGROUND_P2        96.0  261.0     366.0 244.0     HUD_COLOUR_BLACK           150
+
+HUD_RADAR_BLIPS_SIZE            0.0    0.0      12.0  12.0     HUD_COLOUR_WHITE           255
+HUD_RADAR_BLIPS_LEVEL_SIZE      0.0    0.0       7.0   7.0     HUD_COLOUR_WHITE           255
+HUD_RADAR_BLIPS_COP_SIZE        0.0    0.0       8.0   8.0     HUD_COLOUR_WHITE           255
+HUD_RADAR_BLIPS_COP_HELI_SIZE   0.0    0.0      13.5  13.5     HUD_COLOUR_WHITE           255
+HUD_RADAR_BLIPS_BORDER_SIZE     0.0    0.0      24.0  12.0     HUD_COLOUR_WHITE           255
+
+HUD_HEALTH_BAR                 96.0   68.0     134.0   9.0     HUD_COLOUR_RADAR_HEALTH    205
+HUD_ARMOUR_BAR                233.0   68.0     133.0   9.0     HUD_COLOUR_RADAR_ARMOUR    205
+HUD_ARMOUR_BAR_B              233.0   68.0      65.0   9.0     HUD_COLOUR_RADAR_ARMOUR    205
+HUD_BREATH_BAR                301.0   68.0      65.0   9.0     HUD_COLOUR_BLUELIGHT       205
+
+HUD_HEALTH_BAR_P2              96.0  257.0     134.0   9.0     HUD_COLOUR_RADAR_HEALTH    205
+HUD_ARMOUR_BAR_P2             233.0  257.0     133.0   9.0     HUD_COLOUR_RADAR_ARMOUR    205
+HUD_ARMOUR_BAR_B_P2           233.0  257.0      65.0   9.0     HUD_COLOUR_RADAR_ARMOUR    205
+HUD_BREATH_BAR_P2             301.0  257.0      65.0   9.0     HUD_COLOUR_BLUELIGHT       205
+
+HUD_RADAR_GPS_LINE              0.0    0.0      10.0   0.0     HUD_COLOUR_WHITE           255
+HUD_RADAR_GPS_RECT             96.0   94.0     366.0  72.0     HUD_COLOUR_BLACK           0
+HUD_RADAR_GPS_DIST_TEXT       129.0  102.0       0.61  1.4     HUD_COLOUR_WHITE           200
+HUD_RADAR_GPS_DIST_ARROW      116.0   88.0      15.0  15.0     HUD_COLOUR_WHITE           200
+
+HUD_SUBTITLES                   0.0   57.6       1.02  1.94    HUD_COLOUR_WHITE           255
+HUD_WANTED_STARS               96.0   54.0      32.0  33.0     HUD_COLOUR_WHITE           255
+HUD_CASH                       96.0   54.0       1.02  2.1     HUD_COLOUR_WHITE           255
+HUD_AMMO                       96.0   54.0       0.86  1.80    HUD_COLOUR_WHITE           255
+
+HUD_WEAPON_WHEEL                0.0  -92.0       0.0   0.0     HUD_COLOUR_WHITE           255
+;HUD_WEAPON_WHEEL_MOUSE_LINE     0.0  -98.0       2.0   0.0     HUD_COLOUR_RED             255
+HUD_WEAPON_STATS_BOX          284.0   48.0     188.0 184.0     HUD_COLOUR_BLACK           180
+HUD_WEAPON_STATS_BAR           12.0   36.0     164.0  10.0     HUD_COLOUR_WHITE           255
+
+HUD_VEHICLE_NAME               96.0  132.0       1.02  2.1     HUD_COLOUR_WHITE           255
+HUD_ZONE_NAME                  96.0   94.0       1.02  2.1     HUD_COLOUR_WHITE           255 
+
+HUD_HELP_BOX_TEXT               96.0  54.0       0.74  1.42    HUD_COLOUR_WHITE           255
+HUD_HELP_BOX_BORDER             12.0   6.0      12.0  12.0     HUD_COLOUR_BLACK           180
+
+HUD_HELP_BOX_SMALL_TEXT         96.0 274.0       0.64  1.2     HUD_COLOUR_WHITE           255
+HUD_HELP_BOX_SMALL_BORDER        8.0   8.0       8.0  16.0     HUD_COLOUR_BLACK           180
+
+HUD_CROSSHAIR_DOT                0.0   0.0       8.0   8.0     HUD_COLOUR_WHITE           255
+HUD_CROSSHAIR_CROSS              0.0   0.0       8.0   8.0     HUD_COLOUR_RED             255
+
+HUD_VITAL_STATS                286.0  606.0    188.0 348.0     HUD_COLOUR_BLACK           180
+HUD_PLAYER_WHEEL               288.0  248.0    192.0 192.0     HUD_COLOUR_WHITE           255
+
+
+# ----------------------------------------------------------------------------------------------------------
+
+# eof
