@@ -483,10 +483,10 @@ char* CFontNew::ParseToken(char* s, CRGBA& color) {
             break;
         }
         break;
-        //default:
-        //   c = CFont::ParseToken(s, color, true, false);
-        //   PS2Symbol = CFont::m_nExtraFontSymbolId;
-        //   return c;
+        default:
+           c = CFont::ParseToken(s, color, true, false);
+           PS2Symbol = CFont::m_nExtraFontSymbolId;
+           return c;
     }
     while (*c != '~') c++;
     return c + 1;
