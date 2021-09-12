@@ -92,24 +92,6 @@ CHudNew::CHudNew() {
     patch::Nop(0x53E398, 5);
 }
 
-std::vector<std::string> get_all_files_names_within_folder(std::string folder) {
-    std::vector<std::string> names;
-    std::string search_path = folder + "/*.png";
-    WIN32_FIND_DATA fd;
-    HANDLE hFind = ::FindFirstFile(search_path.c_str(), &fd);
-    if (hFind != INVALID_HANDLE_VALUE) {
-        do {
-            // read all (real) files in current folder
-            // , delete '!' read other 2 default folder . and ..
-            if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-                names.push_back(fd.cFileName);
-            }
-        } while (::FindNextFile(hFind, &fd));
-        ::FindClose(hFind);
-    }
-    return names;
-}
-
 void CHudNew::Init() {
     WantedSprites[WANTED_STAR_1] = new CSprite2d();
     WantedSprites[WANTED_STAR_1]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\wanted"), "star1");
