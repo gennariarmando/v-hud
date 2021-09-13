@@ -586,7 +586,7 @@ void PrintCharMap() {
 
     CFontNew::SetWrapX(SCREEN_WIDTH);
     CFontNew::SetClipX(SCREEN_WIDTH);
-    CFontNew::SetFontStyle(CFontNew::FONT_4);
+    CFontNew::SetFontStyle(CFontNew::FONT_3);
     CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
     CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
     CFontNew::SetColor(CRGBA(255, 255, 255, 255));

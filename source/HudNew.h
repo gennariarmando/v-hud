@@ -10,6 +10,7 @@ enum eWantedSprites {
 
 enum eMiscSprites {
     MISC_RECTGRAD,
+    MISC_RECTGRADCENTERED,
     MISC_SKIPICON,
     NUM_MISC_SPRITES,
 };
@@ -81,6 +82,10 @@ enum eHudSettings {
     HUD_CROSSHAIR_CROSS,
     HUD_VITAL_STATS,
     HUD_PLAYER_WHEEL,
+    HUD_WASTED_TEXT,
+    HUD_BUSTED_TEXT,
+    HUD_BIG_MESSAGE,
+    HUD_MISSION_TITLE,
 
     NUM_HUD_SETTINGS,
 };
@@ -117,6 +122,11 @@ public:
     static int m_nDiffMoney;
 
     static int nTargettedEntityDeathTime;
+
+    static char m_LastMissionName[128];
+
+    static bool m_bShowWastedBusted;
+    static bool m_bShowSuccessFailed;
 
     static CSprite2d* WantedSprites[NUM_WANTED_SPRITES];
     static CSprite2d* CrosshairsSprites[NUM_CROSSHAIRS_SPRITES];
@@ -156,6 +166,8 @@ public:
 
     static void DrawAfterFade();
     static void DrawWastedBustedText();
+
+    static void DrawMissionTitle();
 
     static bool IsMoneyCounterDisplaying();
     static bool IsMoneyDifferenceDisplaying();

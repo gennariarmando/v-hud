@@ -63,6 +63,10 @@ int CHudNew::m_nPreviousMoney;
 int CHudNew::m_nDiffMoney;
 int CHudNew::nTargettedEntityDeathTime;
 
+char CHudNew::m_LastMissionName[128];
+bool CHudNew::m_bShowWastedBusted;
+bool CHudNew::m_bShowSuccessFailed;
+
 CSprite2d* CHudNew::WantedSprites[NUM_WANTED_SPRITES];
 CSprite2d* CHudNew::CrosshairsSprites[NUM_CROSSHAIRS_SPRITES];
 CSprite2d* CHudNew::StatsSprites[NUM_PLRSTATS_SPRITES];
@@ -75,6 +79,7 @@ char* mainColor = "HUD_COLOUR_MICHAEL";//"HUD_COLOUR_FREEMODE";
 
 char* MiscSpritesFileNames[] = {
     "rect_grad",
+    "rect_grad_centered",
     "skip_icon",
 };
 
@@ -330,6 +335,7 @@ void CHudNew::Draw() {
         DrawOddJobMessage(1);
         DrawSuccessFailedMessage();
         DrawWastedBustedText();
+        DrawMissionTitle();
     }
 }
 
@@ -1275,7 +1281,93 @@ void CHudNew::DrawOddJobMessage(bool priority) {
 }
 
 void CHudNew::DrawSuccessFailedMessage() {
+    char* mainText = NULL;
+    char* bottomText = NULL;
+    static float offset = 0.0f;
+    static int time = -1;
+    CRGBA col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 150);
 
+    m_bShowSuccessFailed = true;
+    if (CHud::m_BigMessage[0][0] && !strcmp(CHud::m_BigMessage[0], TheText.Get("M_PASS"))) {
+        mainText = CTextNew::GetText("M_PASS").text;
+        bottomText = m_LastMissionName;
+        col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 150);
+    }
+    else if (CHud::m_BigMessage[0][0] && !strcmp(CHud::m_BigMessage[0], TheText.Get("M_PASSR"))) {
+        mainText = CTextNew::GetText("M_PASS").text;
+        bottomText = m_LastMissionName;
+        col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 150);
+    }
+    else if (CHud::m_BigMessage[0][0] && !strcmp(CHud::m_BigMessage[0], TheText.Get("M_PASSS"))) {
+        mainText = CTextNew::GetText("M_PASS").text;
+        bottomText = m_LastMissionName;
+        col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 150);
+    }
+    else if (CHud::m_BigMessage[0][0] && !strcmp(CHud::m_BigMessage[0], TheText.Get("M_FAIL"))) {
+        mainText = CTextNew::GetText("M_FAIL").text;
+
+        switch (FindPlayerPed(-1)->m_nPedState) {
+            case PEDSTATE_DEAD:
+                bottomText = TheText.Get("DEAD");
+                break;
+            case PEDSTATE_ARRESTED:
+                bottomText = TheText.Get("BUSTED");
+                break;
+            default:
+                bottomText = "";
+                break;
+        }
+
+        col = HudColourNew.GetRGB(HUD_COLOUR_RED, 150);
+    }
+    else {
+        offset = 0.0f;
+        time = -1;
+        m_bShowSuccessFailed = false;
+    }
+    
+    if (m_bShowSuccessFailed) {
+        if (time == -1)
+            time = CTimer::m_snTimeInMilliseconds + 1500;
+
+        if (time < CTimer::m_snTimeInMilliseconds) {
+            time = 0;
+            if (offset > -256.0f)
+                offset -= CTimer::ms_fTimeStep * 0.02f * 512.0f;
+        }
+
+        CFontNew::SetBackground(false);
+        CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+        CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
+        CFontNew::SetWrapX(SCREEN_COORD(1920.0f));
+        CFontNew::SetFontStyle(CFontNew::FONT_3);
+        CFontNew::SetDropShadow(0.0f);
+        CFontNew::SetOutline(0.0f);
+        CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+
+        CFontNew::SetColor(col);
+        CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_BIG_MESSAGE).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_BIG_MESSAGE).h));
+
+        float left = UI_X(0.0f);
+        float right = UI_RIGHT(0.0f);
+        float top1 = UI_Y(offset) + SCREEN_COORD_CENTER_Y - UI_Y(101.0f);
+        float bottom1 = UI_Y(offset) + SCREEN_COORD_CENTER_Y + UI_Y(72.0f);
+        float top2 = UI_Y(offset) + SCREEN_COORD_CENTER_Y - UI_Y(143.0f);
+        float bottom2 = UI_Y(offset) + SCREEN_COORD_CENTER_Y + UI_Y(117.0f);
+
+        CSprite2d::SetVertices(left, top1, right, top2, left, bottom1, right, bottom2, CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150));
+        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(MiscSprites[MISC_RECTGRADCENTERED]->m_pTexture));
+        RwIm2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 4);
+        CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(HUD_BIG_MESSAGE).x), SCREEN_COORD_CENTER_DOWN(offset + GET_SETTING(HUD_BIG_MESSAGE).y), mainText);
+
+        CFontNew::SetDropShadow(0.0f);
+        CFontNew::SetOutline(SCREEN_COORD(1.0f));
+        CFontNew::SetFontStyle(CFontNew::FONT_1);
+        CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
+        CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
+        CFontNew::SetScale(SCREEN_MULTIPLIER(0.96f), SCREEN_MULTIPLIER(1.8f));
+        CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(HUD_BIG_MESSAGE).x), SCREEN_COORD_CENTER_DOWN(offset + GET_SETTING(HUD_BIG_MESSAGE).y + 114.0f), bottomText);
+    }
 }
 
 void CHudNew::DrawZoneName() {
@@ -1386,7 +1478,100 @@ void CHudNew::DrawAfterFade() {
 }
 
 void CHudNew::DrawWastedBustedText() {
+    if (m_bShowSuccessFailed)
+        return;
 
+    char* str = NULL;
+    static eHudSettings i;
+    m_bShowWastedBusted = true;
+    switch (FindPlayerPed(-1)->m_nPedState) {
+        case PEDSTATE_DEAD:
+            str = TheText.Get("DEAD");
+            i = HUD_WASTED_TEXT;
+            break;
+        case PEDSTATE_ARRESTED:
+            str = TheText.Get("BUSTED");
+            i = HUD_BUSTED_TEXT;
+            break;
+        default:
+            m_bShowWastedBusted = false;
+            break;
+    }
+
+    if (m_bShowWastedBusted) {
+        CFontNew::SetBackground(false);
+        CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+        CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
+        CFontNew::SetWrapX(SCREEN_COORD(640.0f));
+        CFontNew::SetFontStyle(CFontNew::FONT_3);
+        CFontNew::SetDropShadow(0.0f);
+        CFontNew::SetOutline(0.0f);
+        CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+
+        CFontNew::SetColor(GET_SETTING(i).col);
+        CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(i).w), SCREEN_MULTIPLIER(GET_SETTING(i).h));
+
+        float left = UI_X(0.0f);
+        float right = UI_RIGHT(0.0f);
+        float top1 = SCREEN_COORD_CENTER_Y - UI_Y(101.0f);
+        float bottom1 = SCREEN_COORD_CENTER_Y + UI_Y(72.0f);
+        float top2 = SCREEN_COORD_CENTER_Y - UI_Y(143.0f);
+        float bottom2 = SCREEN_COORD_CENTER_Y + UI_Y(117.0f);
+
+        CSprite2d::SetVertices(left, top1, right, top2, left, bottom1, right, bottom2, CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150));
+        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(MiscSprites[MISC_RECTGRADCENTERED]->m_pTexture));
+        RwIm2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 4);
+        CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(i).x), SCREEN_COORD_CENTER_DOWN(GET_SETTING(i).y), str);
+    }
+}
+
+void CHudNew::DrawMissionTitle() {
+    static bool showText = false;
+    static float alpha = 0.0f;
+    static int time = -1;
+
+    if (CHud::m_BigMessage[1][0]) {
+        if (!showText) {
+            strcpy(m_LastMissionName, CHud::m_BigMessage[1]);
+
+            if (time == -1)
+                time = CTimer::m_snTimeInMilliseconds + 3000;
+
+            CHud::m_BigMessage[1][0] = NULL;
+            showText = true;
+        }
+    }
+
+    if (showText) {
+        if (time < CTimer::m_snTimeInMilliseconds) {
+            alpha -= CTimer::ms_fTimeStep * 0.02f * 255.0f;
+
+            if (alpha <= 0.0f)
+                showText = false;
+        }
+        else {
+            alpha += CTimer::ms_fTimeStep * 0.02f * 255.0f;
+        }
+
+        alpha = clamp(alpha, 0, 255);
+
+        CFontNew::SetBackground(false);
+        CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+        CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
+        CFontNew::SetWrapX(SCREEN_COORD(640.0f));
+        CFontNew::SetFontStyle(CFontNew::FONT_2);
+        CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
+        CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
+
+        CRGBA col = HudColourNew.GetRGB(mainColor, 255);
+        CFontNew::SetColor(CRGBA(col.r, col.g, col.b, alpha));
+        CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_MISSION_TITLE).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_MISSION_TITLE).h));
+        CFontNew::PrintString(UI_RIGHT(GET_SETTING(HUD_MISSION_TITLE).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_MISSION_TITLE).y), m_LastMissionName);
+    } 
+    else {
+        time = -1;
+        alpha = 0.0f;
+    }
 }
 
 bool CHudNew::IsMoneyCounterDisplaying() {

@@ -64,6 +64,12 @@ HUD_CROSSHAIR_CROSS              0.0   0.0       8.0   8.0     HUD_COLOUR_RED   
 HUD_VITAL_STATS                286.0  606.0    188.0 348.0     HUD_COLOUR_BLACK           180
 HUD_PLAYER_WHEEL               288.0  248.0    192.0 192.0     HUD_COLOUR_WHITE           255
 
+HUD_WASTED_TEXT                  0.0  -78.0      3.4   6.6     HUD_COLOUR_RED             150
+HUD_BUSTED_TEXT                  0.0  -78.0      3.4   6.6     HUD_COLOUR_BLUE            150
+
+HUD_BIG_MESSAGE                  0.0  -78.0      2.8   6.0     HUD_COLOUR_WHITE           150
+
+HUD_MISSION_TITLE               96.0   94.0      1.02  2.1     HUD_COLOUR_WHITE           255 
 
 # ----------------------------------------------------------------------------------------------------------
 
