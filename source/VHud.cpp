@@ -63,7 +63,8 @@ VHud::VHud() {
         CHudNew::Draw();
     };
 
-    Events::drawAfterFadeEvent += [] {
+    CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_AFTER, ArgPickNone, void(int, int)> OnFadingScene;
+    OnFadingScene += [] {
         CHudNew::DrawAfterFade();
     };
 

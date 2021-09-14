@@ -335,7 +335,6 @@ void CHudNew::Draw() {
         DrawOddJobMessage(1);
         DrawSuccessFailedMessage();
         DrawWastedBustedText();
-        DrawMissionTitle();
     }
 }
 
@@ -1474,7 +1473,13 @@ void CHudNew::DrawZoneName() {
 }
 
 void CHudNew::DrawAfterFade() {
-    ;;
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)(rwFILTERLINEARMIPLINEAR));
+    RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
+
+    if (!CTimer::m_UserPause && CReplay::Mode != 1 && !CWeapon::ms_bTakePhoto) {
+        DrawMissionTitle();
+    }
 }
 
 void CHudNew::DrawWastedBustedText() {
@@ -1535,7 +1540,7 @@ void CHudNew::DrawMissionTitle() {
             strcpy(m_LastMissionName, CHud::m_BigMessage[1]);
 
             if (time == -1)
-                time = CTimer::m_snTimeInMilliseconds + 3000;
+                time = CTimer::m_snTimeInMilliseconds + 4000;
 
             CHud::m_BigMessage[1][0] = NULL;
             showText = true;
