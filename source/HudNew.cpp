@@ -20,6 +20,7 @@
 #include "CGarages.h"
 #include "CStats.h"
 #include "CKeyGen.h"
+#include "CTheZones.h"
 
 #include "PedNew.h"
 #include "TextNew.h"
@@ -66,6 +67,9 @@ int CHudNew::nTargettedEntityDeathTime;
 char CHudNew::m_LastMissionName[128];
 bool CHudNew::m_bShowWastedBusted;
 bool CHudNew::m_bShowSuccessFailed;
+
+char CHudNew::m_CurrentLevelName[128];
+int CHudNew::m_nLevelNameState;
 
 CSprite2d* CHudNew::WantedSprites[NUM_WANTED_SPRITES];
 CSprite2d* CHudNew::CrosshairsSprites[NUM_CROSSHAIRS_SPRITES];
@@ -296,8 +300,10 @@ void CHudNew::Draw() {
                 if (!CHud::bScriptDontDisplayVehicleName)
                     DrawVehicleName();
 
-                if (!CHud::bScriptDontDisplayAreaName)
+                if (!CHud::bScriptDontDisplayAreaName) {
                     DrawZoneName();
+                    DrawLevelName();
+                }
             }
 
             DrawMissionTimers();
@@ -360,7 +366,7 @@ void CHudNew::DrawCrosshairs() {
     float radius = CWorld::Players[CWorld::PlayerInFocus].m_pPed->GetWeaponRadiusOnScreen();
     CRect rect;
     CRGBA col;
-    CPlayerPed* playa = FindPlayerPed(0);
+    CPlayerPed* playa = FindPlayerPed(-1);
     char* crosshairName = CWeaponSelector::nCrosshairs[playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nType].name;
 
     if (!crosshairName)
@@ -736,7 +742,7 @@ void CHudNew::DrawStats() {
 
     static int prevTimeScale = CTimer::ms_fTimeScale;
     static bool bJustClosed = false;
-    if (CPadNew::GetPad(0)->GetShowPlayerInfo(350) && !IsAimingWeapon()) {
+    if (CPadNew::GetPad(0)->GetShowPlayerInfo(500) && !IsAimingWeapon()) {
         CHud::bDrawingVitalStats = true;
     }
     else {
@@ -1469,6 +1475,53 @@ void CHudNew::DrawZoneName() {
         CHud::m_ZoneState = 0;
         CHud::m_ZoneFadeTimer = 0;
         CHud::m_ZoneNameTimer = 0;
+    }
+}
+
+void CHudNew::DrawLevelName() {
+    static bool showText = false;
+    static float alpha = 0.0f;
+    static int time = 0;
+    static int previousLevel = -1;
+
+    if (previousLevel != CTheZones::m_CurrLevel || m_nLevelNameState == 1) {
+        sprintf(m_CurrentLevelName, "LEVEL%d", CTheZones::m_CurrLevel);
+
+        time = CTimer::m_snTimeInMilliseconds + (m_nLevelNameState ? 500 : 6000);
+        showText = true;
+        previousLevel = CTheZones::m_CurrLevel;
+    }
+
+    if (showText) {
+        if (time < CTimer::m_snTimeInMilliseconds) {
+            alpha -= CTimer::ms_fTimeStep * 0.02f * 255.0f;
+
+            if (alpha <= 0.0f)
+                showText = false;
+        }
+        else {
+            if (m_nLevelNameState) {
+                alpha = 255;
+                m_nLevelNameState = 0;
+            }
+            else
+                alpha += CTimer::ms_fTimeStep * 0.02f * 255.0f;
+        }
+
+        alpha = clamp(alpha, 0, 255);
+
+        CFontNew::SetBackground(false);
+        CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+        CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
+        CFontNew::SetWrapX(SCREEN_COORD(640.0f));
+        CFontNew::SetFontStyle(CFontNew::FONT_2);
+        CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
+        CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
+
+        CRGBA col = GET_SETTING(HUD_LEVEL_NAME).col;
+        CFontNew::SetColor(CRGBA(col.r, col.g, col.b, alpha));
+        CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_LEVEL_NAME).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_LEVEL_NAME).h));
+        CFontNew::PrintString(UI_RIGHT(GET_SETTING(HUD_LEVEL_NAME).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_LEVEL_NAME).y), CTextNew::GetText(m_CurrentLevelName).text);
     }
 }
 

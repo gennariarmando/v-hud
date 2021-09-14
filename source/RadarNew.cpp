@@ -833,8 +833,12 @@ void CRadarNew::DrawMap() {
     if (CPadNew::GetPad(0)->GetExtendRadarRange())
         m_nRadarRangeExtendTime = CTimer::m_snTimeInMilliseconds + 3000;
 
-    if (m_nRadarRangeExtendTime > CTimer::m_snTimeInMilliseconds)
+    if (m_nRadarRangeExtendTime > CTimer::m_snTimeInMilliseconds) {
         radarRange += 100.0f;
+        CHud::m_VehicleState = 1;
+        CHud::m_ZoneState = 1;
+        CHudNew::m_nLevelNameState = 1; 
+    }
 
     CRadar::m_radarRange = interpF(CRadar::m_radarRange, radarRange, 0.05f * CTimer::ms_fTimeStep);
 

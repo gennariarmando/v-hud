@@ -74,6 +74,7 @@ enum eHudSettings {
     HUD_WEAPON_STATS_BAR,
     HUD_VEHICLE_NAME,
     HUD_ZONE_NAME,
+    HUD_LEVEL_NAME,
     HUD_HELP_BOX_TEXT,
     HUD_HELP_BOX_BORDER,
     HUD_HELP_BOX_SMALL_TEXT,
@@ -128,6 +129,9 @@ public:
     static bool m_bShowWastedBusted;
     static bool m_bShowSuccessFailed;
 
+    static char m_CurrentLevelName[128];
+    static int m_nLevelNameState;
+
     static CSprite2d* WantedSprites[NUM_WANTED_SPRITES];
     static CSprite2d* CrosshairsSprites[NUM_CROSSHAIRS_SPRITES];
     static CSprite2d* StatsSprites[NUM_PLRSTATS_SPRITES];
@@ -163,6 +167,8 @@ public:
     static void DrawOddJobMessage(bool priority);
     static void DrawSuccessFailedMessage();
     static void DrawZoneName();
+
+    static void DrawLevelName();
 
     static void DrawAfterFade();
     static void DrawWastedBustedText();
