@@ -1,8 +1,7 @@
 /* http://www.francois-tarlier.com/blog/cubic-lens-distortion-shader/*/
 sampler s0 : register(s0);
  
-float4 main(float2 tex : TEXCOORD0) : COLOR
-{
+float4 main(float2 tex : TEXCOORD0) : COLOR {
     // lens distortion coefficient (between
     float k = -0.5;
     
