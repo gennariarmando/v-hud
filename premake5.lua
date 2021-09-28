@@ -5,6 +5,9 @@ workspace "v-hud"
 project "v-hud"
 	files {
 		"source/**.*",
+		"vendor/pugixml/src/*.*",
+		"vendor/lodepng/lodepng.cpp",
+		"vendor/lodepng/lodepng.h"
 	}
 	
 	includedirs { 
@@ -12,18 +15,19 @@ project "v-hud"
 	}
 	
 	includedirs {
+		"vendor/GInputAPI",
 		"$(PLUGIN_SDK_DIR)/shared/",
 		"$(PLUGIN_SDK_DIR)/shared/game/",
 		"$(PLUGIN_SDK_DIR)/plugin_sa/",
 		"$(PLUGIN_SDK_DIR)/plugin_sa/game_sa/",
-		"$(DXSDK_DIR)/Include/"
+		"vendor/pugixml/src",
+		"$(DXSDK_DIR)/Include/",
 	}
 	
 	libdirs { 
 		"$(PLUGIN_SDK_DIR)/output/lib/",
 		"$(DXSDK_DIR)/Lib/x86"
 	}
-	
 	
 	kind "SharedLib"
 	language "C++"
@@ -38,7 +42,7 @@ project "v-hud"
 	defines { "GTASA", "PLUGIN_SGV_10US", "_DX9_SDK_INSTALLED" }
 
 	filter "configurations:Debug"		
-		links { "plugin_d" }
+		links { "plugin_d", "d3d9" }
 		targetname "VHud"
 		defines { "DEBUG" }
 		symbols "on"
@@ -48,7 +52,7 @@ project "v-hud"
 		postbuildcommands "copy /y \"$(TargetPath)\" \"$(GTA_SA_DIR)\\scripts\\VHud.asi\""
 
 	filter "configurations:Release"
-		links { "plugin" }
+		links { "plugin", "d3d9" }
 		targetname "VHud"
 		defines { "NDEBUG" }
 		symbols "off"
