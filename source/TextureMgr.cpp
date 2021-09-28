@@ -1,8 +1,81 @@
-#include "plugin.h"
+#include "VHud.h"
 #include "TextureMgr.h"
 #include "Utility.h"
 
-int LoadedTexturesCount = 0;
+int texturesCount = 0;
+CTextureRel* CTextureMgr::pTex[1024];
+
+CTextureMgr textureMgr;
+
+CTextureMgr::CTextureMgr() {
+
+}
+
+void CTextureMgr::Init() {
+	texturesCount = 0;
+}
+
+void CTextureMgr::Shutdown() {
+	for (int i = 0; i < texturesCount; i++) {
+		CTextureRel* t = pTex[i];
+
+		if (t) {
+			t->texture = NULL;
+			delete t;
+		}
+	}
+
+	texturesCount = 0;
+}
+
+void CTextureMgr::ReloadTextures() {
+	int c = texturesCount;
+	texturesCount = 0;
+	for (int i = 0; i < c; i++) {
+		CTextureRel* t = pTex[i];
+		if (t) {
+			if (t->texture) {
+				RwTextureDestroy(t->texture);
+				t->texture = CTextureMgr::LoadPNGTextureCB(t->path, t->name);
+			}
+		}
+	}
+}
+
+void CTextureMgr::LimitTextureSize(int& w, int& h) {
+	if (RsGlobal.maximumWidth == 0 || RsGlobal.maximumHeight == 0)
+		return;
+
+	float lx = RsGlobal.maximumWidth / 100;
+	float ly = RsGlobal.maximumHeight / 100;
+
+	int _w = w;
+	int _h = h;
+
+	if (ly > 0.0f && ly <= 5.0f) {
+		_w = 512;
+		_h = 512;
+	}
+	else if (ly > 5.0f && ly <= 7.0f) {
+		_w = 512;
+		_h = 512;
+	}
+	else if (ly > 7.0f && ly <= 10.0f) {
+		_w = 1024;
+		_h = 1024;
+	}
+	else if (ly > 10.0f && ly <= 20.0f) {
+		_w = 2048;
+		_h = 2048;
+	}
+	else if (ly > 20.0f) {
+		_w = 4096;
+		_h = 4096;
+	}
+
+	w = clamp(w, 0, _w);
+	h = clamp(h, 0, _h);
+}
 
 RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name) {
 	int w, h, d, f;
@@ -18,6 +91,9 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name) {
 		RwImage* img = RtPNGImageRead(file);
 		RwImageFindRasterFormat(img, rwRASTERTYPETEXTURE, &w, &h, &d, &f);
 
+		// Little hack to ensure visibility
+		LimitTextureSize(w, h);
+
 		RwRaster* raster = RwRasterCreate(w, h, d, f);
 		RwRasterSetFromImage(raster, img);
 
@@ -26,6 +102,10 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name) {
 		RwTexture* texture = RwTextureCreate(raster);
 		strcpy_s(texture->name, 0x20u, name);
 
+		RwTextureSetFilterMode(texture, rwFILTERLINEARMIPLINEAR);
+
+		//pTex[texturesCount] = new CTextureRel(texture, path, name);
+		//texturesCount++;
 		return texture;
 	}
 	return NULL;
@@ -65,7 +145,6 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name, con
 
 		RwTexture* texture = RwTextureCreate(raster);
 		strcpy_s(texture->name, 0x20u, name);
-
 		return texture;
 	}
 	return NULL;
@@ -132,7 +211,6 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name, con
 
 		 RwTexture* texture = RwTextureCreate(niraster);
 		 strcpy_s(texture->name, 0x20u, name);
-
 		return texture;
 	}
 	return NULL;
@@ -218,4 +296,16 @@ void CTextureMgr::Combine(RwRaster* raster1, RwRaster* raster2) {
 	}
 	RwRasterUnlock(raster1);
 	RwRasterUnlock(raster2);
+}
+
+CTextureRel::CTextureRel() {
+	texture = NULL;
+	path[0] = '\0';
+	name[0] = '\0';
+}
+
+CTextureRel::CTextureRel(RwTexture* tex, const char* _path, const char* _name) {
+	texture = tex;
+	strcpy(path,  _path);
+	strcpy(name, _name);
 }
