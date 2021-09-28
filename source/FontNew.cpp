@@ -1,8 +1,10 @@
-#include "plugin.h"
+#include "VHud.h"
 #include "FontNew.h"
 #include "TextureMgr.h"
 #include "Utility.h"
 #include "HudNew.h"
+#include "PadNew.h"
+#include "HudColoursNew.h"
 
 #include "CSprite2d.h"
 #include "CFont.h"
@@ -11,12 +13,15 @@ using namespace plugin;
 
 CFontNew FontNew;
 
+bool CFontNew::bInitialised;
 CSprite2d* CFontNew::Sprite[NUM_FONTS];
 CFontDetailsNew CFontNew::Details;
 char CFontNew::Size[NUM_FONTS][160];
 bool CFontNew::bNewLine;
 int CFontNew::NumLines;
-int CFontNew::PS2Symbol;
+CSprite2d* CFontNew::PS2Symbol;
+CVector CFontNew::PS2SymbolScale;
+
 CSprite2d* CFontNew::ButtonSprite[NUM_BUTTONS];
 
 char* ButtonFileName[] = {
@@ -57,6 +62,70 @@ char* ButtonFileName[] = {
     "pc_down",
     "pc_left",
     "pc_right",
+    "alt",
+    "backspace",
+    "caps",
+    "del",
+    "down",
+    "end",
+    "enter",
+    "esc",
+    "f1",
+    "f2",
+    "f3",
+    "f4",
+    "f5",
+    "f6",
+    "f7",
+    "f8",
+    "f9",
+    "f10",
+    "f11",
+    "f12",
+    "home",
+    "ins",
+    "lalt",
+    "lctrl",
+    "left",
+    "lwin",
+    "menu",
+    "numlock",
+    "pause",
+    "pgdown",
+    "pgup",
+    "printscreen",
+    "ralt",
+    "rctrl",
+    "right",
+    "rwin",
+    "scrolllock",
+    "shift",
+    "spacebar",
+    "up",
+};
+
+// Custom GInput action strings
+const char* CustomGInputActions[] = {
+#if 0
+                "VEHICLE_FIREWEAPON",
+                "VEHICLE_TURRET_LEFT_RIGHT",
+                "VEHICLE_TURRET_UP_DOWN",
+                "GO_LEFTRIGHT",
+                "GO_UPDOWN",
+                "MELEE_ATTACK",
+                "BLOW_UP_RC_BUGGY",
+#else
+                "PED_MOVE",
+                "BMX_HANDBRAKE",
+                "BMX_BUNNYHOP",
+                "CAMERA_LEFT_RIGHT",
+                "CAMERA_UP_DOWN",
+                "VEHICLE_CHANGE_RADIO_STATION",
+                "GO_LEFTRIGHT",
+                "GO_UPDOWN",
+                "SNATCH_PACKAGE",
+                "HYDRA_TARGET",
+#endif
 };
 
 CFontNew::CFontNew() {
@@ -64,6 +133,9 @@ CFontNew::CFontNew() {
 }
 
 void CFontNew::Init() {
+    if (bInitialised)
+        return;
+
     Sprite[0] = new CSprite2d();
     Sprite[1] = new CSprite2d();
     Sprite[2] = new CSprite2d();
@@ -85,6 +157,8 @@ void CFontNew::Init() {
     ReadValuesFromFile();
 
     Clear();
+
+    bInitialised = true;
 }
 
 void CFontNew::ReadValuesFromFile() {
@@ -151,10 +225,13 @@ void CFontNew::Clear() {
     SetScale(1.0f, 1.0f);
     NumLines = 0;
     bNewLine = false;
-    PS2Symbol = BUTTON_NONE;
+    PS2Symbol = NULL;
 }
 
 void CFontNew::Shutdown() {
+    if (!bInitialised)
+        return;
+
     Sprite[0]->Delete();
     delete Sprite[0];
 
@@ -171,6 +248,8 @@ void CFontNew::Shutdown() {
         ButtonSprite[i]->Delete();
         delete ButtonSprite[i];
     }
+
+    bInitialised = false;
 }
 
 float CFontNew::GetCharacterSize(char c) {
@@ -204,7 +283,7 @@ char* CFontNew::GetNextSpace(char* s) {
     return s;
 }
 
-void CFontNew::PrintString(float x, float y, char* s) {
+int CFontNew::PrintString(float x, float y, char* s) {
     if (*s != '*') {
         if (Details.background) {
             CRect rect;
@@ -216,7 +295,7 @@ void CFontNew::PrintString(float x, float y, char* s) {
             else
                 CSprite2d::DrawRect(rect, Details.backgroundColor);
         }
-        GetNumberLines(true, x, y, s);
+        return GetNumberLines(true, x, y, s);
     }
 }
 
@@ -305,7 +384,7 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, char* s) {
 
     for (s; *s != '\0'; s++) {
         if (*s == '~')
-            s = ParseToken(s, Details.color);
+            s = ParseToken(s);
 
         char c;
         c = *s - ' ';
@@ -320,6 +399,7 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, char* s) {
 
         if (print)
             PrintChar(x, y, c);
+
         x += GetCharacterSize(c);
     }
 
@@ -334,126 +414,150 @@ void CFontNew::PrintString(bool print, float x, float y, char* start, char* end,
         int n = NumLines;
 
         if (*s == '~')
-            s = ParseToken(s, Details.color);
+            s = ParseToken(s);
 
         if (n != NumLines) {
-
             x = xstart;
             y += GetHeightScale(Details.scale.y);
         }
 
         c = *s - ' ';
         float sp = GetCharacterSize(c);
-        if (print) {
-            DrawButton(x, y, PS2Symbol);
-            x += PS2Symbol ? Details.scale.y * 17.0f : 0.0f;
 
+        if (print)
             PrintChar(x, y, c);
-        }
+
         x += sp;
 
         if (c == 0)
             x += spwidth;
-
-        PS2Symbol = BUTTON_NONE;
     }
 }
 
-char* CFontNew::ParseToken(char* s, CRGBA& color) {
+char* CFontNew::ParseToken(char* s) {
     char* c = s + 1;
-
     switch (*c) {
+    case '<':
+        PS2Symbol = ButtonSprite[BUTTON_LEFT];
+        break;
+    case '>':
+        PS2Symbol = ButtonSprite[BUTTON_RIGHT];
+        break;
+    case 'A':
+    case 'a':
+        PS2Symbol = ButtonSprite[BUTTON_L3];
+        break;
+    case 'B':
+    case 'b':
+        SetColor(HudColourNew.GetRGB(HUD_COLOUR_BLUE, 255));
+        break;
+    case 'C':
+    case 'c':
+        PS2Symbol = ButtonSprite[BUTTON_R3];
+        break;
+    case 'D':
+    case 'd':
+        PS2Symbol = ButtonSprite[BUTTON_DOWN];
+        break;
+    case 'G':
+    case 'g':
+        SetColor(HudColourNew.GetRGB(HUD_COLOUR_GREEN, 255));
+        break;
+    case 'H':
+    case 'h':
+        SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
+        break;
+    case 'J':
+    case 'j':
+        PS2Symbol = ButtonSprite[BUTTON_R1];
+        break;
+    case 'K':
+    case 'k':
+        PS2Symbol = ButtonSprite[BUTTON_L1];
+        break;
+    case 'M':
+    case 'm':
+        PS2Symbol = ButtonSprite[BUTTON_L2];
+        break;
     case 'N':
     case 'n':
         bNewLine = true;
         NumLines++;
         break;
-    case 'X': 
-    case 'x': 
-        PS2Symbol = BUTTON_CROSS;
-        break;
     case 'O':
     case 'o':
-        PS2Symbol = BUTTON_CIRCLE;
+        PS2Symbol = ButtonSprite[BUTTON_CIRCLE];
         break;
-    case 'Q': 
-    case 'q': 
-        PS2Symbol = BUTTON_SQUARE;
+    case 'P':
+    case 'p':
+        SetColor(HudColourNew.GetRGB(HUD_COLOUR_PURPLE, 255));
         break;
-    case 'T': 
-    case 't': 
-        PS2Symbol = BUTTON_TRIANGLE;
+    case 'Q':
+    case 'q':
+        PS2Symbol = ButtonSprite[BUTTON_SQUARE];
         break;
-    case 'K': 
-    case 'k':
-        PS2Symbol = BUTTON_L1;
+    case 'R':
+    case 'r':
+        SetColor(HudColourNew.GetRGB(HUD_COLOUR_RED, 255));
         break;
-    case 'M': 
-    case 'm': 
-        PS2Symbol = BUTTON_L2;
+    case 'S':
+    case 's':
+        SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
         break;
-    case 'A': 
-    case 'a': 
-        PS2Symbol = BUTTON_L3;
+    case 'T':
+    case 't':
+        PS2Symbol = ButtonSprite[BUTTON_TRIANGLE];
         break;
-    case 'J': 
-    case 'j': 
-        PS2Symbol = BUTTON_R1;
-        break;
-    case 'V': 
-    case 'v': 
-        PS2Symbol = BUTTON_R2;
-        break;
-    case 'C': 
-    case 'c': 
-        PS2Symbol = BUTTON_R3;
-        break;
-    case 'u':
     case 'U':
+    case 'u':
         if (c[1] == 'd' || c[1] == 'D') {
+            PS2Symbol = ButtonSprite[BUTTON_UPDOWN];
             c++;
-            PS2Symbol = BUTTON_UPDOWN;
         }
         else
-            PS2Symbol = BUTTON_UP;
+            PS2Symbol = ButtonSprite[BUTTON_UP];
         break;
-    case 'd':
-    case 'D':
-        PS2Symbol = BUTTON_DOWN;
+    case 'V':
+    case 'v':
+        PS2Symbol = ButtonSprite[BUTTON_R2];
         break;
-    case '<':
-        if (c[1] == '>') {
-            c++;
-            PS2Symbol = BUTTON_LEFTRIGHT;
-        }
-        else
-            PS2Symbol = BUTTON_LEFT;
+    case 'W':
+    case 'w':
+        SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
         break;
-    case '>':
-        PS2Symbol = BUTTON_RIGHT;
+    case 'X':
+    case 'x':
+        PS2Symbol = ButtonSprite[BUTTON_CROSS];
+        break;
+    case 'Y':
+    case 'y':
+        SetColor(HudColourNew.GetRGB(HUD_COLOUR_ORANGELIGHT, 255));
+        break;
+    case 'l':
+        SetColor(HudColourNew.GetRGB(HUD_COLOUR_BLACK, 255));
         break;
     case '[':
         switch (c[1]) {
         case '~':
-            PS2Symbol = BUTTON_THUMBL;
+            PS2Symbol = ButtonSprite[BUTTON_THUMBL];
             break;
         case 'x':
-            PS2Symbol = BUTTON_THUMBLX;
+            PS2Symbol = ButtonSprite[BUTTON_THUMBLX];
             break;
         case 'y':
-            PS2Symbol = BUTTON_THUMBLY;
+            PS2Symbol = ButtonSprite[BUTTON_THUMBLY];
             break;
         case '<':
-            PS2Symbol = BUTTON_THUMBLXL;
+            PS2Symbol = ButtonSprite[BUTTON_THUMBLXL];
             break;
         case '>':
-            PS2Symbol = BUTTON_THUMBLXR;
+            PS2Symbol = ButtonSprite[BUTTON_THUMBLXR];
             break;
         case 'u':
-            PS2Symbol = BUTTON_THUMBLYU;
+            PS2Symbol = ButtonSprite[BUTTON_THUMBLYU];
             break;
         case 'd':
-            PS2Symbol = BUTTON_THUMBLYD;
+            PS2Symbol = ButtonSprite[BUTTON_THUMBLYD];
             break;
         }
         c++;
@@ -461,55 +565,151 @@ char* CFontNew::ParseToken(char* s, CRGBA& color) {
     case ']':
         switch (*(++c)) {
         case '~':
-            PS2Symbol = BUTTON_THUMBR;
+            PS2Symbol = ButtonSprite[BUTTON_THUMBR];
             break;
         case 'x':
-            PS2Symbol = BUTTON_THUMBRX;
+            PS2Symbol = ButtonSprite[BUTTON_THUMBRX];
             break;
         case 'y':
-            PS2Symbol = BUTTON_THUMBRY;
+            PS2Symbol = ButtonSprite[BUTTON_THUMBRY];
             break;
         case '<':
-            PS2Symbol = BUTTON_THUMBRXL;
+            PS2Symbol = ButtonSprite[BUTTON_THUMBRXL];
             break;
         case '>':
-            PS2Symbol = BUTTON_THUMBRXR;
+            PS2Symbol = ButtonSprite[BUTTON_THUMBRXR];
             break;
         case 'u':
-            PS2Symbol = BUTTON_THUMBRYU;
+            PS2Symbol = ButtonSprite[BUTTON_THUMBRYU];
             break;
         case 'd':
-            PS2Symbol = BUTTON_THUMBRYD;
+            PS2Symbol = ButtonSprite[BUTTON_THUMBRYD];
             break;
         }
         break;
-        default:
-           c = CFont::ParseToken(s, color, true, false);
-           PS2Symbol = CFont::m_nExtraFontSymbolId;
-           return c;
+    case '@':
+        if (char* nx = c) {
+            if (!ParseGInputActions(++c)) {
+                switch (*(++nx)) {
+                case 'E':
+                    PS2Symbol = ButtonSprite[BUTTON_PC_ENTER];
+                    break;
+                }
+                c = nx;
+            }
+        }
     }
-    while (*c != '~') c++;
-    return c + 1;
+    while (*c != '~') ++c;
+
+    if (*c)
+        return c + 1;
+
+    return c + 2;
 }
 
-void CFontNew::DrawButton(float x, float y, int id) {
-    if (!id)
+bool CFontNew::ParseGInputActions(char* s) {
+    short mode = CPadNew::GetPad(0)->Mode;
+    bool southPaw = false;
+    for (int i = 0; i < ARRAY_SIZE(CustomGInputActions); i++) {
+        if (!faststrcmp(s, CustomGInputActions[i])) {
+            switch (i) {
+            case ACTION_PED_MOVE:
+                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBR] : ButtonSprite[BUTTON_THUMBL];
+                break;
+            case ACTION_BMX_HANDBRAKE:
+                switch (mode) {
+                case 0:
+                    PS2Symbol = ButtonSprite[BUTTON_R1];
+                    break;
+                case 1:
+                    PS2Symbol = ButtonSprite[BUTTON_R2];
+                    break;
+                }
+                break;
+            case ACTION_BMX_BUNNYHOP:
+                switch (mode) {
+                case 0:
+                    PS2Symbol = ButtonSprite[BUTTON_L1];
+                    break;
+                case 1:
+                    PS2Symbol = ButtonSprite[BUTTON_SQUARE];
+                    break;
+                }
+                break;
+            case ACTION_CAMERA_LEFT_RIGHT:
+                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBLX] :ButtonSprite[BUTTON_THUMBRX];
+                break;
+            case ACTION_CAMERA_UP_DOWN:
+                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBLY] :ButtonSprite[BUTTON_THUMBRY];
+                break;
+            case ACTION_VEHICLE_CHANGE_RADIO_STATION:
+                switch (mode) {
+                case 0:
+                    PS2Symbol = ButtonSprite[BUTTON_UPDOWN];
+                    break;
+                case 1:
+                    PS2Symbol = ButtonSprite[BUTTON_LEFTRIGHT];
+                    break;
+                }
+                break;
+            case ACTION_GO_LEFTRIGHT:
+                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBRX] : ButtonSprite[BUTTON_THUMBLX];
+                break;
+            case ACTION_GO_UPDOWN:
+                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBRY] : ButtonSprite[BUTTON_THUMBLY];
+                break;
+            case ACTION_SNATCH_PACKAGE:
+                switch (mode) {
+                case 0:
+                    PS2Symbol = ButtonSprite[BUTTON_L1];
+                    break;
+                case 1:
+                    PS2Symbol = ButtonSprite[BUTTON_CIRCLE];
+                    break;
+                }
+                break;
+            case ACTION_HYDRA_TARGET:
+                switch (mode) {
+                case 0:
+                    PS2Symbol = ButtonSprite[BUTTON_R1];
+                    break;
+                case 1:
+                    PS2Symbol = ButtonSprite[BUTTON_SQUARE];
+                    break;
+                }
+                break;
+            }
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void CFontNew::DrawButton(float x, float y, CSprite2d* sprite) {
+    if (!sprite)
         return;
 
     CRect rect;
+    
+    PS2SymbolScale.x = clamp(sprite->m_pTexture->raster->width, 0, 128);
+    PS2SymbolScale.y = clamp(sprite->m_pTexture->raster->height, 0, 128);
+    float w = Details.scale.y * (PS2SymbolScale.x / 4);
+    float h = Details.scale.y * (PS2SymbolScale.y / 4);
     rect.left = x;
-    rect.top = Details.scale.y + Details.scale.y + y;
-    rect.right = Details.scale.y * 17.0f + x;
-    rect.bottom = Details.scale.y * 19.0f + y;
+    rect.top = y + (h / 4);
+    rect.right = rect.left + (w);
+    rect.bottom = rect.top + (h);
 
     int savedAlpha;
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
-    ButtonSprite[id]->Draw(rect, CRGBA(255, 255, 255, Details.color.a));
+    sprite->Draw(rect, CRGBA(255, 255, 255, Details.color.a));
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)savedAlpha);
 }
 
-void CFontNew::PrintChar(float x, float y, char c) {
+void CFontNew::PrintChar(float& x, float& y, char c) {
     float _x = (c % 16);
     float _y = (c / 16);
 
@@ -521,8 +721,12 @@ void CFontNew::PrintChar(float x, float y, char c) {
     float v3 = (_y + 1.0f) / 12.8f - 0.003f;
     float u4 = (_x + 1.0f) / 16.0f - 0.003f;
     float v4 = (_y + 1.0f) / 12.8f - 0.003f;
-    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERLINEARMIPLINEAR);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERMIPLINEAR);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
+
+    DrawButton(x, y, PS2Symbol);
+    x += PS2Symbol ? (Details.scale.y * (PS2SymbolScale.x / 4)) : 0.0f;
+    PS2Symbol = NULL;
 
     // Text shadow
     if (Details.shadow > 0.0f) {
@@ -573,31 +777,32 @@ void CFontNew::PrintStringFromBottom(float x, float y, char* s) {
 
 void PrintCharMap() {
     char* charMap[] = {
-        "!\"#$%&'()*+,-./",
-        "0123456789:;<=>?",
-        "@ABCDEFGHIJKLMNO",
-        "PQRSTUVWXYZ[\]^_",
-        "`abcdefghijklmno",
-        "pqrstuvwxyz",
-        "¿¡¬√ƒ«»… ÀÃÕŒœ—“”",
-        "‘÷Ÿ⁄€‹ﬂ‡·‚„‰ÁËÈÍ",
-        "ÎÏÌÓÔÚÛÙıˆ˘˙˚¸ÒÒø"
+        "!\"#$%&'()*+,-./a",
+        "0123456789:;<=>?a",
+        "@ABCDEFGHIJKLMNOa",
+        "PQRSTUVWXYZ[\]^_a",
+        "`abcdefghijklmnoa",
+        "pqrstuvwxyza",
+        "¿¡¬√ƒ«»… ÀÃÕŒœ—“”a",
+        "‘÷Ÿ⁄€‹ﬂ‡·‚„‰ÁËÈÍa",
+        "ÎÏÌÓÔÚÛÙıˆ˘˙˚¸ÒÒøa"
     };
 
+    CFontNew::SetBackground(false);
     CFontNew::SetWrapX(SCREEN_WIDTH);
     CFontNew::SetClipX(SCREEN_WIDTH);
-    CFontNew::SetFontStyle(CFontNew::FONT_3);
+    CFontNew::SetFontStyle(CFontNew::FONT_1);
     CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
     CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
     CFontNew::SetColor(CRGBA(255, 255, 255, 255));
     CFontNew::SetDropShadow(0.0f);
     CFontNew::SetOutline(SCREEN_COORD(2.0f));
-    CFontNew::SetScale(SCREEN_MULTIPLIER(1.0f), SCREEN_MULTIPLIER(2.0f));
+    CFontNew::SetScale(SCREEN_MULTIPLIER(2.0f), SCREEN_MULTIPLIER(3.0f));
 
     float spacing = 0.0f;
-    for (int i = 0; i < 9; i++) {
-        CFontNew::PrintString(UI_X(0.0f), SCREEN_COORD(spacing), charMap[i]);
-        spacing += 48.0f;
+    for (int i = 0; i < 8; i++) {
+        CFontNew::PrintString(HUD_X(0.0f), SCREEN_COORD(spacing), charMap[i]);
+        spacing += SCREEN_COORD(64.0f);
     }
 }
 

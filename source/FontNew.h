@@ -83,15 +83,58 @@ public:
 		BUTTON_PC_LEFT,
 		BUTTON_PC_RIGHT,
 
+		BUTTON_PC_ALT,
+		BUTTON_PC_BACKSPACE,
+		BUTTON_PC_CAPS,
+		BUTTON_PC_DEL,
+		BUTTON_PC_DOWN2,
+		BUTTON_PC_END,
+		BUTTON_PC_ENTER,
+		BUTTON_PC_ESC,
+		BUTTON_PC_F1,
+		BUTTON_PC_F2,
+		BUTTON_PC_F3,
+		BUTTON_PC_F4,
+		BUTTON_PC_F5,
+		BUTTON_PC_F6,
+		BUTTON_PC_F7,
+		BUTTON_PC_F8,
+		BUTTON_PC_F9,
+		BUTTON_PC_F10,
+		BUTTON_PC_F11,
+		BUTTON_PC_F12,
+		BUTTON_PC_HOME,
+		BUTTON_PC_INS,
+		BUTTON_PC_LALT,
+		BUTTON_PC_LCTRL,
+		BUTTON_PC_LEFT2,
+		BUTTON_PC_LWIN,
+		BUTTON_PC_MENU,
+		BUTTON_PC_NUMLOCK,
+		BUTTON_PC_PAUSE,
+		BUTTON_PC_PGDOWN,
+		BUTTON_PC_PGUP,
+		BUTTON_PC_PRINTSCREEN,
+		BUTTON_PC_RALT,
+		BUTTON_PC_RCTRL,
+		BUTTON_PC_RIGHT2,
+		BUTTON_PC_RWIN,
+		BUTTON_PC_SCROLLLOCK,
+		BUTTON_PC_SHIFT,
+		BUTTON_PC_SPACEBAR,
+		BUTTON_PC_UP2,
+
 		NUM_BUTTONS,
 	};
 
+	static bool bInitialised;
     static CSprite2d* Sprite[NUM_FONTS];
 	static CFontDetailsNew Details;
 	static char Size[NUM_FONTS][160];
 	static bool bNewLine;
 	static int NumLines;
-	static int PS2Symbol;
+	static CSprite2d* PS2Symbol;
+	static CVector PS2SymbolScale;
 	static CSprite2d* ButtonSprite[NUM_BUTTONS];
 
 public:
@@ -104,11 +147,12 @@ public:
 	static float GetStringWidth(char* s, bool spaces = false);
 	static char* GetNextSpace(char* s);
 	static int GetNumberLines(bool print, float x, float y, char* s);
-	static char* ParseToken(char *s, CRGBA& color);
-	static void DrawButton(float x, float y, int id);
-	static void PrintString(float x, float y, char* s);
+	static char* ParseToken(char *s);
+	static bool ParseGInputActions(char* s);
+	static void DrawButton(float x, float y, CSprite2d* sprite);
+	static int PrintString(float x, float y, char* s);
 	static void PrintString(bool print, float x, float y, char* start, char* end, float spwidth);
-	static void PrintChar(float x, float y, char c);
+	static void PrintChar(float& x, float& y, char c);
 	static void PrintStringFromBottom(float x, float y, char* s);
 	static float GetHeightScale(float h);
 	static void GetTextRect(CRect* rect, float xstart, float ystart, char* s);
