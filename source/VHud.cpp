@@ -1,8 +1,6 @@
-#include "plugin.h"
-
+#include "VHud.h"
 #include "HudColoursNew.h"
 #include "PadNew.h"
-#include "DeathScreen.h"
 #include "FontNew.h"
 #include "GPS.h"
 #include "HudNew.h"
@@ -13,7 +11,6 @@
 #include "RadioHud.h"
 #include "TextureMgr.h"
 #include "Utility.h"
-#include "VHud.h"
 #include "WeaponSelector.h"
 
 using namespace plugin;
@@ -39,11 +36,15 @@ VHud::VHud() {
     if (!IsSupportedGameVersion())
         Error("This version of GTA: San Andreas is not supported by this plugin.");
 
-    Events::initGameEvent += [] {
+    Events::initRwEvent += [] {
         HudColourNew.ReadColorsFromFile();
         CFontNew::Init();
-        CGPS::Init();
         MenuNew.Init();
+        CRadioHud::Init();
+    };
+
+    Events::initGameEvent += [] {
+        CGPS::Init();
         CHudNew::Init();
         COverlayLayer::Init();
         CRadarNew::Init();
@@ -55,23 +56,23 @@ VHud::VHud() {
         CWeaponSelector::ReInit();
     };
 
-    Events::drawingEvent += [] {
-        MenuNew.Update();
-    };
-
-    Events::drawHudEvent += [] {
+    CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void()> beforeFading;
+    beforeFading += [] {
         CHudNew::Draw();
+
     };
 
-    CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_AFTER, ArgPickNone, void(int, int)> OnFadingScene;
-    OnFadingScene += [] {
+    CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> afterFading;
+    afterFading += [] {
         CHudNew::DrawAfterFade();
     };
 
     Events::shutdownRwEvent += [] {
+        MenuNew.Shutdown();
         CGPS::Shutdown();
         CRadarNew::Shutdown();
         CHudNew::Shutdown();
+        CRadioHud::Shutdown();
         COverlayLayer::Shutdown();
         CFontNew::Shutdown();
         CWeaponSelector::Shutdown();

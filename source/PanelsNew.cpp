@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include "VHud.h"
 #include "PanelsNew.h"
 #include "Utility.h"
 

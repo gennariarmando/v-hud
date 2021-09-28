@@ -40,12 +40,12 @@ class CRadarNew {
 public:
     static CSprite2d* m_RadarSprites[NUM_RADAR_SPRITES];
     static CSprite2d* m_BlipsSprites[256];
-    static CSprite2d* m_MapSprites[12 * 12];
+    static CSprite2d* m_MiniMapSprites[12 * 12];
     static CRadarAnim Anim;
     static CVector2D m_vRadarMapQuality;
     static CBlip m_BlipsList[256];
     static int m_BlipsCount;
-    static bool m_bTexturesLoaded;
+    static bool m_bInitialised;
     static RwCamera* m_pCamera;
     static RwFrame* m_pFrame;
     static RwRaster* m_pFrameBuffer1;

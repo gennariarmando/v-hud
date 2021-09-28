@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include "VHud.h"
 #include "TextNew.h"
 #include "Utility.h"
 #include "CText.h"
@@ -52,8 +52,8 @@ void CTextNew::ReadTextFile() {
         int id = 0;
 
         for (std::string line; getline(file, line);) {
-            char str[64];
-            char text[64];
+            char str[16];
+            char text[16000];
             int r, g, b, a;
 
             if (!line[0] || line[0] == '#' || line[0] == '[' || line[0] == ';')
@@ -80,10 +80,27 @@ CTextRead CTextNew::GetText(char* str) {
         return result;
 
     for (int i = 0; i < 256; i++) {
-        if (TextList[i].str[0] == str[0] 
-            && TextList[i].str[1] == str[1] 
-            && faststrcmp(str, TextList[i].str, 2) == 0)
+        if (TextList[i].str[0] == str[0]
+            && TextList[i].str[1] == str[1]
+            && TextList[i].str[2] == str[2]
+            && !faststrcmp(str, TextList[i].str, 3)) {
             result = GetText(i);
+            break;
+        }
     }
     return result;
+}
+
+char CTextNew::GetUpperCase(char c) {
+    if (c >= 'a' && c <= 'z') {
+       c = c - ('a' - 'A');
+    }
+    return c;
+}
+
+void CTextNew::UpperCase(char* s) {
+    while (*s) {
+        *s = GetUpperCase(*s);
+        s++;
+    }
 }

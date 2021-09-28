@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include "VHud.h"
 #include "Utility.h"
 #include "CSprite2d.h"
 
@@ -15,14 +15,18 @@ void RotateVertices(CVector2D *rect, float x, float y, float angle) {
     }
 }
 
-void DrawProgressBar(float x, float y, float w, float h, float progress, CRGBA const& col) {
+void DrawProgressBar(float x, float y, float w, float h, float progress, CRGBA const& col, CRGBA const& colBack) {
     // progress value is 0.0f - 1.0f
     if (progress <= 0.0f)
         progress = 0.0f;
     else if (progress >= 1.0f)
         progress = 1.0f;
 
-    CSprite2d::DrawRect(CRect(x, y, x + w, y + h), CRGBA(col.r / 2, col.g / 2, col.b / 2, col.a));
+    CRGBA back = CRGBA(col.r / 2, col.g / 2, col.b / 2, col.a);
+    if (colBack != NULL)
+        back = colBack;
+
+    CSprite2d::DrawRect(CRect(x, y, x + w, y + h), back);
     CSprite2d::DrawRect(CRect(x, y, x + (w * progress), y + h), col);
 }
 
@@ -60,13 +64,6 @@ bool FileCheck(const char* name) {
     return (stat(name, &buffer) == 0);
 }
 
-float CenterX(float x) {
-    if (SCREEN_WIDTH / SCREEN_HEIGHT <= DEFAULT_WIDTH / DEFAULT_HEIGHT)
-        return SCREEN_COORD(x);
-    else
-        return (SCREEN_WIDTH * 0.5f) + (SCREEN_COORD(x - (DEFAULT_WIDTH * 0.5f)));
-}
-
 bool faststrcmp(const char* str1, const char* str2, int offset) {
     str1 += offset;
     str2 += offset;
@@ -79,6 +76,14 @@ bool faststrcmp(const char* str1, const char* str2, int offset) {
 
 void _rwD3D9RWSetRasterStage(RwRaster* r, int arg) {
     plugin::Call<0x7FDCD0, RwRaster*, int>(r, arg);
+}
+
+RwChar** _psGetVideoModeList() {
+    return plugin::CallAndReturn<RwChar**, 0x745AF0>();
+}
+
+void _psSetVideoMode(int index) {
+    plugin::Call<0x745C70, int>(index);
 }
 
 void DrawSpriteWithBorder(CSprite2d* sprite, float x, float y, float w, float h, float outline, CRGBA const& color, CRGBA const& borderColor) {
@@ -111,15 +116,6 @@ void DrawSpriteWithBorder(CSprite2d* sprite, float x, float y, float w, float h,
     sprite->Draw(CRect(x, y, x + w, y + h), color);
 }
 
-void StringReplace(std::string& str, std::string substring, std::string replacement) {
-    size_t i = str.find(substring);
-    size_t len = substring.length();
-    while (i != std::string::npos) {
-        str.replace(i, len, replacement);
-        i = str.find(substring, i);
-    }
-}
-
 float ConstrainAngle(float x) {
     x = fmod(x, 360);
     if (x < 0)
@@ -144,4 +140,9 @@ void* CreatePixelShaderFromResource(int id) {
     }
     
     return ps;
+}
+
+HMONITOR GetPrimaryMonitorHandle() {
+    const POINT ptZero = { 0, 0 };
+    return MonitorFromPoint(ptZero, MONITOR_DEFAULTTOPRIMARY);
 }

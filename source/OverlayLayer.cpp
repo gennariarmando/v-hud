@@ -1,12 +1,15 @@
-#include "plugin.h"
+#include "VHud.h"
+#include "CSprite2d.h"
+#include "CScene.h"
+
 #include "OverlayLayer.h"
 #include "Utility.h"
-#include "CSprite2d.h"
 #include "TextureMgr.h"
-#include "CScene.h"
 #include "WeaponSelector.h"
 #include "HudNew.h"
 #include "HudColoursNew.h"
+#include "MenuNew.h"
+
 #include "resource.h"
 
 using namespace plugin;
@@ -15,6 +18,7 @@ COverlayLayer overlayLayer;
 
 eOverlayEffect COverlayLayer::CurrentEffect;
 float COverlayLayer::fShaderConstant[4];
+bool COverlayLayer::bInitialised = false;
 
 void* overlay_color_fxc;
 void* blur_fxc;
@@ -47,6 +51,9 @@ COverlayLayer::COverlayLayer() {
 }
 
 void COverlayLayer::Init() {
+    if (bInitialised)
+        return;
+
     overlay_color_fxc = CreatePixelShaderFromResource(IDR_OVERLAY_COLOR);
     blur_fxc = CreatePixelShaderFromResource(IDR_BLUR);
     crosshair_lens_fxc = CreatePixelShaderFromResource(IDR_CROSSHAIR_LENS);
@@ -59,11 +66,18 @@ void COverlayLayer::Init() {
 
     for (int i = 0; i < 4; i++)
         fShaderConstant[i] = 1.0f;
+
+    bInitialised = true;
 }
 
 void COverlayLayer::Shutdown() {
+    if (!bInitialised)
+        return;
+
     OverlaySprite->Delete();
     delete OverlaySprite;
+
+    bInitialised = false;
 }
 
 void COverlayLayer::UpdateFrameBuffer() {
@@ -115,10 +129,12 @@ void COverlayLayer::RenderEffects() {
     RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)FALSE);
     RwRenderStateSet(rwRENDERSTATEFOGTYPE, (void*)rwFOGTYPELINEAR);
     RwRenderStateSet(rwRENDERSTATECULLMODE, (void*)rwCULLMODECULLNONE);
+    RwRenderStateSet(rwRENDERSTATEALPHATESTFUNCTION, (void*)rwALPHATESTFUNCTIONGREATER);
+    RwRenderStateSet(rwRENDERSTATEALPHATESTFUNCTIONREF, (void*)2);
 
     CRect rect = { SCREEN_COORD(-5.0f), SCREEN_COORD(-5.0f), SCREEN_COORD_RIGHT(-5.0f), SCREEN_COORD_BOTTOM(-5.0f) };
     CRGBA c = { 255, 255, 255, 255 };
-    CRGBA fc = HudColourNew.GetRGB(mainColor, 200);
+    CRGBA fc = HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 200);
 
     switch (CurrentEffect) {
     case EFFECT_BLUR_COLOR:
@@ -131,6 +147,7 @@ void COverlayLayer::RenderEffects() {
         break;
     case EFFECT_BLACK_N_WHITE:
         SetVerticesHelper(rect, black_n_white_fxc, NULL);
+        SetVerticesHelper(rect, vignette_fxc, NULL);
         break;
     case EFFECT_LENS_DISTORTION:
         SetVerticesHelper(rect, crosshair_lens_fxc, NULL);

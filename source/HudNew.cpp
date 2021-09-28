@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include "VHud.h"
 #include "CFont.h"
 #include "CCutsceneMgr.h"
 #include "CMenuManager.h"
@@ -29,7 +29,6 @@
 #include "HudColoursNew.h"
 #include "HudNew.h"
 #include "WeaponSelector.h"
-#include "DeathScreen.h"
 #include "RadioHud.h"
 #include "OverlayLayer.h"
 #include "RadarNew.h"
@@ -49,6 +48,7 @@ CHudNew HudNew;
 
 CHudSetting CHudNew::m_HudList[256];
 
+bool CHudNew::bInitialised = false;
 bool CHudNew::bShowMoney;
 bool CHudNew::bShowMoneyDifference;
 int CHudNew::nMoneyFadeAlpha;
@@ -75,17 +75,8 @@ CSprite2d* CHudNew::WantedSprites[NUM_WANTED_SPRITES];
 CSprite2d* CHudNew::CrosshairsSprites[NUM_CROSSHAIRS_SPRITES];
 CSprite2d* CHudNew::StatsSprites[NUM_PLRSTATS_SPRITES];
 CSprite2d* CHudNew::PlayerPortrait[4][2];
-CSprite2d* CHudNew::MiscSprites[NUM_MISC_SPRITES];
 
 void* simple_mask_fxc;
-
-char* mainColor = "HUD_COLOUR_MICHAEL";//"HUD_COLOUR_FREEMODE";
-
-char* MiscSpritesFileNames[] = {
-    "rect_grad",
-    "rect_grad_centered",
-    "skip_icon",
-};
 
 CHudNew::CHudNew() {
     patch::PutRetn(0x58FAE0); // CHud::Draw
@@ -102,6 +93,9 @@ CHudNew::CHudNew() {
 }
 
 void CHudNew::Init() {
+    if (bInitialised)
+        return;
+
     WantedSprites[WANTED_STAR_1] = new CSprite2d();
     WantedSprites[WANTED_STAR_1]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\wanted"), "star1");
     WantedSprites[WANTED_STAR_2] = new CSprite2d();
@@ -154,15 +148,11 @@ void CHudNew::Init() {
     PlayerPortrait[3][0] = new CSprite2d();
     PlayerPortrait[3][1] = new CSprite2d();
 
-    for (int i = 0; i < NUM_MISC_SPRITES; i++) {
-        MiscSprites[i] = new CSprite2d();
-        MiscSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\misc"), MiscSpritesFileNames[i]);
-    }
-
     simple_mask_fxc = CreatePixelShaderFromResource(IDR_SIMPLE_MASK);
 
     ReadSettingsFromFile();
     ReInit();
+    bInitialised = true;
 }
 
 void CHudNew::ReInit() {
@@ -183,9 +173,15 @@ void CHudNew::ReInit() {
 
     m_nDiffMoney = 0;
     nTargettedEntityDeathTime = 0;
+
+    m_bShowWastedBusted = false;
+    m_bShowSuccessFailed = false;
 }
 
 void CHudNew::Shutdown() {
+    if (!bInitialised)
+        return;
+
     for (int i = 0; i < NUM_WANTED_SPRITES; i++) {
         WantedSprites[i]->Delete();
         delete WantedSprites[i];
@@ -209,11 +205,7 @@ void CHudNew::Shutdown() {
             }
         }
     }
-
-    for (int i = 0; i < NUM_MISC_SPRITES; i++) {
-        MiscSprites[i]->Delete();
-        delete MiscSprites[i];
-    }
+    bInitialised = false;
 }
 
 void CHudNew::ReadSettingsFromFile() {
@@ -273,9 +265,10 @@ bool HelpTripSkipShown;
 bool ShowTripSkipMessage;
 
 void CHudNew::Draw() {
-    if (CReplay::Mode != 1
-        && !CWeapon::ms_bTakePhoto
-        /*&& !FrontEndMenuManager.m_bActivateMenuNextFrame*/) {
+    if (CTimer::m_UserPause || CTimer::m_CodePause)
+        return;
+
+    if (CReplay::Mode != 1 && !CWeapon::ms_bTakePhoto) {
         RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)FALSE);
         RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
         RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
@@ -286,30 +279,37 @@ void CHudNew::Draw() {
         RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)(rwFILTERLINEARMIPLINEAR));
 
         CWeaponSelector::ProcessWeaponSelector();
+        CWeaponSelector::DrawWheel();
+
+        if (MenuNew.Settings.showRadar && !CHud::bScriptDontDisplayRadar && !TheCamera.m_bWideScreenOn) {
+            DrawRadar();
+        }
 
         if (!TheCamera.m_bWideScreenOn) {
             DrawCrosshairs();
-            if (FrontEndMenuManager.m_bHudOn && CTheScripts::bDisplayHud) {
-                DrawWanted();
-                DrawPlayerInfo();
-                CWeaponSelector::DrawWheel();
-                DrawStats();
-            }
 
-            if (!CHud::bDrawingVitalStats) {
-                if (!CHud::bScriptDontDisplayVehicleName)
-                    DrawVehicleName();
-
-                if (!CHud::bScriptDontDisplayAreaName) {
-                    DrawZoneName();
-                    DrawLevelName();
+            if (MenuNew.Settings.showHUD) {
+                if (CTheScripts::bDisplayHud) {
+                    DrawWanted();
+                    DrawPlayerInfo();
+                    CWeaponSelector::DrawWheel();
                 }
-            }
 
-            DrawMissionTimers();
-        }
-        if (!CHud::bScriptDontDisplayRadar && !TheCamera.m_bWideScreenOn) {
-            DrawRadar();
+                if (!CHud::bDrawingVitalStats) {
+                    if (!CHud::bScriptDontDisplayVehicleName)
+                        DrawVehicleName();
+
+                    if (!CHud::bScriptDontDisplayAreaName) {
+                        DrawZoneName();
+                        DrawLevelName();
+                    }
+                }
+
+                DrawMissionTimers();
+                DrawHelpText();
+            }
+            DrawStats();
+
         }
 
         ShowTripSkipMessage = false;
@@ -324,23 +324,21 @@ void CHudNew::Draw() {
                 HelpTripSkipShown = true;
             }
         }
-    }
-    if (CHud::m_bDraw3dMarkers && !TheCamera.m_bWideScreenOn)
-        CRadar::Draw3dMarkers();
-
-    if (!CTimer::m_UserPause) {
-        if (CMenuSystem::num_menus_in_use)
-            CMenuSystem::Process(-99);
-
-        DrawScriptText(0);
 
         if (CTheScripts::bDrawSubtitlesBeforeFade)
             DrawSubtitles();
 
-        DrawHelpText();
         DrawOddJobMessage(1);
         DrawSuccessFailedMessage();
         DrawWastedBustedText();
+
+        if (CHud::m_bDraw3dMarkers && !TheCamera.m_bWideScreenOn)
+            CRadar::Draw3dMarkers();
+
+        if (CMenuSystem::num_menus_in_use)
+            CMenuSystem::Process(-99);
+
+        DrawScriptText(0);
     }
 }
 
@@ -372,81 +370,85 @@ void CHudNew::DrawCrosshairs() {
     if (!crosshairName)
         return;
 
-    if ((playa && playa->m_pIntelligence && playa->m_pIntelligence->GetTaskUseGun() && playa->m_pIntelligence->GetTaskUseGun()->m_pWeaponInfo->m_nFlags.bAimWithArm) && !playa->m_pIntelligence->GetTaskUseGun()->m_ArmIKInUse)
-        return;
+    if (playa && playa->m_pIntelligence && playa->m_pIntelligence->GetTaskUseGun()) {
+        bool ik = (playa->m_pIntelligence->GetTaskUseGun()->m_pWeaponInfo->m_nFlags.bAimWithArm && !playa->m_pIntelligence->GetTaskUseGun()->m_ArmIKInUse);
 
-    if (!playa->m_pPlayerData->m_bHaveTargetSelected) {
-        if (CTheScripts::bDrawCrossHair || !TheCamera.m_bTransitionState) {
-            if (IsAimingWeapon()) {
-                if (!faststrcmp(crosshairName, "sniper")) {
-                    COverlayLayer::SetEffect(EFFECT_LENS_DISTORTION);
+        if (ik && !playa->m_nPedFlags.bIsDucking)
+            return;
 
-                    static int shoot = playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTotalAmmo;
-                    static int time = 0;
+        if (!playa->m_pPlayerData->m_bHaveTargetSelected) {
+            if (CTheScripts::bDrawCrossHair || !TheCamera.m_bTransitionState) {
+                if (1) {
+                    if (!faststrcmp(crosshairName, "sniper")) {
+                        COverlayLayer::SetEffect(EFFECT_LENS_DISTORTION);
 
-                    rect.left = (SCREEN_WIDTH / 2) - SCREEN_COORD(960.0f);
-                    rect.right = (SCREEN_WIDTH / 2) + SCREEN_COORD(960.0f);
-                    rect.top = (SCREEN_HEIGHT / 2) - SCREEN_COORD(960.0f);
-                    rect.bottom = (SCREEN_HEIGHT / 2) + SCREEN_COORD(960.0f);
+                        static int shoot = playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTotalAmmo;
+                        static int time = 0;
 
-                    CSprite2d::DrawRect(CRect(0.0f, 0.0f, rect.left, SCREEN_HEIGHT), CRGBA(0, 0, 0, 255));
-                    CSprite2d::DrawRect(CRect(rect.right, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT), CRGBA(0, 0, 0, 255));
+                        rect.left = (SCREEN_WIDTH / 2) - SCREEN_COORD(960.0f);
+                        rect.right = (SCREEN_WIDTH / 2) + SCREEN_COORD(960.0f);
+                        rect.top = (SCREEN_HEIGHT / 2) - SCREEN_COORD(960.0f);
+                        rect.bottom = (SCREEN_HEIGHT / 2) + SCREEN_COORD(960.0f);
 
-                    CrosshairsSprites[CROSSHAIR_SNIPER]->Draw(rect, CRGBA(255, 255, 255, 255));
+                        CSprite2d::DrawRect(CRect(0.0f, 0.0f, rect.left, SCREEN_HEIGHT), CRGBA(0, 0, 0, 255));
+                        CSprite2d::DrawRect(CRect(rect.right, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT), CRGBA(0, 0, 0, 255));
 
-                    col = HudColourNew.GetRGB("HUD_COLOUR_GREEN", 255);
-                    rect.left = (SCREEN_WIDTH / 2) - SCREEN_COORD(96.0f);
-                    rect.right = (SCREEN_WIDTH / 2) + SCREEN_COORD(96.0f);
-                    rect.top = (SCREEN_HEIGHT / 2) - SCREEN_COORD(96.0f);
-                    rect.bottom = (SCREEN_HEIGHT / 2) + SCREEN_COORD(96.0f);
+                        CrosshairsSprites[CROSSHAIR_SNIPER]->Draw(rect, CRGBA(255, 255, 255, 255));
 
-                    if (playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTotalAmmo != shoot) {
-                        shoot = playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTotalAmmo;
-                        time = playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTimeForNextShot;
+                        col = HudColourNew.GetRGB(HUD_COLOUR_GREEN, 255);
+                        rect.left = (SCREEN_WIDTH / 2) - SCREEN_COORD(96.0f);
+                        rect.right = (SCREEN_WIDTH / 2) + SCREEN_COORD(96.0f);
+                        rect.top = (SCREEN_HEIGHT / 2) - SCREEN_COORD(96.0f);
+                        rect.bottom = (SCREEN_HEIGHT / 2) + SCREEN_COORD(96.0f);
+
+                        if (playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTotalAmmo != shoot) {
+                            shoot = playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTotalAmmo;
+                            time = playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTimeForNextShot;
+                        }
+
+                        if (time > CTimer::m_snTimeInMilliseconds)
+                            col = HudColourNew.GetRGB(HUD_COLOUR_RED, 255);
+
+                        CrosshairsSprites[CROSSHAIR_SNIPERTARGET]->Draw(rect, col);
                     }
-
-                    if (time > CTimer::m_snTimeInMilliseconds)
-                        col = HudColourNew.GetRGB("HUD_COLOUR_RED", 255);
-
-                    CrosshairsSprites[CROSSHAIR_SNIPERTARGET]->Draw(rect, col);
-                }
-                else if (!faststrcmp(crosshairName, "rocket")) {
-                    rect.left = (SCREEN_WIDTH / 2) - SCREEN_COORD(96.0f);
-                    rect.right = (SCREEN_WIDTH / 2) + SCREEN_COORD(96.0f);
-                    rect.top = (SCREEN_HEIGHT / 2) - SCREEN_COORD(96.0f);
-                    rect.bottom = (SCREEN_HEIGHT / 2) + SCREEN_COORD(96.0f);
-                    CrosshairsSprites[CROSSHAIR_ROCKET]->Draw(rect, CRGBA(255, 255, 255, 255));
-                }
-                else if (faststrcmp(crosshairName, "none")) {
-                    int alpha = 255;
-                    static int dotAlpha;
-                    static int alphaTime = 0;
-
-                    if (playa->m_pPlayerTargettedPed && playa->m_pPlayerTargettedPed->m_fHealth <= 0.0f) {
-                        nTargettedEntityDeathTime = CTimer::m_snTimeInMilliseconds + 200;
-                        playa->m_pPlayerTargettedPed = NULL;
+                    else if (!faststrcmp(crosshairName, "rocket")) {
+                        rect.left = (SCREEN_WIDTH / 2) - SCREEN_COORD(96.0f);
+                        rect.right = (SCREEN_WIDTH / 2) + SCREEN_COORD(96.0f);
+                        rect.top = (SCREEN_HEIGHT / 2) - SCREEN_COORD(96.0f);
+                        rect.bottom = (SCREEN_HEIGHT / 2) + SCREEN_COORD(96.0f);
+                        CrosshairsSprites[CROSSHAIR_ROCKET]->Draw(rect, CRGBA(255, 255, 255, 255));
                     }
+                    else if (faststrcmp(crosshairName, "none")) {
+                        int alpha = 255;
+                        static int dotAlpha;
+                        static int alphaTime = 0;
 
-                    if (playa->m_pPlayerTargettedPed)
-                        alphaTime = CTimer::m_snTimeInMilliseconds + 50;
+                        if (playa->m_pPlayerTargettedPed && playa->m_pPlayerTargettedPed->m_fHealth <= 0.0f) {
+                            nTargettedEntityDeathTime = CTimer::m_snTimeInMilliseconds + 200;
+                            playa->m_pPlayerTargettedPed = NULL;
+                        }
 
-                    if (alphaTime > CTimer::m_snTimeInMilliseconds) {
-                        alpha = 100;
-                        playa->m_pPlayerTargettedPed = NULL;
-                    }
+                        if (playa->m_pPlayerTargettedPed)
+                            alphaTime = CTimer::m_snTimeInMilliseconds + 50;
 
-                    dotAlpha = (int)interpF(dotAlpha, alpha, 0.2f * CTimer::ms_fTimeStep);
+                        if (alphaTime > CTimer::m_snTimeInMilliseconds) {
+                            alpha = 100;
+                            playa->m_pPlayerTargettedPed = NULL;
+                        }
 
-                    float w = GET_SETTING(HUD_CROSSHAIR_DOT).w;
-                    float h = GET_SETTING(HUD_CROSSHAIR_DOT).w;
-                    CRGBA col = GET_SETTING(HUD_CROSSHAIR_DOT).col;
-                    col.a = dotAlpha;
-                    CrosshairsSprites[CROSSHAIR_DOT]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), col);
+                        dotAlpha = (int)interpF(dotAlpha, alpha, 0.2f * CTimer::ms_fTimeStep);
 
-                    if (nTargettedEntityDeathTime > CTimer::m_snTimeInMilliseconds) {
-                        w = GET_SETTING(HUD_CROSSHAIR_CROSS).w;
-                        h = GET_SETTING(HUD_CROSSHAIR_CROSS).w;
-                        CrosshairsSprites[CROSSHAIR_CROSS]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), GET_SETTING(HUD_CROSSHAIR_CROSS).col);
+                        float w = GET_SETTING(HUD_CROSSHAIR_DOT).w;
+                        float h = GET_SETTING(HUD_CROSSHAIR_DOT).w;
+                        CRGBA col = GET_SETTING(HUD_CROSSHAIR_DOT).col;
+                        col.a = dotAlpha;
+                        CrosshairsSprites[CROSSHAIR_DOT]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), col);
+
+                        if (nTargettedEntityDeathTime > CTimer::m_snTimeInMilliseconds) {
+                            w = GET_SETTING(HUD_CROSSHAIR_CROSS).w;
+                            h = GET_SETTING(HUD_CROSSHAIR_CROSS).w;
+                            CrosshairsSprites[CROSSHAIR_CROSS]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), GET_SETTING(HUD_CROSSHAIR_CROSS).col);
+                        }
                     }
                 }
             }
@@ -491,7 +493,7 @@ void CHudNew::DrawMoneyCounter() {
     CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_CASH).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_CASH).h));
 
     sprintf_s(str, "$%d", playa.m_nDisplayMoney);
-    CFontNew::PrintString(UI_RIGHT(GET_SETTING(HUD_CASH).x), SCREEN_COORD(GET_SETTING(HUD_CASH).y) + heightLerp, str);
+    CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_CASH).x), SCREEN_COORD(GET_SETTING(HUD_CASH).y) + heightLerp, str);
 
     if (m_nPreviousMoney != playa.m_nMoney) {
         bShowMoney = true;
@@ -513,7 +515,7 @@ void CHudNew::DrawMoneyCounter() {
     CFontNew::Details.color.a = nMoneyDifferenceFadeAlpha;
     CFontNew::Details.dropColor.a = nMoneyDifferenceFadeAlpha;
 
-    CFontNew::PrintString(UI_RIGHT(GET_SETTING(HUD_CASH).x), SCREEN_COORD(GET_SETTING(HUD_CASH).y + 2.0f) + CFontNew::GetHeightScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_CASH).h)) + heightLerp, str);
+    CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_CASH).x), SCREEN_COORD(GET_SETTING(HUD_CASH).y + 2.0f) + CFontNew::GetHeightScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_CASH).h)) + heightLerp, str);
 
     if (nTimeToShowMoneyDifference < CTimer::m_snTimeInMilliseconds || m_nDiffMoney == 0)
         bShowMoneyDifference = false;
@@ -598,10 +600,10 @@ void CHudNew::DrawAmmo() {
     }
     else {
         CFontNew::SetColor(HudColourNew.GetRGB("HUD_COLOUR_WHITE", nAmmoFadeAlpha));
-        CFontNew::PrintString(UI_RIGHT(GET_SETTING(HUD_AMMO).x + 6.0f) - CFontNew::GetStringWidth(str_clip, false), SCREEN_COORD(GET_SETTING(HUD_AMMO).y) + heightLerp, str_ammo);
+        CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_AMMO).x + 6.0f) - CFontNew::GetStringWidth(str_clip, false), SCREEN_COORD(GET_SETTING(HUD_AMMO).y) + heightLerp, str_ammo);
 
         CFontNew::SetColor(HudColourNew.GetRGB("HUD_COLOUR_GREY", nAmmoFadeAlpha));
-        CFontNew::PrintString(UI_RIGHT(GET_SETTING(HUD_AMMO).x), SCREEN_COORD(GET_SETTING(HUD_AMMO).y) + heightLerp, str_clip);
+        CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_AMMO).x), SCREEN_COORD(GET_SETTING(HUD_AMMO).y) + heightLerp, str_clip);
     }
 
     if (nTimeToShowAmmoDifference < CTimer::m_snTimeInMilliseconds)
@@ -616,7 +618,7 @@ void CHudNew::DrawSimpleRect(CRect const& rect, CRGBA const& col) {
     unsigned int savedAlpha;
     unsigned int savedFilter;
     RwRenderStateGet(rwRENDERSTATESHADEMODE, &savedShade);
-    RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEGOURAUD);
+    RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEFLAT);
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
     RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
@@ -634,13 +636,16 @@ void CHudNew::DrawSimpleRectGrad(CRect const& rect, CRGBA const& col) {
     unsigned int savedAlpha;
     unsigned int savedFilter;
     RwRenderStateGet(rwRENDERSTATESHADEMODE, &savedShade);
-    RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEGOURAUD);
+    RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEFLAT);
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
     RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
-    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERLINEAR);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
 
-    MiscSprites[MISC_RECTGRAD]->Draw(rect, col);
+    CSprite2d::SetVertices(rect.left, rect.top, rect.right, rect.top,
+                          rect.left, rect.bottom, rect.right, rect.bottom, col, col, col, col);
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(MenuNew.MiscSprites[MISC_RECTGRAD]->m_pTexture));
+    RwIm2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 4);
 
     RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)savedShade);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)savedAlpha);
@@ -705,16 +710,16 @@ void CHudNew::DrawPlayerPortrait(int id, float x, float y, float w, float h) {
     if (PlayerPortrait[id] && PlayerPortrait[id][0]->m_pTexture) {
         switch (id) {
             case 0:
-                PlayerPortrait[id][0]->Draw(UI_RIGHT(_x + (24.0f * scale)), SCREEN_COORD_BOTTOM(_y), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
+                PlayerPortrait[id][0]->Draw(HUD_RIGHT(_x + (24.0f * scale)), SCREEN_COORD_BOTTOM(_y), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
                 break;
             case 1:
-                PlayerPortrait[id][0]->Draw(UI_RIGHT(_x - (_w * scale)), SCREEN_COORD_BOTTOM(_y + (_h * scale)), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
+                PlayerPortrait[id][0]->Draw(HUD_RIGHT(_x - (_w * scale)), SCREEN_COORD_BOTTOM(_y + (_h * scale)), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
                 break;
             case 2:
-                PlayerPortrait[id][0]->Draw(UI_RIGHT(_x - (24.0f * scale) - ((_w * scale) * 2.0f)), SCREEN_COORD_BOTTOM(_y), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
+                PlayerPortrait[id][0]->Draw(HUD_RIGHT(_x - (24.0f * scale) - ((_w * scale) * 2.0f)), SCREEN_COORD_BOTTOM(_y), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
                 break;
             case 3:
-                PlayerPortrait[id][0]->Draw(UI_RIGHT(_x - (_w * scale)), SCREEN_COORD_BOTTOM(_y - (_h * scale)), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
+                PlayerPortrait[id][0]->Draw(HUD_RIGHT(_x - (_w * scale)), SCREEN_COORD_BOTTOM(_y - (_h * scale)), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
                 break;
         }
     }
@@ -722,16 +727,16 @@ void CHudNew::DrawPlayerPortrait(int id, float x, float y, float w, float h) {
     if (id == CWorld::PlayerInFocus) {
         switch (id) {
             case 0:
-                StatsSprites[PLRSTAT_PLAYER1_ACTIVE]->Draw(UI_RIGHT(x), SCREEN_COORD_BOTTOM(y), SCREEN_COORD(64.0f * 0.75f), SCREEN_COORD(h), HudColourNew.GetRGB(mainColor, 255));
+                StatsSprites[PLRSTAT_PLAYER1_ACTIVE]->Draw(HUD_RIGHT(x), SCREEN_COORD_BOTTOM(y), SCREEN_COORD(64.0f * 0.75f), SCREEN_COORD(h), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
                 break;
             case 1:
-                StatsSprites[PLRSTAT_PLAYER2_ACTIVE]->Draw(UI_RIGHT(x), SCREEN_COORD_BOTTOM(y), SCREEN_COORD(w), SCREEN_COORD(64.0f * 0.75f), HudColourNew.GetRGB(mainColor, 255));
+                StatsSprites[PLRSTAT_PLAYER2_ACTIVE]->Draw(HUD_RIGHT(x), SCREEN_COORD_BOTTOM(y), SCREEN_COORD(w), SCREEN_COORD(64.0f * 0.75f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
                 break;
             case 2:
-                StatsSprites[PLRSTAT_PLAYER3_ACTIVE]->Draw(UI_RIGHT(x - w + (64.0f * 0.75f)), SCREEN_COORD_BOTTOM(y), SCREEN_COORD(64.0f * 0.75f), SCREEN_COORD(h), HudColourNew.GetRGB(mainColor, 255));
+                StatsSprites[PLRSTAT_PLAYER3_ACTIVE]->Draw(HUD_RIGHT(x - w + (64.0f * 0.75f)), SCREEN_COORD_BOTTOM(y), SCREEN_COORD(64.0f * 0.75f), SCREEN_COORD(h), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
                 break;
             case 3:
-                StatsSprites[PLRSTAT_PLAYER4_ACTIVE]->Draw(UI_RIGHT(x), SCREEN_COORD_BOTTOM(y - h + (64.0f * 0.75f)), SCREEN_COORD(w), SCREEN_COORD(64.0f * 0.75f), HudColourNew.GetRGB(mainColor, 255));
+                StatsSprites[PLRSTAT_PLAYER4_ACTIVE]->Draw(HUD_RIGHT(x), SCREEN_COORD_BOTTOM(y - h + (64.0f * 0.75f)), SCREEN_COORD(w), SCREEN_COORD(64.0f * 0.75f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
                 break;
         }
     }
@@ -768,7 +773,7 @@ void CHudNew::DrawStats() {
         float h = GET_SETTING(HUD_VITAL_STATS).h;
         CRGBA col = GET_SETTING(HUD_VITAL_STATS).col;
 
-        DrawSimpleRect(CRect(UI_RIGHT(x), SCREEN_COORD_BOTTOM(y), UI_RIGHT(x) + SCREEN_COORD(w), SCREEN_COORD_BOTTOM(y) + SCREEN_COORD(h)), col);
+        DrawSimpleRect(CRect(HUD_RIGHT(x), SCREEN_COORD_BOTTOM(y), HUD_RIGHT(x) + SCREEN_COORD(w), SCREEN_COORD_BOTTOM(y) + SCREEN_COORD(h)), col);
 
         CFontNew::SetBackground(false);
         CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
@@ -816,10 +821,10 @@ void CHudNew::DrawStats() {
             unsigned int savedFilter;
             RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, (void*)&savedFilter);
             RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
-            DrawProgressBarWithSprite(StatsSprites[PLRSTAT_PROGRESS_BAR], UI_RIGHT((x - 12.0f)), SCREEN_COORD_BOTTOM(spacing + (y - 34.0f)), SCREEN_COORD(164.0f), SCREEN_COORD(8.0f), CStats::GetStatValue(stat[i]) / 1000, HudColourNew.GetRGB(mainColor, 255));
+            DrawProgressBarWithSprite(StatsSprites[PLRSTAT_PROGRESS_BAR], HUD_RIGHT((x - 12.0f)), SCREEN_COORD_BOTTOM(spacing + (y - 34.0f)), SCREEN_COORD(164.0f), SCREEN_COORD(8.0f), CStats::GetStatValue(stat[i]) / 1000, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
             RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
 
-            CFontNew::PrintString(UI_RIGHT(x - 12.0f), SCREEN_COORD_BOTTOM(spacing + ((y - 34.0f) + 28.0f)), TheText.Get(str[i]));
+            CFontNew::PrintString(HUD_RIGHT(x - 12.0f), SCREEN_COORD_BOTTOM(spacing + ((y - 34.0f) + 28.0f)), TheText.Get(str[i]));
             spacing -= (34.0f + 8.0f);
         }
 
@@ -830,7 +835,7 @@ void CHudNew::DrawStats() {
         h = GetSetting(HUD_PLAYER_WHEEL).h;
         col = GetSetting(HUD_PLAYER_WHEEL).col;
 
-        StatsSprites[PLRSTAT_WHEEL]->Draw(UI_RIGHT(x), SCREEN_COORD_BOTTOM(y), SCREEN_COORD(w), SCREEN_COORD(h), col);
+        StatsSprites[PLRSTAT_WHEEL]->Draw(HUD_RIGHT(x), SCREEN_COORD_BOTTOM(y), SCREEN_COORD(w), SCREEN_COORD(h), col);
 
         for (int i = 0; i < 4; i++)
             DrawPlayerPortrait(i, x, y, w, h);
@@ -882,9 +887,9 @@ void CHudNew::DrawWanted() {
         if (FindPlayerWanted(-1)->m_nWantedLevel > i
             && (CTimer::m_snTimeInMilliseconds > FindPlayerWanted(-1)->m_nLastTimeWantedLevelChanged + 2000
                 || CTimer::m_FrameCounter & 8) && (CRadarNew::m_bCopPursuit || CTimer::m_FrameCounter & 8))
-            WantedSprites[WANTED_STAR_2]->Draw(UI_RIGHT(x + w + spacing), UI_Y(y), SCREEN_COORD(w), SCREEN_COORD(h), c);
+            WantedSprites[WANTED_STAR_2]->Draw(HUD_RIGHT(x + w + spacing), HUD_Y(y), SCREEN_COORD(w), SCREEN_COORD(h), c);
         else
-            WantedSprites[WANTED_STAR_1]->Draw(UI_RIGHT(x + w + spacing), UI_Y(y), SCREEN_COORD(w), SCREEN_COORD(h), CRGBA(0, 0, 0, 100));
+            WantedSprites[WANTED_STAR_1]->Draw(HUD_RIGHT(x + w + spacing), HUD_Y(y), SCREEN_COORD(w), SCREEN_COORD(h), CRGBA(0, 0, 0, 100));
         spacing += w - 2.0f;
     }
 }
@@ -966,7 +971,7 @@ void CHudNew::DrawVehicleName() {
                 "EXECUTI",
                 "WORKER",
                 "BIG",
-                "TAXI",
+                "SERVICE",
                 "MOPED",
                 "MOTORBI",
                 "LEISURE",
@@ -997,7 +1002,7 @@ void CHudNew::DrawVehicleName() {
             CRGBA col = GET_SETTING(HUD_VEHICLE_NAME).col;
             CFontNew::SetColor(CRGBA(col.r, col.g, col.b, alpha));
             CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_VEHICLE_NAME).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_VEHICLE_NAME).h));
-            CFontNew::PrintString(UI_RIGHT(GET_SETTING(HUD_VEHICLE_NAME).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_VEHICLE_NAME).y), vehicleName);
+            CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_VEHICLE_NAME).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_VEHICLE_NAME).y), vehicleName);
         }
     }
     else {
@@ -1015,7 +1020,6 @@ void CHudNew::DrawMissionTimers() {
 void CHudNew::DrawRadar() {
     if (CEntryExitManager::ms_exitEnterState != 1
         && CEntryExitManager::ms_exitEnterState != 2
-        && FrontEndMenuManager.m_nRadarMode != 2
         && (CHud::m_ItemToFlash != 8 || CTimer::m_FrameCounter & 8)) {
         RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSWRAP);
         RwRenderStateSet(rwRENDERSTATETEXTUREPERSPECTIVE, (void*)TRUE);
@@ -1191,7 +1195,7 @@ void CHudNew::PrintSmallHelpText(int alpha) {
         sprintf(string, "%s %c", TheText.Get(string), CHud::m_pHelpMessageToPrint[0]);
 
         CRect r;
-        r.left = UI_X(96.0f);
+        r.left = HUD_X(96.0f);
         r.top = SCREEN_COORD_BOTTOM(324.0f);
         r.right = r.left + SCREEN_COORD(270.0f);
         r.bottom = r.top + SCREEN_COORD(64.0f);
@@ -1210,11 +1214,11 @@ void CHudNew::PrintSmallHelpText(int alpha) {
         c = GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).col;
         CFontNew::SetColor(CRGBA(c.r, c.g, c.b, clamp(alpha, 0, c.a)));
         CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
-        CFontNew::PrintString(UI_X(96.0f + 50.0f), SCREEN_COORD_BOTTOM(324.0f), string);
-        CFontNew::PrintString(UI_X(96.0f + 50.0f), SCREEN_COORD_BOTTOM(304.0f), percentage);
+        CFontNew::PrintString(HUD_X(96.0f + 50.0f), SCREEN_COORD_BOTTOM(324.0f), string);
+        CFontNew::PrintString(HUD_X(96.0f + 50.0f), SCREEN_COORD_BOTTOM(304.0f), percentage);
 
         CheckPlayerPortrait(CWorld::PlayerInFocus);
-        r.left = UI_X(96.0f + 4.0f);
+        r.left = HUD_X(96.0f + 4.0f);
         r.top = SCREEN_COORD_BOTTOM(324.0f - 4.0f);
         r.right = r.left + SCREEN_COORD(38.0f);
         r.bottom = r.top + SCREEN_COORD(38.0f);
@@ -1223,28 +1227,28 @@ void CHudNew::PrintSmallHelpText(int alpha) {
         unsigned int savedFilter;
         RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, (void*)&savedFilter);
         RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
-        DrawProgressBarWithSprite(StatsSprites[PLRSTAT_PROGRESS_BAR], UI_X(96.0f + 4.0f), SCREEN_COORD_BOTTOM(300.0f - 23.0f), SCREEN_COORD(262.0f), SCREEN_COORD(13.0f), progress / 1000, HudColourNew.GetRGB(mainColor, 255));
+        DrawProgressBarWithSprite(StatsSprites[PLRSTAT_PROGRESS_BAR], HUD_X(96.0f + 4.0f), SCREEN_COORD_BOTTOM(300.0f - 23.0f), SCREEN_COORD(262.0f), SCREEN_COORD(13.0f), progress / 1000, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
         RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
     }
     else if (ShowTripSkipMessage) {
         CRect r;
-        r.left = UI_X(96.0f);
+        r.left = HUD_X(96.0f);
         r.top = SCREEN_COORD_BOTTOM(324.0f);
         r.right = r.left + SCREEN_COORD(270.0f);
         r.bottom = r.top + SCREEN_COORD(64.0f);
 
         DrawSimpleRectGrad(r, c);
 
-        r.left = UI_X(104.0f);
+        r.left = HUD_X(104.0f);
         r.top = SCREEN_COORD_BOTTOM(324.0f);
         r.right = r.left + SCREEN_COORD(64.0f);
         r.bottom = r.top + SCREEN_COORD(64.0f);
-        MiscSprites[MISC_SKIPICON]->Draw(r, CRGBA(255, 255, 255, 255));
+        MenuNew.MiscSprites[MISC_SKIPICON]->Draw(r, CRGBA(255, 255, 255, 255));
 
         c = GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).col;
         CFontNew::SetColor(CRGBA(c.r, c.g, c.b, clamp(alpha, 0, c.a)));
         CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).h));
-        CFontNew::PrintString(UI_X(96.0f + 50.0f), SCREEN_COORD_BOTTOM(324.0f), "TRIP SKIP");
+        CFontNew::PrintString(HUD_X(96.0f + 50.0f), SCREEN_COORD_BOTTOM(324.0f), "TRIP SKIP");
     }
     else {
         CFontNew::SetBackground(true);
@@ -1256,7 +1260,7 @@ void CHudNew::PrintSmallHelpText(int alpha) {
         c = GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).col;
         CFontNew::SetColor(CRGBA(c.r, c.g, c.b, clamp(alpha, 0, c.a)));
         CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).h));
-        CFontNew::PrintStringFromBottom(UI_X(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).y), CHud::m_pHelpMessageToPrint);
+        CFontNew::PrintStringFromBottom(HUD_X(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).y), CHud::m_pHelpMessageToPrint);
         CFontNew::SetGradBackground(false);
     }
 }
@@ -1278,7 +1282,7 @@ void CHudNew::PrintBigHelpText(int alpha) {
     CFontNew::SetColor(CRGBA(c.r, c.g, c.b, clamp(alpha, 0, c.a)));
 
     CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_HELP_BOX_TEXT).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_HELP_BOX_TEXT).h));
-    CFontNew::PrintString(UI_X(GET_SETTING(HUD_HELP_BOX_TEXT).x), UI_Y(GET_SETTING(HUD_HELP_BOX_TEXT).y), CHud::m_pHelpMessageToPrint);
+    CFontNew::PrintString(HUD_X(GET_SETTING(HUD_HELP_BOX_TEXT).x), HUD_Y(GET_SETTING(HUD_HELP_BOX_TEXT).y), CHud::m_pHelpMessageToPrint);
 }
 
 void CHudNew::DrawOddJobMessage(bool priority) {
@@ -1353,15 +1357,15 @@ void CHudNew::DrawSuccessFailedMessage() {
         CFontNew::SetColor(col);
         CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_BIG_MESSAGE).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_BIG_MESSAGE).h));
 
-        float left = UI_X(0.0f);
-        float right = UI_RIGHT(0.0f);
-        float top1 = UI_Y(offset) + SCREEN_COORD_CENTER_Y - UI_Y(101.0f);
-        float bottom1 = UI_Y(offset) + SCREEN_COORD_CENTER_Y + UI_Y(72.0f);
-        float top2 = UI_Y(offset) + SCREEN_COORD_CENTER_Y - UI_Y(143.0f);
-        float bottom2 = UI_Y(offset) + SCREEN_COORD_CENTER_Y + UI_Y(117.0f);
+        float left = HUD_X(0.0f);
+        float right = HUD_RIGHT(0.0f);
+        float top1 = HUD_Y(offset) + SCREEN_COORD_CENTER_Y - HUD_Y(101.0f);
+        float bottom1 = HUD_Y(offset) + SCREEN_COORD_CENTER_Y + HUD_Y(72.0f);
+        float top2 = HUD_Y(offset) + SCREEN_COORD_CENTER_Y - HUD_Y(143.0f);
+        float bottom2 = HUD_Y(offset) + SCREEN_COORD_CENTER_Y + HUD_Y(117.0f);
 
         CSprite2d::SetVertices(left, top1, right, top2, left, bottom1, right, bottom2, CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150));
-        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(MiscSprites[MISC_RECTGRADCENTERED]->m_pTexture));
+        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(MenuNew.MiscSprites[MISC_RECTGRADCENTERED]->m_pTexture));
         RwIm2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 4);
         CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(HUD_BIG_MESSAGE).x), SCREEN_COORD_CENTER_DOWN(offset + GET_SETTING(HUD_BIG_MESSAGE).y), mainText);
 
@@ -1461,13 +1465,13 @@ void CHudNew::DrawZoneName() {
             CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
             CFontNew::SetWrapX(SCREEN_COORD(640.0f));
             CFontNew::SetFontStyle(CFontNew::FONT_2);
-            CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
+            CFontNew::SetDropShadow(SCREEN_COORD(3.0f));
             CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
 
             CRGBA col = GET_SETTING(HUD_ZONE_NAME).col;
             CFontNew::SetColor(CRGBA(col.r, col.g, col.b, alpha));
             CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_ZONE_NAME).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_ZONE_NAME).h));
-            CFontNew::PrintString(UI_RIGHT(GET_SETTING(HUD_ZONE_NAME).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_ZONE_NAME).y), CHud::m_ZoneToPrint);
+            CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_ZONE_NAME).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_ZONE_NAME).y), CHud::m_ZoneToPrint);
         }
     }
     else {
@@ -1521,7 +1525,7 @@ void CHudNew::DrawLevelName() {
         CRGBA col = GET_SETTING(HUD_LEVEL_NAME).col;
         CFontNew::SetColor(CRGBA(col.r, col.g, col.b, alpha));
         CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_LEVEL_NAME).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_LEVEL_NAME).h));
-        CFontNew::PrintString(UI_RIGHT(GET_SETTING(HUD_LEVEL_NAME).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_LEVEL_NAME).y), CTextNew::GetText(m_CurrentLevelName).text);
+        CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_LEVEL_NAME).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_LEVEL_NAME).y), CTextNew::GetText(m_CurrentLevelName).text);
     }
 }
 
@@ -1541,22 +1545,31 @@ void CHudNew::DrawWastedBustedText() {
 
     char* str = NULL;
     static eHudSettings i;
-    m_bShowWastedBusted = true;
+    static int time = -1;
     switch (FindPlayerPed(-1)->m_nPedState) {
         case PEDSTATE_DEAD:
+        case PEDSTATE_DIE:
             str = TheText.Get("DEAD");
             i = HUD_WASTED_TEXT;
+            COverlayLayer::SetEffect(EFFECT_BLACK_N_WHITE);
+            if (time == -1)
+                time = CTimer::m_snTimeInMilliseconds + 2000;
             break;
         case PEDSTATE_ARRESTED:
             str = TheText.Get("BUSTED");
             i = HUD_BUSTED_TEXT;
-            break;
-        default:
-            m_bShowWastedBusted = false;
+            COverlayLayer::SetEffect(EFFECT_BLACK_N_WHITE);
+            if (time == -1)
+                time = CTimer::m_snTimeInMilliseconds + 2000;
             break;
     }
 
-    if (m_bShowWastedBusted) {
+    if (time != -1 && time < CTimer::m_snTimeInMilliseconds) {
+        m_bShowWastedBusted = true;
+        time = -1;
+    }
+
+    if (m_bShowWastedBusted && str) {
         CFontNew::SetBackground(false);
         CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
         CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
@@ -1569,15 +1582,15 @@ void CHudNew::DrawWastedBustedText() {
         CFontNew::SetColor(GET_SETTING(i).col);
         CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(i).w), SCREEN_MULTIPLIER(GET_SETTING(i).h));
 
-        float left = UI_X(0.0f);
-        float right = UI_RIGHT(0.0f);
-        float top1 = SCREEN_COORD_CENTER_Y - UI_Y(101.0f);
-        float bottom1 = SCREEN_COORD_CENTER_Y + UI_Y(72.0f);
-        float top2 = SCREEN_COORD_CENTER_Y - UI_Y(143.0f);
-        float bottom2 = SCREEN_COORD_CENTER_Y + UI_Y(117.0f);
+        float left = HUD_X(0.0f);
+        float right = HUD_RIGHT(0.0f);
+        float top1 = SCREEN_COORD_CENTER_Y - HUD_Y(101.0f);
+        float bottom1 = SCREEN_COORD_CENTER_Y + HUD_Y(72.0f);
+        float top2 = SCREEN_COORD_CENTER_Y - HUD_Y(143.0f);
+        float bottom2 = SCREEN_COORD_CENTER_Y + HUD_Y(117.0f);
 
         CSprite2d::SetVertices(left, top1, right, top2, left, bottom1, right, bottom2, CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150));
-        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(MiscSprites[MISC_RECTGRADCENTERED]->m_pTexture));
+        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(MenuNew.MiscSprites[MISC_RECTGRADCENTERED]->m_pTexture));
         RwIm2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 4);
         CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(i).x), SCREEN_COORD_CENTER_DOWN(GET_SETTING(i).y), str);
     }
@@ -1621,10 +1634,10 @@ void CHudNew::DrawMissionTitle() {
         CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
         CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
 
-        CRGBA col = HudColourNew.GetRGB(mainColor, 255);
+        CRGBA col = HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255);
         CFontNew::SetColor(CRGBA(col.r, col.g, col.b, alpha));
         CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_MISSION_TITLE).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_MISSION_TITLE).h));
-        CFontNew::PrintString(UI_RIGHT(GET_SETTING(HUD_MISSION_TITLE).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_MISSION_TITLE).y), m_LastMissionName);
+        CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_MISSION_TITLE).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_MISSION_TITLE).y), m_LastMissionName);
     } 
     else {
         time = -1;

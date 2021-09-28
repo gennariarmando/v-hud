@@ -1,4 +1,4 @@
-#include "plugin.h"
+#include "VHud.h"
 #include "WeaponSelector.h"
 #include "Utility.h"
 #include "TextureMgr.h"
@@ -80,7 +80,8 @@ CWeaponWheel* CWeaponSelector::GetActiveWeapon() {
         if (nActiveWeapon[nActiveSlot] != -1)
             return WeaponWheel[nActiveSlot][nActiveWeapon[nActiveSlot]];
     }
-    else NULL;
+
+    return NULL;
 }
 
 void CWeaponSelector::Init() {
@@ -336,13 +337,13 @@ void CWeaponSelector::ProcessWeaponSelector() {
             if (bSlowCycle) {
                 CVector2D centre = { SCREEN_COORD_CENTER_X + GET_SETTING("HUD_WEAPON_WHEEL").x, SCREEN_COORD_CENTER_Y + (GET_SETTING("HUD_WEAPON_WHEEL").y) };
 
-                CVector2D pos = LimitMousePosition(MenuNew.MousePos);
+                CVector2D pos = LimitMousePosition(MenuNew.vMousePos);
                 float a = atan2f(pos.y - centre.y, pos.x - centre.x) * (180.0f / M_PI);
 
                 a = ConstrainAngle(-a);
 
                 float deg = 45.0f;
-                float dist = (MenuNew.MousePos - centre).Magnitude();
+                float dist = (MenuNew.vMousePos - centre).Magnitude();
                 float radius = 45.0f;
 
                 if (dist > radius) {
@@ -373,7 +374,7 @@ void CWeaponSelector::ProcessWeaponSelector() {
                 }
 
                 // Debug line                 
-                CSprite2d::Draw2DPolygon(MenuNew.MousePos.x, MenuNew.MousePos.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + MenuNew.MousePos.x, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + MenuNew.MousePos.y, centre.x, centre.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + centre.x, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + centre.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").col);
+                CSprite2d::Draw2DPolygon(MenuNew.vMousePos.x, MenuNew.vMousePos.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + MenuNew.vMousePos.x, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + MenuNew.vMousePos.y, centre.x, centre.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + centre.x, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + centre.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").col);
             }
         }
     }
@@ -384,13 +385,6 @@ void CWeaponSelector::ProcessWeaponSelector() {
         ClearWheel();
         bWeaponWheelJustClosed = false;
     }
-}
-
-void CWeaponSelector::CenterCursor() {
-    CVector2D centre = { SCREEN_COORD_CENTER_X + GET_SETTING("HUD_WEAPON_WHEEL").x, SCREEN_COORD_CENTER_Y + (GET_SETTING("HUD_WEAPON_WHEEL").y) };
-
-    MenuNew.MousePos.x = centre.x;
-    MenuNew.MousePos.y = centre.y;
 }
 
 CVector2D CWeaponSelector::LimitMousePosition(CVector2D& pos) {
@@ -580,7 +574,7 @@ void CWeaponSelector::OpenWeaponWheel(bool slow) {
 
     nWeaponWheelOpenTime = CTimer::m_snTimeInMilliseconds + (500 * CTimer::ms_fTimeScale);
     bShowWeaponWheel = true;
-    CenterCursor();
+    MenuNew.CenterCursor();
 }
 
 void CWeaponSelector::CloseWeaponWheel(bool switchon) {
@@ -657,11 +651,11 @@ void CWeaponSelector::DrawWheelPart(char id, float x, float y, int n, CRGBA cons
     unsigned int savedAlpha;
     unsigned int savedFilter;
     RwRenderStateGet(rwRENDERSTATESHADEMODE, &savedShade);
-    RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEFLAT);
+    RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEGOURAUD);
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
     RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
-    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERMIPLINEAR);
 
     float r = M_PI_4 * n;
     float angle = r + M_PI;
@@ -718,14 +712,14 @@ void CWeaponSelector::DrawWheel() {
 
         for (int i = 0; i < 8; i++) {
             if (i == nSelectedSlot)
-                DrawWheelPart(WHEEL_PART_GRAD, x, y, i, HudColourNew.GetRGB(mainColor, 255));
+                DrawWheelPart(WHEEL_PART_GRAD, x, y, i, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 150));
             else
-                DrawWheelPart(WHEEL_PART_SOLID, x, y, i, CRGBA(255, 255, 255, 255));
+                DrawWheelPart(WHEEL_PART_SOLID, x, y, i, CRGBA(0, 0, 0, 50));
 
             if (i == nActiveSlot && nSelectedWeapon[i] == nActiveWeapon[i])
-                DrawWheelPart(WHEEL_PART_ACTIVE, x, y, i, HudColourNew.GetRGB(mainColor, 255));
+                DrawWheelPart(WHEEL_PART_ACTIVE, x, y, i, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 205));
             else
-                DrawWheelPart(WHEEL_PART_INACTIVE, x, y, i, CRGBA(255, 255, 255, 205));
+                DrawWheelPart(WHEEL_PART_INACTIVE, x, y, i, CRGBA(0, 0, 0, 100));
 
             CWeaponWheel* wep = WeaponWheel[i][nSelectedWeapon[i]];
             int weap = nArrayOfAvailableWeapons[i][nSelectedWeapon[i]];
@@ -854,7 +848,7 @@ void CWeaponSelector::DrawWheel() {
         // *Extra* Parachute
         bool hasPara = playa->DoWeHaveWeaponAvailable(WEAPON_PARACHUTE);
         if (hasPara) {
-            WheelSprite[WHEEL_EXTRA]->Draw(SCREEN_COORD_CENTER_X + SCREEN_COORD(x + 202.0f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y + 202.0f), SCREEN_COORD(100.0f), SCREEN_COORD(100.0f), CRGBA(255, 255, 255, 255));
+            WheelSprite[WHEEL_EXTRA]->Draw(SCREEN_COORD_CENTER_X + SCREEN_COORD(x + 202.0f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y + 202.0f), SCREEN_COORD(100.0f), SCREEN_COORD(100.0f), CRGBA(0, 0, 0, 50));
             ExtraSprite[WEXTRA_PARA]->Draw(SCREEN_COORD_CENTER_X + SCREEN_COORD(x + 198.0f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y + 198.0f), SCREEN_COORD(106.0f), SCREEN_COORD(106.0f), CRGBA(255, 255, 255, 255));
         }
 
@@ -890,8 +884,8 @@ void CWeaponSelector::DrawWheel() {
                 sprintf(gString, "%d    /    %d", curr, max);
                 CFontNew::PrintString(SCREEN_COORD_CENTER_X + SCREEN_COORD(x + 2.0f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 82.0f), gString);
 
-                DrawSpriteWithBorder(WheelSprite[WHEEL_ARROW_LEFT], SCREEN_COORD_CENTER_X + SCREEN_COORD((x + 2.0f) - (46.0f / 2) - 32.0f) - (CFontNew::GetStringWidth(gString, true) * 0.5f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 89.0f), SCREEN_COORD(46.0f), SCREEN_COORD(46.0f), SCREEN_COORD(1.5f), HudColourNew.GetRGB(mainColor, 255));
-                DrawSpriteWithBorder(WheelSprite[WHEEL_ARROW_RIGHT], SCREEN_COORD_CENTER_X + SCREEN_COORD((x + 2.0f) - (46.0f / 2) + 32.0f) + (CFontNew::GetStringWidth(gString, true) * 0.5f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 89.0f), SCREEN_COORD(46.0f), SCREEN_COORD(46.0f), SCREEN_COORD(1.5f), HudColourNew.GetRGB(mainColor, 255));
+                DrawSpriteWithBorder(WheelSprite[WHEEL_ARROW_LEFT], SCREEN_COORD_CENTER_X + SCREEN_COORD((x + 2.0f) - (46.0f / 2) - 32.0f) - (CFontNew::GetStringWidth(gString, true) * 0.5f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 89.0f), SCREEN_COORD(46.0f), SCREEN_COORD(46.0f), SCREEN_COORD(1.5f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+                DrawSpriteWithBorder(WheelSprite[WHEEL_ARROW_RIGHT], SCREEN_COORD_CENTER_X + SCREEN_COORD((x + 2.0f) - (46.0f / 2) + 32.0f) + (CFontNew::GetStringWidth(gString, true) * 0.5f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 89.0f), SCREEN_COORD(46.0f), SCREEN_COORD(46.0f), SCREEN_COORD(1.5f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
             }
 
             float offset = 0.0f;
@@ -950,11 +944,11 @@ void CWeaponSelector::DrawStats(int active_id, int selected_id) {
     float y = GET_SETTING(HUD_WEAPON_STATS_BOX).y;
     float w = GET_SETTING(HUD_WEAPON_STATS_BOX).w;
     float h = GET_SETTING(HUD_WEAPON_STATS_BOX).h;
-    CRGBA col = GET_SETTING("HUD_WEAPON_STATS_BOX").col;
+    CRGBA col = GET_SETTING(HUD_WEAPON_STATS_BOX).col;
 
     static float heightLerp = 0.0f;
     heightLerp = interpF(heightLerp, GetShiftOffsetForStatsBox(), 0.8f * CTimer::ms_fTimeStep);
-    CHudNew::DrawSimpleRect(CRect(UI_RIGHT(x), SCREEN_COORD(y) + heightLerp, UI_RIGHT(x) + SCREEN_COORD(w), SCREEN_COORD(y) + heightLerp + SCREEN_COORD(h)), col);
+    CHudNew::DrawSimpleRect(CRect(HUD_RIGHT(x), SCREEN_COORD(y) + heightLerp, HUD_RIGHT(x) + SCREEN_COORD(w), SCREEN_COORD(y) + heightLerp + SCREEN_COORD(h)), col);
 
     x = x - GET_SETTING("HUD_WEAPON_STATS_BAR").x;
     y = y + GET_SETTING("HUD_WEAPON_STATS_BAR").y;
@@ -1047,8 +1041,8 @@ void CWeaponSelector::DrawStats(int active_id, int selected_id) {
         else
             col = HudColourNew.GetRGB("HUD_COLOUR_RED", 255);
 
-        DrawProgressBarWithProgressDifference(UI_RIGHT(x), SCREEN_COORD(spacing + y) + heightLerp, SCREEN_COORD(w), SCREEN_COORD(h), fStatsProgress[i], GET_SETTING("HUD_WEAPON_STATS_BAR").col, fStatsDiff[i], col);
-        CFontNew::PrintString(UI_RIGHT(x), SCREEN_COORD(spacing + (y - 28.0f)) + heightLerp, CTextNew::GetText(statName[i]).text);
+        DrawProgressBarWithProgressDifference(HUD_RIGHT(x), SCREEN_COORD(spacing + y) + heightLerp, SCREEN_COORD(w), SCREEN_COORD(h), fStatsProgress[i], GET_SETTING("HUD_WEAPON_STATS_BAR").col, fStatsDiff[i], col);
+        CFontNew::PrintString(HUD_RIGHT(x), SCREEN_COORD(spacing + (y - 28.0f)) + heightLerp, CTextNew::GetText(statName[i]).text);
         spacing += 42.0f;
     }
 

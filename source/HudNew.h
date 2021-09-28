@@ -8,13 +8,6 @@ enum eWantedSprites {
     NUM_WANTED_SPRITES,
 };
 
-enum eMiscSprites {
-    MISC_RECTGRAD,
-    MISC_RECTGRADCENTERED,
-    MISC_SKIPICON,
-    NUM_MISC_SPRITES,
-};
-
 enum eCrosshairsSprites {
     CROSSHAIR_DOT,
     CROSSHAIR_CROSS,
@@ -108,6 +101,7 @@ class CHudNew : CHud {
 public:
     static CHudSetting m_HudList[256];
 
+    static bool bInitialised;
     static bool bShowMoney;
     static bool bShowMoneyDifference;
     static int nMoneyFadeAlpha;
@@ -136,7 +130,6 @@ public:
     static CSprite2d* CrosshairsSprites[NUM_CROSSHAIRS_SPRITES];
     static CSprite2d* StatsSprites[NUM_PLRSTATS_SPRITES];
     static CSprite2d* PlayerPortrait[4][2];
-    static CSprite2d* MiscSprites[NUM_MISC_SPRITES];
 
 public:
     CHudNew();
@@ -186,5 +179,3 @@ public:
     static float GetShiftOffsetForMoney();
     static float GetShiftOffsetForAmmo();
 };
-
-extern char* mainColor;

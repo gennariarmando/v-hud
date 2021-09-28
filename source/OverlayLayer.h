@@ -12,6 +12,7 @@ class COverlayLayer {
 private:
     static eOverlayEffect CurrentEffect;
     static float fShaderConstant[4];
+    static bool bInitialised;
 
 public:
     COverlayLayer();

@@ -112,7 +112,5 @@ public:
 
     static float GetShiftOffsetForStatsBox();
     static void DrawStats(int selected_id, int active_id);
-    static void CenterCursor();
-    static void MoveCursor(float x, float y);
     static CVector2D LimitMousePosition(CVector2D& pos);
 };

@@ -2,8 +2,8 @@
 
 class CTextRead {
 public:
-    char str[256];
-    char text[256];
+    char str[16];
+    char text[16000];
 
     CTextRead::CTextRead() {
         strcpy(str, "NONE");
@@ -27,4 +27,9 @@ public:
     static void ReadTextFile();
     static CTextRead GetText(int s);
     static CTextRead GetText(char* str);
+    static void UpperCase(char* s);
+
+private:
+    static char GetUpperCase(char c);
+
 };
