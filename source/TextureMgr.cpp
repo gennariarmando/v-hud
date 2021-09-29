@@ -92,7 +92,7 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name) {
 		RwImageFindRasterFormat(img, rwRASTERTYPETEXTURE, &w, &h, &d, &f);
 
 		// Little hack to ensure visibility
-		LimitTextureSize(w, h);
+		//LimitTextureSize(w, h);
 
 		RwRaster* raster = RwRasterCreate(w, h, d, f);
 		RwRasterSetFromImage(raster, img);
