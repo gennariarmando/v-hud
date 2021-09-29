@@ -54,6 +54,7 @@ public:
     static CSprite2d* WheelSprite[NUM_WHEEL_SPRITES];
     static CSprite2d* ExtraSprite[NUM_WEXTRA_SPRITES];
 
+    static CVector2D vMousePos;
     static bool bShowWeaponWheel;
     static bool bWeaponWheelJustClosed;
     static int nWeaponWheelOpenTime;
@@ -94,6 +95,8 @@ public:
     static int GetLastSlotAvailable();
     static bool IsAbleToSwitchWeapon();
     static void ProcessWeaponSelector();
+    static void CenterCursor();
+    static void UpdateCursorPos();
     static void ResetCameraMovement();
     static void DisableCameraMovement();
     static void PopulateSlot(int slot);

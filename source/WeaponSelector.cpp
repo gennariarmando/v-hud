@@ -30,6 +30,7 @@ CWeaponSelector weaponSelector;
 bool CWeaponSelector::bInitialised;
 CSprite2d* CWeaponSelector::WheelSprite[NUM_WHEEL_SPRITES];
 CSprite2d* CWeaponSelector::ExtraSprite[NUM_WEXTRA_SPRITES];
+CVector2D CWeaponSelector::vMousePos;
 bool CWeaponSelector::bShowWeaponWheel;
 bool CWeaponSelector::bWeaponWheelJustClosed;
 int CWeaponSelector::nWeaponWheelOpenTime;
@@ -85,32 +86,33 @@ CWeaponWheel* CWeaponSelector::GetActiveWeapon() {
 }
 
 void CWeaponSelector::Init() {
+    if (bInitialised)
+        return;
+
     Clear();
 
     ReadSlotFromFile();
     ReadWeaponRatesFromFile();
 
-    if (!bInitialised) {
-        for (int i = 0; i < NUM_WHEEL_SPRITES; i++) {
-            WheelSprite[i] = new CSprite2d();
-            WheelSprite[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\weapon"), WheelFileNames[i]);
-        }
+    for (int i = 0; i < NUM_WHEEL_SPRITES; i++) {
+        WheelSprite[i] = new CSprite2d();
+        WheelSprite[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\weapon"), WheelFileNames[i]);
+    }
 
-        for (int i = 0; i < NUM_WEXTRA_SPRITES; i++) {
-            ExtraSprite[i] = new CSprite2d();
-            ExtraSprite[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\weapon\\extra"), WExtraFileNames[i]);
-        }
+    for (int i = 0; i < NUM_WEXTRA_SPRITES; i++) {
+        ExtraSprite[i] = new CSprite2d();
+        ExtraSprite[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\weapon\\extra"), WExtraFileNames[i]);
+    }
 
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 128; j++) {
-                if (WeaponWheel[i][j] && strncmp(WeaponWheel[i][j]->tex, "\0", 1)) {
-                    WeaponWheel[i][j]->sprite->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\weapon\\weapons"), WeaponWheel[i][j]->tex);
-                }
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 128; j++) {
+            if (WeaponWheel[i][j] && strncmp(WeaponWheel[i][j]->tex, "\0", 1)) {
+                WeaponWheel[i][j]->sprite->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\weapon\\weapons"), WeaponWheel[i][j]->tex);
             }
         }
-
-        bInitialised = true;
     }
+
+    bInitialised = true;
 }
 
 void CWeaponSelector::Clear() {
@@ -134,33 +136,36 @@ void CWeaponSelector::ReInit() {
 }
 
 void CWeaponSelector::Shutdown() {
+    if (!bInitialised)
+        return;
+
     Clear();
 
-    if (bInitialised) {
-        for (int i = 0; i < NUM_WHEEL_SPRITES; i++) {
-            WheelSprite[i]->Delete();
-            delete WheelSprite[i];
-        }
+    for (int i = 0; i < NUM_WHEEL_SPRITES; i++) {
+        WheelSprite[i]->Delete();
+        delete WheelSprite[i];
+    }
 
-        for (int i = 0; i < NUM_WEXTRA_SPRITES; i++) {
-            ExtraSprite[i]->Delete();
-            delete ExtraSprite[i];
-        }
+    for (int i = 0; i < NUM_WEXTRA_SPRITES; i++) {
+        ExtraSprite[i]->Delete();
+        delete ExtraSprite[i];
+    }
 
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 128; j++) {
-                if (WeaponWheel[i][j] && strncmp(WeaponWheel[i][j]->tex, "\0", 1)) {
-                    WeaponWheel[i][j]->sprite->Delete();
-                    delete WeaponWheel[i][j];
-                }
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 128; j++) {
+            if (WeaponWheel[i][j] && strncmp(WeaponWheel[i][j]->tex, "\0", 1)) {
+                WeaponWheel[i][j]->sprite->Delete();
+                delete WeaponWheel[i][j];
             }
         }
-
-        bInitialised = false;
     }
+
+
 
     if (WeaponStat)
         delete WeaponStat;
+
+    bInitialised = false;
 }
 
 void CWeaponSelector::ReadSlotFromFile() {
@@ -285,6 +290,8 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
 }
 
 void CWeaponSelector::ProcessWeaponSelector() {
+    UpdateCursorPos();
+
     if (IsAbleToSwitchWeapon()) {
         if (nTimeSinceClosed < CTimer::m_snTimeInMilliseconds) {
             if (!bShowWeaponWheel && CPadNew::GetPad(0)->GetShowWeaponWheel(350)) {
@@ -337,13 +344,13 @@ void CWeaponSelector::ProcessWeaponSelector() {
             if (bSlowCycle) {
                 CVector2D centre = { SCREEN_COORD_CENTER_X + GET_SETTING("HUD_WEAPON_WHEEL").x, SCREEN_COORD_CENTER_Y + (GET_SETTING("HUD_WEAPON_WHEEL").y) };
 
-                CVector2D pos = LimitMousePosition(MenuNew.vMousePos);
+                CVector2D pos = LimitMousePosition(vMousePos);
                 float a = atan2f(pos.y - centre.y, pos.x - centre.x) * (180.0f / M_PI);
 
                 a = ConstrainAngle(-a);
 
                 float deg = 45.0f;
-                float dist = (MenuNew.vMousePos - centre).Magnitude();
+                float dist = (vMousePos - centre).Magnitude();
                 float radius = 45.0f;
 
                 if (dist > radius) {
@@ -374,7 +381,7 @@ void CWeaponSelector::ProcessWeaponSelector() {
                 }
 
                 // Debug line                 
-                CSprite2d::Draw2DPolygon(MenuNew.vMousePos.x, MenuNew.vMousePos.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + MenuNew.vMousePos.x, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + MenuNew.vMousePos.y, centre.x, centre.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + centre.x, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + centre.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").col);
+                CSprite2d::Draw2DPolygon(vMousePos.x, vMousePos.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + vMousePos.x, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + vMousePos.y, centre.x, centre.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + centre.x, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + centre.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").col);
             }
         }
     }
@@ -385,6 +392,33 @@ void CWeaponSelector::ProcessWeaponSelector() {
         ClearWheel();
         bWeaponWheelJustClosed = false;
     }
+}
+
+void CWeaponSelector::CenterCursor() {
+    CVector2D centre = { SCREEN_COORD_CENTER_X + GET_SETTING("HUD_WEAPON_WHEEL").x, SCREEN_COORD_CENTER_Y + (GET_SETTING("HUD_WEAPON_WHEEL").y) };
+
+    vMousePos.x = centre.x;
+    vMousePos.y = centre.y;
+}
+
+void CWeaponSelector::UpdateCursorPos() {
+    float x = CPadNew::GetMouseInput(256.0f).x;
+    float y = CPadNew::GetMouseInput(256.0f).y;
+
+    if (x < 0.01f || x > 0.01f)
+        vMousePos.x += x;
+
+    if (y < 0.01f || y > 0.01f)
+        vMousePos.y += y;
+
+    if (vMousePos.x < 0)
+        vMousePos.x = 0;
+    if (vMousePos.x > SCREEN_WIDTH)
+        vMousePos.x = SCREEN_WIDTH;
+    if (vMousePos.y < 0)
+        vMousePos.y = 0;
+    if (vMousePos.y > SCREEN_HEIGHT)
+        vMousePos.y = SCREEN_HEIGHT;
 }
 
 CVector2D CWeaponSelector::LimitMousePosition(CVector2D& pos) {
@@ -574,7 +608,7 @@ void CWeaponSelector::OpenWeaponWheel(bool slow) {
 
     nWeaponWheelOpenTime = CTimer::m_snTimeInMilliseconds + (500 * CTimer::ms_fTimeScale);
     bShowWeaponWheel = true;
-    MenuNew.CenterCursor();
+    CenterCursor();
 }
 
 void CWeaponSelector::CloseWeaponWheel(bool switchon) {
