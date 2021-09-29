@@ -6,7 +6,6 @@
 #include "HudNew.h"
 #include "MenuNew.h"
 #include "OverlayLayer.h"
-#include "PanelsNew.h"
 #include "RadarNew.h"
 #include "RadioHud.h"
 #include "TextureMgr.h"
@@ -41,12 +40,12 @@ VHud::VHud() {
         CFontNew::Init();
         MenuNew.Init();
         CRadioHud::Init();
+        COverlayLayer::Init();
     };
 
     Events::initGameEvent += [] {
         CGPS::Init();
         CHudNew::Init();
-        COverlayLayer::Init();
         CRadarNew::Init();
         CWeaponSelector::Init();
     };
@@ -59,7 +58,6 @@ VHud::VHud() {
     CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void()> beforeFading;
     beforeFading += [] {
         CHudNew::Draw();
-
     };
 
     CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> afterFading;
