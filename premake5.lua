@@ -6,8 +6,6 @@ project "v-hud"
 	files {
 		"source/**.*",
 		"vendor/pugixml/src/*.*",
-		"vendor/lodepng/lodepng.cpp",
-		"vendor/lodepng/lodepng.h"
 	}
 	
 	includedirs { 
