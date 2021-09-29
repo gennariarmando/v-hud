@@ -147,6 +147,7 @@ public:
     static void DrawAmmo();
     static void DrawSimpleRect(CRect const& rect, CRGBA const& col);
     static void DrawSimpleRectGrad(CRect const& rect, CRGBA const& col);
+    static void DrawSimpleRectGradInverted(CRect const& rect, CRGBA const& col);
     static void DrawWanted();
     static void DrawVehicleName();
     static void DrawMissionTimers();

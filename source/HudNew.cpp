@@ -32,7 +32,6 @@
 #include "RadioHud.h"
 #include "OverlayLayer.h"
 #include "RadarNew.h"
-#include "PanelsNew.h"
 #include "Utility.h"
 #include "GPS.h"
 #include "MenuNew.h"
@@ -644,6 +643,27 @@ void CHudNew::DrawSimpleRectGrad(CRect const& rect, CRGBA const& col) {
 
     CSprite2d::SetVertices(rect.left, rect.top, rect.right, rect.top,
                           rect.left, rect.bottom, rect.right, rect.bottom, col, col, col, col);
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(MenuNew.MiscSprites[MISC_RECTGRAD]->m_pTexture));
+    RwIm2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 4);
+
+    RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)savedShade);
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)savedAlpha);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
+}
+
+void CHudNew::DrawSimpleRectGradInverted(CRect const& rect, CRGBA const& col) {
+    unsigned int savedShade;
+    unsigned int savedAlpha;
+    unsigned int savedFilter;
+    RwRenderStateGet(rwRENDERSTATESHADEMODE, &savedShade);
+    RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEFLAT);
+    RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
+    RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
+
+    CSprite2d::SetVertices(rect.right, rect.top, rect.left, rect.top,
+        rect.right, rect.bottom, rect.left, rect.bottom, col, col, col, col);
     RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(MenuNew.MiscSprites[MISC_RECTGRAD]->m_pTexture));
     RwIm2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 4);
 
