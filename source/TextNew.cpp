@@ -11,7 +11,7 @@ CTextNew TextNew;
 CTextRead CTextNew::TextList[256];
 
 CTextNew::CTextNew() {
-    CdeclEvent<AddressList<0x6A03E3, H_CALL>, PRIORITY_AFTER, ArgPickNone, void(LPCSTR)> OnTextLoad;  
+    CdeclEvent<AddressList<0x6A03E3, H_CALL>, PRIORITY_AFTER, ArgPickNone, void(const char*)> OnTextLoad;  
 
     OnTextLoad += [] {
         ReadTextFile();
