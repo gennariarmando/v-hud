@@ -1635,9 +1635,6 @@ void CMenuNew::DrawDefault() {
         bb = max((menuEntry.bottom * (GetEntryBackHeight() + 1)) + (GetMenuHorSpacing() * (GetEntryBackHeight())), 0);
         //
 
-        sprintf(gString, "currentEntry: %d", nCurrentEntryItem);
-        CFontNew::PrintString(0.0f, 0.0f, gString);
-
         nCurrentEntryItemHover = -1;
         for (int i = 0; i < MAX_MENU_ENTRIES; i++) {
             char* leftText = NULL;
