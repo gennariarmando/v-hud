@@ -137,6 +137,7 @@ enum {
 enum eMenuTabs {
     MENUTAB_NONE,
     MENUTAB_ACTION,
+    MENUTAB_POPULATESAVESLOT,
     MENUTAB_STORYMODE,
     MENUTAB_SETTINGS,
     MENUTAB_QUIT,
@@ -357,6 +358,9 @@ public:
     bool bInvertInput;
 
     int nNumOfSaveGames;
+    bool bSaveSlotsPopulated;
+
+    char nSaveSlots[9][64];
 
 public:
     CMenuNew();
@@ -379,8 +383,11 @@ public:
     void SetInputTypeAndClear(int input, int n);
     int GetLastMenuBarItem();
     int GetLastMenuScreenTab();
+    int GetFirstMenuScreenEntry();
     int GetLastMenuScreenEntry();
     bool HasToContinueLoop(int i);
+    bool HasToContinueLoopInverse(int i);
+    int GetEntryBackHeight();
     void OpenCloseMenu(bool on, bool force);
     void OpenMenuScreen(int screen);
     void CenterCursor();

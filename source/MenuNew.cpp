@@ -242,6 +242,10 @@ void CMenuNew::Clear() {
     bInvertInput = false;
 
     nNumOfSaveGames = 0;
+
+    for (int i = 0; i < 9; i++) {
+        strcpy(nSaveSlots[i], "\0");
+    }
 }
 
 void CMenuNew::BuildMenuBar() {
@@ -325,7 +329,7 @@ void CMenuNew::BuildMenuScreen() {
 
     // MENUSCREEN_GAME
     if (auto game = AddNewScreen("FE_GAM")) {
-        if (auto loadGame = AddNewTab(game, MENUTAB_NONE, "FE_LGAM", NULL)) {
+        if (auto loadGame = AddNewTab(game, MENUTAB_POPULATESAVESLOT, "FE_LGAM", NULL)) {
             AddNewEntry(loadGame, MENUENTRY_LOADGAME, "FE_NOSAV", 0, 1);
             AddNewEntry(loadGame, MENUENTRY_LOADGAME, "FE_NOSAV", 0, 0);
             AddNewEntry(loadGame, MENUENTRY_LOADGAME, "FE_NOSAV", 0, 0);
@@ -448,6 +452,8 @@ void CMenuNew::SetInputTypeAndClear(int input, int n = 0) {
                 nPreviousTabItemHover = MENU_HOVER_NONE;
                 break;
             case MENUINPUT_ENTRY:
+                if (n == 0)
+                    n = GetFirstMenuScreenEntry();
                 nPreviousEntryItem = nCurrentEntryItem;
                 nCurrentEntryItem = n;
                 nCurrentEntryItemHover = MENU_HOVER_NONE;
@@ -461,7 +467,7 @@ void CMenuNew::SetInputTypeAndClear(int input, int n = 0) {
 }
 
 int CMenuNew::GetLastMenuBarItem() {
-    int result = -1;
+    int result = 0;
     for (int i = 0; i < MAX_MENU_BAR_ITEMS; i++) {
         if (MenuBar[i].barName[0] != '\0')
             result++;
@@ -470,7 +476,7 @@ int CMenuNew::GetLastMenuBarItem() {
 }
 
 int CMenuNew::GetLastMenuScreenTab() {
-    int result = -1;
+    int result = 0;
     for (int i = 0; i < MAX_MENU_TABS; i++) {
         if (MenuScreen[nCurrentScreen].Tab[i].tabName[0] != '\0')
             result++;
@@ -478,8 +484,16 @@ int CMenuNew::GetLastMenuScreenTab() {
     return result;
 }
 
+int CMenuNew::GetFirstMenuScreenEntry() {
+    for (int i = 0; i < MAX_MENU_ENTRIES; i++) {
+        if (HasToContinueLoopInverse(i))
+            return i;
+    }
+    return 0;
+}
+
 int CMenuNew::GetLastMenuScreenEntry() {
-    int result = -1;
+    int result = 0;
     for (int i = 0; i < MAX_MENU_ENTRIES; i++) {
         if (HasToContinueLoop(i))
             continue;
@@ -490,15 +504,35 @@ int CMenuNew::GetLastMenuScreenEntry() {
 }
 
 bool CMenuNew::HasToContinueLoop(int i) {
-    if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].entryName[0] == '\0')
-        return true;
-
     if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].type == MENUENTRY_LOADGAME) {
-        if (CGenericGameStorage::ms_Slots[i + 1] != SLOT_OK)
+        char* str = nSaveSlots[i];
+
+        if (str[0] == '\0')
             return true;
     }
-
+    else {
+        if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].entryName[0] == '\0')
+            return true;
+    }
     return false;
+}
+
+bool CMenuNew::HasToContinueLoopInverse(int i) {
+    if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].type == MENUENTRY_LOADGAME) {
+        char* str = nSaveSlots[i];
+
+        if (str[0] != '\0')
+            return true;
+    }
+    else {
+        if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].entryName[0] != '\0')
+            return true;
+    }
+    return false;
+}
+
+int CMenuNew::GetEntryBackHeight() {
+    return GetLastMenuScreenEntry() - 1;
 }
 
 void CMenuNew::OpenCloseMenu(bool on, bool force) {
@@ -601,6 +635,21 @@ void CMenuNew::Process() {
     }
 
     if (bMenuActive) {
+        if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type == MENUTAB_POPULATESAVESLOT) {
+            if (!bSaveSlotsPopulated) {
+                PcSaveHelper.PopulateSlotInfo();
+                nNumOfSaveGames = GetNumOfSaveGames();
+                bSaveSlotsPopulated = true;
+            }
+        }
+        else {
+            nNumOfSaveGames = 0;
+            for (int i = 0; i < 9; i++) {
+                strcpy(nSaveSlots[i], "\0");
+            }
+            bSaveSlotsPopulated = false;
+        }
+
         switch (nCurrentInputType) {
         case MENUINPUT_BAR:
             if (bShowMenuBar) {
@@ -609,7 +658,7 @@ void CMenuNew::Process() {
                     nCurrentBarItem--;
 
                     if (nCurrentBarItem < 0)
-                        nCurrentBarItem = GetLastMenuBarItem();
+                        nCurrentBarItem = GetLastMenuBarItem() - 1;
 
                     SetInputTypeAndClear(MENUINPUT_TAB);
                     SetInputTypeAndClear(MENUINPUT_ENTRY);
@@ -621,7 +670,7 @@ void CMenuNew::Process() {
                     nPreviousBarItem = nCurrentBarItem;
                     nCurrentBarItem++;
 
-                    if (nCurrentBarItem > GetLastMenuBarItem())
+                    if (nCurrentBarItem > GetLastMenuBarItem() - 1)
                         nCurrentBarItem = 0;
 
                     SetInputTypeAndClear(MENUINPUT_TAB);
@@ -645,7 +694,7 @@ void CMenuNew::Process() {
                     nCurrentTabItem--;
 
                     if (nCurrentTabItem < 0)
-                        nCurrentTabItem = GetLastMenuScreenTab();
+                        nCurrentTabItem = GetLastMenuScreenTab() - 1;
 
                     SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
                     SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
@@ -654,7 +703,7 @@ void CMenuNew::Process() {
                     nPreviousTabItem = nCurrentTabItem;
                     nCurrentTabItem++;
 
-                    if (nCurrentTabItem > GetLastMenuScreenTab())
+                    if (nCurrentTabItem > GetLastMenuScreenTab() - 1)
                         nCurrentTabItem = 0;
 
                     SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
@@ -682,18 +731,28 @@ void CMenuNew::Process() {
         case MENUINPUT_ENTRY:
             if (!IsLoading()) {
                 if (Up) {
-                    nPreviousEntryItem = nCurrentEntryItem;
-                    nCurrentEntryItem--;
+                    while (true) {
+                        nPreviousEntryItem = nCurrentEntryItem;
+                        nCurrentEntryItem--;
 
-                    if (nCurrentEntryItem < 0)
-                        nCurrentEntryItem = GetLastMenuScreenEntry();
+                        if (HasToContinueLoopInverse(nCurrentEntryItem))
+                            break;
+
+                        if (nCurrentEntryItem < GetFirstMenuScreenEntry())
+                            nCurrentEntryItem = GetLastMenuScreenEntry() + 1;
+                    }
                 }
                 else if (Down) {
-                    nPreviousEntryItem = nCurrentEntryItem;
-                    nCurrentEntryItem++;
+                    while (true) {
+                        nPreviousEntryItem = nCurrentEntryItem;
+                        nCurrentEntryItem++;
 
-                    if (nCurrentEntryItem > GetLastMenuScreenEntry())
-                        nCurrentEntryItem = 0;
+                        if (HasToContinueLoopInverse(nCurrentEntryItem))
+                            break;
+
+                        if (nCurrentEntryItem > GetLastMenuScreenEntry() + 1)
+                            nCurrentEntryItem = GetFirstMenuScreenEntry() - 1;                    
+                    }
                 }
                 else if (Back) {
                     if (nMenuAlert == MENUALERT_NONE) {
@@ -796,7 +855,7 @@ void CMenuNew::ProcessTabStuff() {
         SetMenuMessage(MENUMESSAGE_EXIT_GAME);
         break;
     default:
-        if (GetLastMenuScreenEntry() != -1)
+        if (GetLastMenuScreenEntry() - 1 != -1)
             SetInputTypeAndClear(MENUINPUT_ENTRY, nPreviousEntryItem);
         break;
     }
@@ -1461,9 +1520,14 @@ bool CMenuNew::IsLoading() {
 }
 
 int CMenuNew::GetNumOfSaveGames() {
+    if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type != MENUTAB_POPULATESAVESLOT)
+        return 0;
+
     int result = 0;
     for (int i = 0; i < 9; i++) {
         char* str = CGenericGameStorage::GetNameOfSavedGame(i);
+
+        strcpy(nSaveSlots[i], str);
 
         if (str[0] != '\0')
             result++;
@@ -1568,8 +1632,11 @@ void CMenuNew::DrawDefault() {
         menuEntry.top += (menuEntry.bottom + GetMenuHorSpacing()) * MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[0].y;
         static float bb = 0.0f;
         CSprite2d::DrawRect(CRect(menuEntry.left, menuEntry.top, menuEntry.left + menuEntry.right, menuEntry.top + bb), CRGBA(0, 0, 0, FadeIn(180)));
-        bb = max((menuEntry.bottom * (GetLastMenuScreenEntry() + 1)) + (GetMenuHorSpacing() * (GetLastMenuScreenEntry())), 0);
+        bb = max((menuEntry.bottom * (GetEntryBackHeight() + 1)) + (GetMenuHorSpacing() * (GetEntryBackHeight())), 0);
         //
+
+        sprintf(gString, "currentEntry: %d", nCurrentEntryItem);
+        CFontNew::PrintString(0.0f, 0.0f, gString);
 
         nCurrentEntryItemHover = -1;
         for (int i = 0; i < MAX_MENU_ENTRIES; i++) {
@@ -1582,7 +1649,7 @@ void CMenuNew::DrawDefault() {
                 continue; 
 
             if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].type == MENUENTRY_LOADGAME) {
-                leftText = CGenericGameStorage::GetNameOfSavedGame(i);
+                leftText = nSaveSlots[i];
                 sprintf(leftTextTmp, "%02d - %s", i + 1, leftText ? leftText : CTextNew::GetText("FE_UNK").text);
                 leftText = leftTextTmp;
             }
@@ -1830,21 +1897,8 @@ void CMenuNew::DrawDefault() {
     if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_PAD")) {
         DrawTabGamePad();
     }
-
-    static bool populateSlot = true;
-    if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_LGAM")) {
+    if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type == MENUTAB_POPULATESAVESLOT) {
         DrawTabNumSaveGames();
-
-        if (populateSlot) {
-            PcSaveHelper.PopulateSlotInfo();
-            
-            nNumOfSaveGames = GetNumOfSaveGames();
-
-            populateSlot = false;
-        }
-    }
-    else {
-        populateSlot = true;
     }
 }
 
