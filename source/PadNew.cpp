@@ -10,6 +10,8 @@ using namespace plugin;
 
 CPadNew Pad;
 
+bool bHasPadInHands = false;
+
 void CPadNew::Init() {
 
 

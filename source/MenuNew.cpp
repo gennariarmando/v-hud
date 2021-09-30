@@ -117,6 +117,12 @@ CMenuNew::CMenuNew() {
         MenuNew.Settings.Save();
     };
     patch::RedirectJump(0x57C660, (void(__fastcall*)(int, int))saveSettings);
+
+    CdeclEvent<AddressList<0x61907A, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> onSavingGame;
+    onSavingGame += [] {
+        MenuNew.TempSettings.saveSlot = MenuNew.nCurrentEntryItem;
+        MenuNew.ApplyChanges();
+    };
 }
 
 void CMenuNew::Init() {
@@ -245,6 +251,13 @@ void CMenuNew::Clear() {
 
     for (int i = 0; i < 9; i++) {
         strcpy(nSaveSlots[i], "\0");
+    }
+
+    bHelpText = true;
+    nHelpTextCount = 0;
+
+    for (int i = 0; i < MAX_HELP_TEXT; i++) {
+        nHelpTextType[i].type = HELP_TEXT_NONE;
     }
 }
 
@@ -767,8 +780,13 @@ void CMenuNew::Process() {
                 ProcessEntryStuff(Enter, Left ? -1 : Right ? 1 : 0);
 
                 if (Space) {
-                    if (nMenuAlert == MENUALERT_PENDINGCHANGES)
-                        ApplyGraphicsChanges();
+                    if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_GFX")) {
+                        if (nMenuAlert == MENUALERT_PENDINGCHANGES)
+                            ApplyGraphicsChanges();
+                    }
+                    if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_LGAM")) {
+                        SetMenuMessage(MENUMESSAGE_DELETE_GAME);
+                    }
                 }
             }
             break;
@@ -785,6 +803,17 @@ void CMenuNew::Process() {
             break;
         default:
             StopRadio();
+            break;
+        }
+
+        switch (nCurrentScreen) {
+        case MENUSCREEN_NONE:
+            break;
+        case MENUSCREEN_LANDING:
+            break;
+        default:
+            AppendHelpText(HELP_TEXT_SELECT);
+            AppendHelpText(HELP_TEXT_BACK);
             break;
         }
 
@@ -844,7 +873,7 @@ void CMenuNew::ProcessTabStuff() {
         }
         break;
     case MENUTAB_STORYMODE:
-        DoSettingsBeforeStartingAGame(false);
+        DoSettingsBeforeStartingAGame(true, 0);
         break;
     case MENUTAB_SETTINGS:
         SetInputTypeAndClear(MENUINPUT_TAB, 0);
@@ -861,9 +890,9 @@ void CMenuNew::ProcessTabStuff() {
     }
 }
 
-void CMenuNew::DoSettingsBeforeStartingAGame(bool load) {
+void CMenuNew::DoSettingsBeforeStartingAGame(bool load, int slot) {
     if (load) {
-        if (CGenericGameStorage::CheckSlotDataValid(nCurrentEntryItem, false)) {
+        if (CGenericGameStorage::CheckSlotDataValid(slot == -1 ? nCurrentEntryItem : slot, false)) {
             FrontEndMenuManager.m_bDontDrawFrontEnd = true;
             CGame::bMissionPackGame = false;
             FrontEndMenuManager.m_bLoadingData = true;
@@ -871,7 +900,7 @@ void CMenuNew::DoSettingsBeforeStartingAGame(bool load) {
         }
         else {
             // Error
-            return;
+            // Start new game
         }
     }
 
@@ -904,6 +933,19 @@ void CMenuNew::ProcessMessagesStuff(int enter, int esc, int space, int input) {
     case MENUMESSAGE_EXIT_GAME:
         if (enter) {
             RsEventHandler(rsQUITAPP, (void*)FALSE);
+        }
+        else if (esc) {
+            UnSetMenuMessage();
+        }
+        break;
+    case MENUMESSAGE_DELETE_GAME:
+        if (enter) {
+            if (CGenericGameStorage::CheckSlotDataValid(nCurrentEntryItem, false)) {
+                PcSaveHelper.DeleteSlot(nCurrentEntryItem);
+                bSaveSlotsPopulated = false;
+                UnSetMenuMessage();
+                SetInputTypeAndClear(MENUINPUT_TAB, -1);
+            }
         }
         else if (esc) {
             UnSetMenuMessage();
@@ -1444,6 +1486,10 @@ void CMenuNew::Draw() {
             header = "FE_EXITW";
             msg = "FE_EXITW1";
             break;
+        case MENUMESSAGE_DELETE_GAME:
+            header = "FE_LGAM";
+            msg = "FE_LGAM1";
+            break;
         case MENUMESSAGE_LOSE_CHANGES_ASK:
             header = "FE_ALERT";
             msg = "FE_PENDSET";
@@ -1455,7 +1501,7 @@ void CMenuNew::Draw() {
         CFontNew::SetBackground(false);
         CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
         CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
-        CFontNew::SetWrapX(SCREEN_COORD(980.0f));
+        CFontNew::SetWrapX(SCREEN_COORD(1200.0f));
         CFontNew::SetFontStyle(CFontNew::FONT_3);
         CFontNew::SetDropShadow(0.0f);
         CFontNew::SetOutline(0.0f);
@@ -1464,7 +1510,7 @@ void CMenuNew::Draw() {
         CFontNew::SetScale(SCREEN_MULTIPLIER(3.2f), SCREEN_MULTIPLIER(6.3f));
 
         if (header) {
-            CFontNew::PrintString(SCREEN_COORD_CENTER_X, SCREEN_COORD_CENTER_Y + SCREEN_COORD(-116.0f), CTextNew::GetText(header).text);
+            CFontNew::PrintStringFromBottom(SCREEN_COORD_CENTER_X, SCREEN_COORD_CENTER_Y + SCREEN_COORD(-116.0f), CTextNew::GetText(header).text);
         }
 
         if (msg) {
@@ -1488,11 +1534,61 @@ void CMenuNew::Draw() {
         }
     }
 
+    if (bHelpText) {
+        CRect r;
+        r.left = MENU_RIGHT(96.0f);
+        r.right = SCREEN_COORD(32.0f);
+        r.top = MENU_BOTTOM(90.0f);
+        r.bottom = SCREEN_COORD(36.0f);
+
+        static float b = 0.0f;
+        CSprite2d::DrawRect(CRect(r.left - b, r.top, r.left, r.top + r.bottom), CRGBA(0, 0, 0, 150));
+        b = 0.0f;
+
+        CFontNew::SetBackground(false);
+        CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+        CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
+        CFontNew::SetWrapX(SCREEN_COORD(980.0f));
+        CFontNew::SetFontStyle(CFontNew::FONT_1);
+        CFontNew::SetDropShadow(0.0f);
+        CFontNew::SetOutline(0.0f);
+        CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+        CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
+        CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
+
+        float x = r.left;
+        float spacing = SCREEN_COORD(48.0f);
+        float offset = SCREEN_COORD(32.0f);
+        float back = SCREEN_COORD(48.0f);
+        for (int i = 0; i < nHelpTextCount; i++) {
+            char* str = NULL;
+
+            switch (nHelpTextType[i].type) {
+            case HELP_TEXT_SELECT:
+                str = "Select ~x~";
+                break;
+            case HELP_TEXT_BACK:
+                str = "Back ~t~";
+                break;
+            }
+            CFontNew::PrintString(x - offset, r.top + SCREEN_COORD(4.0f), str);
+            x -= CFontNew::GetStringWidth(str);
+            x -= spacing;
+            b += CFontNew::GetStringWidth(str) + back;
+        }
+        nHelpTextCount = 0;
+    }
+
     if (bDrawMouse) {
         if (nMouseType <= MOUSE_HAND) {
             MenuSprites[nMouseType]->Draw(vMousePos.x, vMousePos.y, SCREEN_COORD(30.0f), SCREEN_COORD(32.0f), CRGBA(255, 255, 255, 255));
         }
     }
+}
+
+void CMenuNew::AppendHelpText(int type) {
+    nHelpTextType[nHelpTextCount].type = type;
+    nHelpTextCount++;
 }
 
 void CMenuNew::SetMenuMessage(int type) {
@@ -1956,9 +2052,15 @@ void CMenuNew::DrawTabNumSaveGames() {
     CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(105)));
     CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
 
-    char* str = CTextNew::GetText("FE_SAVNUM").text;
-    sprintf(gString, CTextNew::GetText("FE_SAVNUM").text, nNumOfSaveGames);
-    CFontNew::PrintString(menuEntry.left + SCREEN_COORD(12.0f), menuEntry.top + SCREEN_COORD(5.0f), gString);
+    char* str = NULL;
+    if (nNumOfSaveGames > 0) {
+        sprintf(gString, CTextNew::GetText("FE_SAVNUM").text, nNumOfSaveGames);
+        str = gString;
+    }
+    else {
+        str = CTextNew::GetText("FE_NOSAV").text;
+    }
+    CFontNew::PrintString(menuEntry.left + SCREEN_COORD(12.0f), menuEntry.top + SCREEN_COORD(5.0f), str);
 }
 
 void CMenuNew::DrawLandingPage() {
@@ -2476,6 +2578,7 @@ void CMenuSettings::Clear() {
     frameLimiter = true;
 
     landingPage = true;
+    saveSlot = 0;
 
     const char* defColour = "HUD_COLOUR_MICHAEL";
     strcpy(uiMainColor, defColour);
@@ -2552,6 +2655,7 @@ void CMenuSettings::Load() {
             // Saving and Startup
             if (auto startup = settings.child("startup")) {
                 landingPage = startup.child("LandingPage").attribute("value").as_bool();
+                saveSlot = startup.append_child("SaveSlot").append_attribute("value").as_int();
             }
 
             // Misc
@@ -2636,6 +2740,7 @@ void CMenuSettings::Save() {
 
     auto startup = settings.append_child("startup");
     startup.append_child("LandingPage").append_attribute("value").set_value(landingPage);
+    startup.append_child("SaveSlot").append_attribute("value").set_value(saveSlot);
 
     auto misc = settings.append_child("misc");
     misc.append_child("UIMainColor").append_attribute("value").set_value(uiMainColor);

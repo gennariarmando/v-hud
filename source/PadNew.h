@@ -74,3 +74,5 @@ public:
     bool CheckForControllerInput();
     bool CheckForMouseInput();
 };
+
+extern bool bHasPadInHands;

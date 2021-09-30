@@ -506,7 +506,7 @@ char* CFontNew::ParseToken(char* s) {
         break;
     case 'T':
     case 't':
-        PS2Symbol = ButtonSprite[BUTTON_TRIANGLE];
+        PS2Symbol = bHasPadInHands ? ButtonSprite[BUTTON_TRIANGLE] : ButtonSprite[BUTTON_PC_ESC];
         break;
     case 'U':
     case 'u':
@@ -527,7 +527,7 @@ char* CFontNew::ParseToken(char* s) {
         break;
     case 'X':
     case 'x':
-        PS2Symbol = ButtonSprite[BUTTON_CROSS];
+        PS2Symbol = bHasPadInHands ? ButtonSprite[BUTTON_CROSS] : ButtonSprite[BUTTON_PC_ENTER];
         break;
     case 'Y':
     case 'y':
@@ -594,9 +594,12 @@ char* CFontNew::ParseToken(char* s) {
                 case 'E':
                     PS2Symbol = ButtonSprite[BUTTON_PC_ENTER];
                     break;
+                case 'B':
+                    PS2Symbol = ButtonSprite[BUTTON_PC_ESC];
+                    break;
                 }
-                c = nx;
             }
+            c = nx;
         }
     }
     while (*c != '~') ++c;
@@ -695,10 +698,10 @@ void CFontNew::DrawButton(float x, float y, CSprite2d* sprite) {
     
     PS2SymbolScale.x = clamp(sprite->m_pTexture->raster->width, 0, 128);
     PS2SymbolScale.y = clamp(sprite->m_pTexture->raster->height, 0, 128);
-    float w = Details.scale.y * (PS2SymbolScale.x / 4);
-    float h = Details.scale.y * (PS2SymbolScale.y / 4);
+    float w = Details.scale.y * (PS2SymbolScale.x / 3);
+    float h = Details.scale.y * (PS2SymbolScale.y / 3);
     rect.left = x;
-    rect.top = y + (h / 4);
+    rect.top = y + SCREEN_COORD(1.0f);
     rect.right = rect.left + (w);
     rect.bottom = rect.top + (h);
 
@@ -725,7 +728,7 @@ void CFontNew::PrintChar(float& x, float& y, char c) {
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
 
     DrawButton(x, y, PS2Symbol);
-    x += PS2Symbol ? (Details.scale.y * (PS2SymbolScale.x / 4)) : 0.0f;
+    x += PS2Symbol ? (Details.scale.y * (PS2SymbolScale.x / 3)) : 0.0f;
     PS2Symbol = NULL;
 
     // Text shadow
@@ -770,7 +773,7 @@ void CFontNew::PrintChar(float& x, float& y, char c) {
 }
 
 void CFontNew::PrintStringFromBottom(float x, float y, char* s) {
-    y -= GetHeightScale(Details.scale.y) * GetNumberLines(false, x, y, s);
+    y -= GetHeightScale(Details.scale.y) * (GetNumberLines(false, x, y, s) - 1);
 
     PrintString(x, y, s);
 }

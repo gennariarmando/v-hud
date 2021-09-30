@@ -113,6 +113,7 @@ enum eMenuMessages {
     MENUMESSAGE_NEW_GAME,
     MENUMESSAGE_LOAD_GAME,
     MENUMESSAGE_EXIT_GAME,
+    MENUMESSAGE_DELETE_GAME,
     MENUMESSAGE_LOSE_CHANGES_ASK,
 };
 
@@ -121,6 +122,7 @@ enum {
     MAX_MENU_SCREENS = 12,
     MAX_MENU_TABS = 32,
     MAX_MENU_ENTRIES = 32,
+    MAX_HELP_TEXT = 8,
 };
 
 enum {
@@ -156,6 +158,12 @@ enum eSettingsIndex {
 enum eMenuAlerts {
     MENUALERT_NONE,
     MENUALERT_PENDINGCHANGES,
+};
+
+enum eHelpTextType {
+    HELP_TEXT_NONE,
+    HELP_TEXT_SELECT,
+    HELP_TEXT_BACK,
 };
 
 /*
@@ -280,6 +288,7 @@ public:
 
     // Saving and Startup
     bool landingPage;
+    int saveSlot;
 
     // Misc
     char uiMainColor[32];
@@ -362,6 +371,13 @@ public:
 
     char nSaveSlots[9][64];
 
+    bool bHelpText;
+    int nHelpTextCount;
+
+    struct {
+        char type;
+    } nHelpTextType[MAX_HELP_TEXT];
+
 public:
     CMenuNew();
     void Init();
@@ -395,7 +411,8 @@ public:
     unsigned int GetTimeInMillisecondsRight();
     unsigned char FadeIn(unsigned char alpha);
     void ProcessTabStuff();
-    void DoSettingsBeforeStartingAGame(bool load);
+    void DoStartGameAfterLandingPage();
+    void DoSettingsBeforeStartingAGame(bool load, int slot = -1);
     void ProcessMessagesStuff(int enter, int esc, int space, int input);
     void ProcessAlertStuff();
     void ProcessEntryStuff(int enter, int input);
@@ -404,6 +421,7 @@ public:
     void CheckSliderMovement(double value);
     void DrawPauseMenuExtraText();
     void Draw();
+    void AppendHelpText(int type);
     void SetMenuMessage(int type);
     void UnSetMenuMessage();
     bool IsLoading();
