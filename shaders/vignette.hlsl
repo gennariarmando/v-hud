@@ -1,13 +1,12 @@
 sampler s0 : register(s0);
 float4 p0 : register(c0);
-float4 p1 : register(c1);
 
 float4 vignette(float4 c, float2 tex) {
-	float2 tc = tex - float2(0.500, 0.500);	
-	tc *= float2((p1.y / p1.x), 1.0);
-	tc /= 1.0;
-	float v = dot(tc, tc);
-	c.rgb *= (1.0 + pow(v, 1.0) * -0.5); //pow - multiply
+	float2 uv = tex.xy / p0.xy;
+	uv *= 1.0f - uv.yx;
+	float v = uv.x * uv.y * 15.0f;
+	v = pow(v, 0.25f);
+	c.rgb *= v;
 	return c;
 }
 
