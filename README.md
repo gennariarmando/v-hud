@@ -29,9 +29,9 @@ List of features:
 
 ### Screenshots:
 <p align="center"><img src="https://i.imgur.com/V480WnS.png" width="640" height="270"></p>
-<p align="center"><img src="https://i.imgur.com/ZVtSWFMl.png" width="640" height="270"></p>
-<p align="center"><img src="https://i.imgur.com/FTkcThIl.png" width="640" height="270"></p>
-<p align="center"><img src="https://i.imgur.com/4KOVuoWl.png" width="640" height="270"></p>
+<p align="center"><img src="https://i.imgur.com/ZVtSWFM.png" width="640" height="270"></p>
+<p align="center"><img src="https://i.imgur.com/FTkcThI.png" width="640" height="270"></p>
+<p align="center"><img src="https://i.imgur.com/4KOVuoW.png" width="640" height="270"></p>
 
 ### Download:
 WIP project - not recommended for end user. \
