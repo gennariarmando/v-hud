@@ -63,11 +63,13 @@ enum eMenuScreens {
     MENUSCREEN_GAME,
     MENUSCREEN_GALLERY,
     MENUSCREEN_LANDING,
+    MENUSCREEN_SAVE,
     NUM_MENUSCREENS
 };
 
 enum eMenuEntries {
     MENUENTRY_NONE = 0,
+    MENUENTRY_CHANGETAB,
     MENUENTRY_SCREENTYPE,
     MENUENTRY_CHANGERES,
     MENUENTRY_ASPECTRATIO,
@@ -106,12 +108,21 @@ enum eMenuEntries {
     MENUENTRY_LANDINGPAGE,
     MENUENTRY_LOADGAME,
     MENUENTRY_NUMOFSAVEGAMES,
+    MENUENTRY_ACTION,
+    MENUENTRY_PAD,
+    MENUENTRY_GFX,
+    MENUENTRY_POPULATESAVESLOT,
+    MENUENTRY_SAVEGAME,
+    MENUENTRY_STORYMODE,
+    MENUENTRY_SETTINGS,
+    MENUENTRY_QUIT,
 };
 
 enum eMenuMessages {
     MENUMESSAGE_NONE,
     MENUMESSAGE_NEW_GAME,
     MENUMESSAGE_LOAD_GAME,
+    MENUMESSAGE_SAVE_GAME,
     MENUMESSAGE_EXIT_GAME,
     MENUMESSAGE_DELETE_GAME,
     MENUMESSAGE_LOSE_CHANGES_ASK,
@@ -134,15 +145,6 @@ enum {
     MENUINPUT_TAB, 
     MENUINPUT_ENTRY,
     MENUINPUT_MESSAGE,
-};
-
-enum eMenuTabs {
-    MENUTAB_NONE,
-    MENUTAB_ACTION,
-    MENUTAB_POPULATESAVESLOT,
-    MENUTAB_STORYMODE,
-    MENUTAB_SETTINGS,
-    MENUTAB_QUIT,
 };
 
 enum eSettingsIndex {
@@ -215,13 +217,15 @@ public:
     char tabName[16];
     char actionName[16];
     CMenuEntry Entries[MAX_MENU_ENTRIES]; 
+    bool full;
 
 public:
-    inline void AddTab(int _type, char* _tabName, char* _actionName) {
+    inline void AddTab(int _type, char* _tabName, char* _actionName, bool _full) {
         type = _type;
         strcpy(tabName, _tabName);
         if (_actionName)
             strcpy(actionName, _actionName);
+        full = _full;
     }
 };
 
@@ -360,8 +364,10 @@ public:
 
     int nMenuAlert;
 
+    bool bShowMenuExtraText;
     bool bShowMenuBar;
     bool bNoTransparentBackg;
+    bool bStylizedBackground;
 
     bool bLandingPage;
     bool bInvertInput;
@@ -370,6 +376,7 @@ public:
     bool bSaveSlotsPopulated;
 
     char nSaveSlots[9][64];
+    char nSaveSlotsDate[9][32];
 
     bool bHelpText;
     int nHelpTextCount;
@@ -377,6 +384,10 @@ public:
     struct {
         char type;
     } nHelpTextType[MAX_HELP_TEXT];
+
+    bool bSavePage;
+
+    bool bRequestMenuClose;
 
 public:
     CMenuNew();
@@ -389,11 +400,12 @@ public:
     void DrawBackground();
 
     void SetLandingPageBehaviour();
+    void SetSavePageBehaviour();
     void SetDefaultPageBehaviour();
 
     void AddNewBarItem(char* name, int screen);
     CMenuScreen* AddNewScreen(char* name);
-    CMenuTab* AddNewTab(CMenuScreen* s, int type, char* tabName, char* actionName);
+    CMenuTab* AddNewTab(CMenuScreen* s, int type, char* tabName, char* actionName, bool full);
     CMenuEntry* AddNewEntry(CMenuTab* t, int type, char* entryName, int x, int y);
 
     void SetInputTypeAndClear(int input, int n);
@@ -411,8 +423,8 @@ public:
     unsigned int GetTimeInMillisecondsRight();
     unsigned char FadeIn(unsigned char alpha);
     void ProcessTabStuff();
-    void DoStartGameAfterLandingPage();
     void DoSettingsBeforeStartingAGame(bool load, int slot = -1);
+    void DoStuffBeforeSavingAGame(int slot);
     void ProcessMessagesStuff(int enter, int esc, int space, int input);
     void ProcessAlertStuff();
     void ProcessEntryStuff(int enter, int input);

@@ -85,8 +85,8 @@ CMenuNew::CMenuNew() {
     patch::Nop(0x748CE1, 10);
 
     // Lock gGameState to 6
-    //patch::Set<BYTE>(0xC8D4C0, 5);
-    //patch::Nop(0x747483, 6);
+    patch::Set<BYTE>(0xC8D4C0, 5);
+    patch::Nop(0x747483, 6);
     //patch::Nop(0x748C90, 10);
     //patch::Nop(0x748C23, 5);
     //patch::Nop(0x748C2B, 5);
@@ -97,6 +97,12 @@ CMenuNew::CMenuNew() {
     //    CLoadingScreen::DoPCTitleFadeOut();
     //};
     //patch::RedirectCall(0x748C9A, (void(__cdecl*)())doPCTitleFadeOut);
+
+    auto openSavePage = [](int, int, int, int, int) {
+        MenuNew.SetSavePageBehaviour();
+    };
+    patch::RedirectCall(0x48547E, (void(__fastcall*)(int, int, int, int, int))openSavePage);
+    patch::Nop(0x485457, 7);
 
     auto processFrontend = [](int _this, int) {
         MenuNew.Process();
@@ -163,6 +169,8 @@ void CMenuNew::Init() {
 
     if (bLandingPage)
         SetLandingPageBehaviour();
+    else
+        DoSettingsBeforeStartingAGame(true, Settings.saveSlot);
 
     bInitialised = true;
 }
@@ -241,6 +249,7 @@ void CMenuNew::Clear() {
 
     nMenuAlert = MENUALERT_NONE;
 
+    bShowMenuExtraText = true;
     bShowMenuBar = true;
     bShowMenu = true;
     bNoTransparentBackg = false;
@@ -248,9 +257,11 @@ void CMenuNew::Clear() {
     bInvertInput = false;
 
     nNumOfSaveGames = 0;
+    bSaveSlotsPopulated = false;
 
     for (int i = 0; i < 9; i++) {
-        strcpy(nSaveSlots[i], "\0");
+        nSaveSlots[i][0] = NULL;
+        nSaveSlotsDate[i][0] = NULL;
     }
 
     bHelpText = true;
@@ -259,6 +270,9 @@ void CMenuNew::Clear() {
     for (int i = 0; i < MAX_HELP_TEXT; i++) {
         nHelpTextType[i].type = HELP_TEXT_NONE;
     }
+
+    bSavePage = false;
+    bRequestMenuClose = false;
 }
 
 void CMenuNew::BuildMenuBar() {
@@ -278,7 +292,7 @@ void CMenuNew::BuildMenuScreen() {
 
     // MENUSCREEN_SETTINGS
     if (auto settings = AddNewScreen("FE_SET")) {
-        if (auto pad = AddNewTab(settings, MENUTAB_NONE, "FE_PAD", NULL)) {
+        if (auto pad = AddNewTab(settings, MENUENTRY_PAD, "FE_PAD", NULL, false)) {
             AddNewEntry(pad, MENUENTRY_INVERTPADX1, "FE_ILSX", 0, 7);
             AddNewEntry(pad, MENUENTRY_INVERTPADY1, "FE_ILSY", 0, 0);
             AddNewEntry(pad, MENUENTRY_INVERTPADX2, "FE_ILA", 0, 0);
@@ -288,7 +302,7 @@ void CMenuNew::BuildMenuScreen() {
             AddNewEntry(pad, MENUENTRY_RESTOREDEFAULTS, "FE_RDEF", 0, 0);
         }
 
-        if (auto key = AddNewTab(settings, MENUTAB_NONE, "FE_KEY", NULL)) {
+        if (auto key = AddNewTab(settings, MENUENTRY_CHANGETAB, "FE_KEY", NULL, false)) {
             AddNewEntry(key, MENUENTRY_MOUSESENSITIVITY, "FE_MVEL", 0, 0);
             AddNewEntry(key, MENUENTRY_INVERTMOUSEY, "FE_MINY", 0, 0);
             AddNewEntry(key, MENUENTRY_MOUSESTEER, "FE_MSTE", 0, 0);
@@ -296,11 +310,11 @@ void CMenuNew::BuildMenuScreen() {
             AddNewEntry(key, MENUENTRY_RESTOREDEFAULTS, "FE_RDEF", 0, 0);
         }
 
-        if (auto kbin = AddNewTab(settings, MENUTAB_ACTION, "FE_KBIN", "FE_KBIN1")) {
+        if (auto kbin = AddNewTab(settings, MENUENTRY_ACTION, "FE_KBIN", "FE_KBIN1", false)) {
 
         }
 
-        if (auto audio = AddNewTab(settings, MENUTAB_NONE, "FE_AUD", NULL)) {
+        if (auto audio = AddNewTab(settings, MENUENTRY_CHANGETAB, "FE_AUD", NULL, false)) {
             AddNewEntry(audio, MENUENTRY_SFXVOLUME, "FE_SFXV", 0, 0);
             AddNewEntry(audio, MENUENTRY_RADIOVOLUME, "FE_RADV", 0, 0);
             AddNewEntry(audio, MENUENTRY_RADIOSTATION, "FE_RSTA", 0, 0);
@@ -311,7 +325,7 @@ void CMenuNew::BuildMenuScreen() {
             AddNewEntry(audio, MENUENTRY_RESTOREDEFAULTS, "FE_RDEF", 0, 0);
         }
 
-        if (auto display = AddNewTab(settings, MENUTAB_NONE, "FE_DIS", NULL)) {
+        if (auto display = AddNewTab(settings, MENUENTRY_CHANGETAB, "FE_DIS", NULL, false)) {
             AddNewEntry(display, MENUENTRY_SHOWRADAR, "FE_RAD", 0, 0);
             AddNewEntry(display, MENUENTRY_SHOWHUD, "FE_HUD", 0, 0);
             AddNewEntry(display, MENUENTRY_GPSROUTE, "FE_GPS", 0, 0);
@@ -323,7 +337,7 @@ void CMenuNew::BuildMenuScreen() {
             AddNewEntry(display, MENUENTRY_RESTOREDEFAULTS, "FE_RDEF", 0, 0);
         }
 
-        if (auto graphics = AddNewTab(settings, MENUTAB_NONE, "FE_GFX", NULL)) {
+        if (auto graphics = AddNewTab(settings, MENUENTRY_GFX, "FE_GFX", NULL, false)) {
             AddNewEntry(graphics, MENUENTRY_SCREENTYPE, "FE_STP", 0, 2);
             AddNewEntry(graphics, MENUENTRY_CHANGERES, "FE_RES", 0, 0);
             //AddNewEntry(graphics, MENUENTRY_ASPECTRATIO, "FE_AR", 0, 0);
@@ -335,14 +349,14 @@ void CMenuNew::BuildMenuScreen() {
             AddNewEntry(graphics, MENUENTRY_RESTOREDEFAULTS, "FE_RDEF", 0, 0);
         }
 
-        if (auto startup = AddNewTab(settings, MENUTAB_NONE, "FE_SAS", NULL)) {
+        if (auto startup = AddNewTab(settings, MENUENTRY_CHANGETAB, "FE_SAS", NULL, false)) {
             AddNewEntry(startup, MENUENTRY_LANDINGPAGE, "FE_LAND", 0, 0);
         }
     }
 
     // MENUSCREEN_GAME
     if (auto game = AddNewScreen("FE_GAM")) {
-        if (auto loadGame = AddNewTab(game, MENUTAB_POPULATESAVESLOT, "FE_LGAM", NULL)) {
+        if (auto loadGame = AddNewTab(game, MENUENTRY_POPULATESAVESLOT, "FE_LGAM", NULL, false)) {
             AddNewEntry(loadGame, MENUENTRY_LOADGAME, "FE_NOSAV", 0, 1);
             AddNewEntry(loadGame, MENUENTRY_LOADGAME, "FE_NOSAV", 0, 0);
             AddNewEntry(loadGame, MENUENTRY_LOADGAME, "FE_NOSAV", 0, 0);
@@ -353,11 +367,11 @@ void CMenuNew::BuildMenuScreen() {
             AddNewEntry(loadGame, MENUENTRY_LOADGAME, "FE_NOSAV", 0, 0);
         }
 
-        if (auto newGame = AddNewTab(game, MENUTAB_ACTION, "FE_NGAM", "FE_NGAM1")) {
+        if (auto newGame = AddNewTab(game, MENUENTRY_ACTION, "FE_NGAM", "FE_NGAM1", false)) {
 
         }
 
-        if (auto exitGame = AddNewTab(game, MENUTAB_ACTION, "FE_EXIT", "FE_EXIT1")) {
+        if (auto exitGame = AddNewTab(game, MENUENTRY_ACTION, "FE_EXIT", "FE_EXIT1", false)) {
 
         }
     }
@@ -365,33 +379,72 @@ void CMenuNew::BuildMenuScreen() {
     // MENUSCREEN_GALLERY
     AddNewScreen("FE_GAL");
 
+    // MENUSCREEN_LANDING
     if (auto landing = AddNewScreen("FE_LAND")) {
-        AddNewTab(landing, MENUTAB_STORYMODE, "FE_STORY", NULL);
-        AddNewTab(landing, MENUTAB_SETTINGS, "FE_SET", NULL);
-        AddNewTab(landing, MENUTAB_QUIT, "FE_QUIT", NULL);
+        AddNewTab(landing, MENUENTRY_STORYMODE, "FE_STORY", NULL, false);
+        AddNewTab(landing, MENUENTRY_SETTINGS, "FE_SET", NULL, false);
+        AddNewTab(landing, MENUENTRY_QUIT, "FE_QUIT", NULL, false);
+    }
+
+    // MENUSCREEN_SAVE
+    if (auto save = AddNewScreen("FE_SGAM")) {
+        AddNewTab(save, MENUENTRY_SAVEGAME, "FE_NOSAV", NULL, true);
+        AddNewTab(save, MENUENTRY_SAVEGAME, "FE_NOSAV", NULL, true);
+        AddNewTab(save, MENUENTRY_SAVEGAME, "FE_NOSAV", NULL, true);
+        AddNewTab(save, MENUENTRY_SAVEGAME, "FE_NOSAV", NULL, true);
+        AddNewTab(save, MENUENTRY_SAVEGAME, "FE_NOSAV", NULL, true);
+        AddNewTab(save, MENUENTRY_SAVEGAME, "FE_NOSAV", NULL, true);
+        AddNewTab(save, MENUENTRY_SAVEGAME, "FE_NOSAV", NULL, true);
+        AddNewTab(save, MENUENTRY_SAVEGAME, "FE_NOSAV", NULL, true);
     }
 }
 
 void CMenuNew::DrawBackground() {
     CSprite2d::DrawRect(CRect(-5.0f, -5.0f, SCREEN_WIDTH + 5.0f, SCREEN_HEIGHT + 5.0f), CRGBA(0, 0, 0, 255));
-    MenuNew.LandingSprites[LANDING_BACK_0]->Draw(CRect(MENU_X(0.0f), MENU_Y(0.0f), MENU_RIGHT(0.0f), MENU_BOTTOM(0.0f)), CRGBA(255, 255, 255, 255));
-    MenuNew.LandingSprites[LANDING_FRONT_0]->Draw(CRect(MENU_X(0.0f), MENU_Y(-3.0f), MENU_X(764.0f), MENU_BOTTOM(-3.0f)), CRGBA(255, 255, 255, 255));
+
+    if (bStylizedBackground) {
+        MenuNew.LandingSprites[LANDING_BACK_0]->Draw(CRect(MENU_X(0.0f), MENU_Y(0.0f), MENU_RIGHT(0.0f), MENU_BOTTOM(0.0f)), CRGBA(255, 255, 255, 255));
+        MenuNew.LandingSprites[LANDING_FRONT_0]->Draw(CRect(MENU_X(0.0f), MENU_Y(-3.0f), MENU_X(764.0f), MENU_BOTTOM(-3.0f)), CRGBA(255, 255, 255, 255));
+    }
 }
 
 void CMenuNew::SetLandingPageBehaviour() {
+    if (nCurrentScreen == MENUSCREEN_LANDING)
+        return;
+
+    bLandingPage = true;
     bShowMenu = false;
+    bShowMenuExtraText = false;
     bShowMenuBar = false;
     bInvertInput = true;
     bNoTransparentBackg = true;
+    bStylizedBackground = true;
     OpenMenuScreen(MENUSCREEN_LANDING);
+    SetInputTypeAndClear(MENUINPUT_TAB, 0);
+}
+
+void CMenuNew::SetSavePageBehaviour() {
+    if (nCurrentScreen == MENUSCREEN_SAVE)
+        return;
+
+    bSavePage = true;
+    bShowMenu = true;
+    bShowMenuExtraText = true;
+    bShowMenuBar = false;
+    bInvertInput = false;
+    bNoTransparentBackg = true;
+    bStylizedBackground = false;
+    OpenMenuScreen(MENUSCREEN_SAVE);
     SetInputTypeAndClear(MENUINPUT_TAB, 0);
 }
 
 void CMenuNew::SetDefaultPageBehaviour() {
     bShowMenu = true;
+    bShowMenuExtraText = false;
     bShowMenuBar = false;
     bInvertInput = false;
     bNoTransparentBackg = true;
+    bStylizedBackground = true;
 }
 
 void CMenuNew::AddNewBarItem(char* name, int screen) {
@@ -418,14 +471,14 @@ CMenuScreen* CMenuNew::AddNewScreen(char* name) {
     }
 }
 
-CMenuTab* CMenuNew::AddNewTab(CMenuScreen* s, int type, char* tabName, char* actionName) {
+CMenuTab* CMenuNew::AddNewTab(CMenuScreen* s, int type, char* tabName, char* actionName, bool full) {
     for (int j = 0; j < MAX_MENU_TABS; j++) {
         CMenuTab* t = &s->Tab[j];
 
         if (t->tabName[0] != '\0')
             continue;
 
-        t->AddTab(type, tabName, actionName);
+        t->AddTab(type, tabName, actionName, full);
         return t;
     }
 }
@@ -577,14 +630,17 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
         bRequestScreenUpdate = true;
     }
 
+    nLoadingTime = GetTimeInMillisecondsRight() + MENU_SCREEN_CHANGE_WAIT_TIME;
     nOpenCloseWaitTime = GetTimeInMillisecondsRight() + MENU_OPEN_CLOSE_WAIT_TIME;
     bMenuActive = on;
 }
 
 void CMenuNew::OpenMenuScreen(int screen) {
     CTimer::StartUserPause();
+    nLoadingTime = 0;
     nOpenCloseWaitTime = 0;
     bMenuActive = true;
+    bRequestScreenUpdate = true;
 
     nPreviousScreen = nCurrentScreen;
     nCurrentScreen = screen;
@@ -638,7 +694,7 @@ void CMenuNew::Process() {
     bool Down = pad->GetMenuDownJustDown();
     bool Left = pad->GetMenuLeftJustDown();
     bool Right = pad->GetMenuRightJustDown();
-    bool Enter = pad->GetMenuEnterJustDown() || (pad->GetLeftMouseJustDown() && nCurrentEntryItemHover == nCurrentEntryItem);
+    bool Enter = pad->GetMenuEnterJustDown();
     bool Back = pad->GetMenuBackJustDown() || (pad->GetRightMouseJustDown() && nCurrentInputType != MENUINPUT_BAR);
     bool Space = pad->GetMenuSpaceJustDown();
 
@@ -648,7 +704,8 @@ void CMenuNew::Process() {
     }
 
     if (bMenuActive) {
-        if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type == MENUTAB_POPULATESAVESLOT) {
+        if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type == MENUENTRY_POPULATESAVESLOT ||
+            bSavePage) {
             if (!bSaveSlotsPopulated) {
                 PcSaveHelper.PopulateSlotInfo();
                 nNumOfSaveGames = GetNumOfSaveGames();
@@ -658,7 +715,8 @@ void CMenuNew::Process() {
         else {
             nNumOfSaveGames = 0;
             for (int i = 0; i < 9; i++) {
-                strcpy(nSaveSlots[i], "\0");
+                nSaveSlots[i][0] = NULL;
+                nSaveSlotsDate[i][0] = NULL;
             }
             bSaveSlotsPopulated = false;
         }
@@ -732,8 +790,11 @@ void CMenuNew::Process() {
                             bShowMenuBar = false;
                             bInvertInput = true;
                             OpenMenuScreen(MENUSCREEN_LANDING);
-                            SetInputTypeAndClear(MENUINPUT_TAB, nPreviousTabItem);
+                            SetInputTypeAndClear(MENUINPUT_TAB, 1);
                         }
+                    }
+                    else if (bSavePage) {
+                        OpenCloseMenu(false, true);
                     }
                     else {
                         SetInputTypeAndClear(MENUINPUT_BAR, nCurrentBarItem);
@@ -752,7 +813,7 @@ void CMenuNew::Process() {
                             break;
 
                         if (nCurrentEntryItem < GetFirstMenuScreenEntry())
-                            nCurrentEntryItem = GetLastMenuScreenEntry() + 1;
+                            nCurrentEntryItem = GetLastMenuScreenEntry() + 2;
                     }
                 }
                 else if (Down) {
@@ -764,7 +825,7 @@ void CMenuNew::Process() {
                             break;
 
                         if (nCurrentEntryItem > GetLastMenuScreenEntry() + 1)
-                            nCurrentEntryItem = GetFirstMenuScreenEntry() - 1;                    
+                            nCurrentEntryItem = GetFirstMenuScreenEntry() - 1;
                     }
                 }
                 else if (Back) {
@@ -806,41 +867,55 @@ void CMenuNew::Process() {
             break;
         }
 
-        switch (nCurrentScreen) {
-        case MENUSCREEN_NONE:
-            break;
-        case MENUSCREEN_LANDING:
-            break;
-        default:
-            AppendHelpText(HELP_TEXT_SELECT);
-            AppendHelpText(HELP_TEXT_BACK);
-            break;
+        if (nCurrentMessage == MENUMESSAGE_NONE) {
+            switch (nCurrentScreen) {
+            case MENUSCREEN_NONE:
+                break;
+            case MENUSCREEN_LANDING:
+                break;
+            default:
+                AppendHelpText(HELP_TEXT_SELECT);
+                AppendHelpText(HELP_TEXT_BACK);
+                break;
+            }
+        }
+        else {
+            switch (nCurrentMessage) {
+            case MENUMESSAGE_NONE:
+                break;
+            default:
+                AppendHelpText(HELP_TEXT_SELECT);
+                AppendHelpText(HELP_TEXT_BACK);
+                break;
+            }
         }
 
         FindOutUsedMemory();
 
-        if (bShowMenuBar) {
-            if (bRequestScreenUpdate) {
-                if (nCurrentScreen != MenuBar[nCurrentBarItem].targetScreen) {
-                    fScreenAlpha = 0;
-                    nLoadingTime = GetTimeInMillisecondsRight() + MENU_SCREEN_CHANGE_WAIT_TIME;
-                }
-                bRequestScreenUpdate = false;
-            }
+        if (bRequestScreenUpdate) {
+            fScreenAlpha = 0;
+            nLoadingTime = GetTimeInMillisecondsRight() + MENU_SCREEN_CHANGE_WAIT_TIME;
+            bRequestScreenUpdate = false;
+        }
 
-            if (!IsLoading()) {
+        if (!IsLoading()) {
+            if (bShowMenuBar) {
                 if (nCurrentScreen != MenuBar[nCurrentBarItem].targetScreen) {
                     nPreviousScreen = nCurrentScreen;
                     nCurrentScreen = MenuBar[nCurrentBarItem].targetScreen;
-                    nLoadingTime = 0;
                 }
-
+            }
+            if (fScreenAlpha < 255.0f) {
                 fScreenAlpha += 0.02f * 255.0f;
                 fScreenAlpha = clamp(fScreenAlpha, 0, 255);
             }
-        }
-        else {
-            fScreenAlpha = 255;
+            else fScreenAlpha = 255.0f;
+            nLoadingTime = 0;
+
+            if (bRequestMenuClose) {
+                OpenCloseMenu(false, true);
+                bRequestMenuClose = false;
+            }
         }
     }
     else {
@@ -851,7 +926,7 @@ void CMenuNew::Process() {
 }
 
 unsigned int CMenuNew::GetTimeInMillisecondsRight() {
-    return CTimer::m_UserPause ? CTimer::m_snTimeInMillisecondsPauseMode : CTimer::m_CodePause ? CTimer::m_snTimeInMillisecondsNonClipped : CTimer::m_snTimeInMilliseconds;
+    return CTimer::m_snTimeInMillisecondsPauseMode;
 }
 
 unsigned char CMenuNew::FadeIn(unsigned char alpha) {
@@ -863,31 +938,7 @@ unsigned char CMenuNew::FadeIn(unsigned char alpha) {
 }
 
 void CMenuNew::ProcessTabStuff() {
-    switch (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type) {
-    case MENUTAB_ACTION:
-        if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_NGAM")) {
-            SetMenuMessage(MENUMESSAGE_NEW_GAME);
-        }
-        else if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_EXIT")) {
-            SetMenuMessage(MENUMESSAGE_EXIT_GAME);
-        }
-        break;
-    case MENUTAB_STORYMODE:
-        DoSettingsBeforeStartingAGame(true, 0);
-        break;
-    case MENUTAB_SETTINGS:
-        SetInputTypeAndClear(MENUINPUT_TAB, 0);
-        OpenMenuScreen(MENUSCREEN_SETTINGS);
-        SetDefaultPageBehaviour();
-        break;
-    case MENUTAB_QUIT:
-        SetMenuMessage(MENUMESSAGE_EXIT_GAME);
-        break;
-    default:
-        if (GetLastMenuScreenEntry() - 1 != -1)
-            SetInputTypeAndClear(MENUINPUT_ENTRY, nPreviousEntryItem);
-        break;
-    }
+    ProcessEntryStuff(1, 0);
 }
 
 void CMenuNew::DoSettingsBeforeStartingAGame(bool load, int slot) {
@@ -909,6 +960,12 @@ void CMenuNew::DoSettingsBeforeStartingAGame(bool load, int slot) {
     Clear();
 }
 
+void CMenuNew::DoStuffBeforeSavingAGame(int slot) {
+    PcSaveHelper.SaveSlot(slot);
+    bRequestMenuClose = true;
+    bRequestScreenUpdate = true;
+}
+
 void CMenuNew::ProcessMessagesStuff(int enter, int esc, int space, int input) {
     if (!enter && !esc && !space && !input)
         return;
@@ -925,6 +982,15 @@ void CMenuNew::ProcessMessagesStuff(int enter, int esc, int space, int input) {
     case MENUMESSAGE_LOAD_GAME:
         if (enter) {
             DoSettingsBeforeStartingAGame(true);
+        }
+        else if (esc) {
+            UnSetMenuMessage();
+        }
+        break;
+    case MENUMESSAGE_SAVE_GAME:
+        if (enter) {
+            DoStuffBeforeSavingAGame(nCurrentTabItem);
+            UnSetMenuMessage();
         }
         else if (esc) {
             UnSetMenuMessage();
@@ -975,15 +1041,59 @@ void CMenuNew::ProcessAlertStuff() {
 }
 
 void CMenuNew::ProcessEntryStuff(int enter, int input) {
+    int type;
+
+    switch (nCurrentInputType) {
+    case MENUINPUT_TAB:
+        type = MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type;
+        break;
+    default:
+        type = MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[nCurrentEntryItem].type;
+        break;
+    }
+
     if (!enter && !input)
         return;
 
-    switch (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[nCurrentEntryItem].type) {
+    switch (type) {
     case MENUENTRY_NONE:
         break;
+    case MENUENTRY_ACTION:
+        if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_NGAM")) {
+            SetMenuMessage(MENUMESSAGE_NEW_GAME);
+        }
+        else if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_EXIT")) {
+            SetMenuMessage(MENUMESSAGE_EXIT_GAME);
+        }
+        break;
+    case MENUENTRY_STORYMODE:
+        DoSettingsBeforeStartingAGame(true, 0);
+        break;
+    case MENUENTRY_SETTINGS:
+        SetInputTypeAndClear(MENUINPUT_TAB, 0);
+        OpenMenuScreen(MENUSCREEN_SETTINGS);
+        SetDefaultPageBehaviour();
+        break;
+    case MENUENTRY_QUIT:
+        SetMenuMessage(MENUMESSAGE_EXIT_GAME);
+        break;
+    case MENUENTRY_PAD:
+    case MENUENTRY_GFX:
+    case MENUENTRY_POPULATESAVESLOT:
+    // Fall through
+    case MENUENTRY_CHANGETAB:
+        if (GetLastMenuScreenEntry() - 1 != -1)
+            SetInputTypeAndClear(MENUINPUT_ENTRY, nPreviousEntryItem);
+        break;
+
     case MENUENTRY_LOADGAME:
         if (enter) {
             SetMenuMessage(MENUMESSAGE_LOAD_GAME);
+        }
+        break;
+    case MENUENTRY_SAVEGAME:
+        if (enter) {
+            SetMenuMessage(MENUMESSAGE_SAVE_GAME);
         }
         break;
     case MENUENTRY_SCREENTYPE:
@@ -1261,7 +1371,7 @@ void CMenuNew::CheckSliderMovement(double value) {
 void CMenuNew::DrawPauseMenuExtraText() {
     CPlayerInfo playa = CWorld::Players[CWorld::PlayerInFocus];
 
-    // Game name
+    // Header
     CFontNew::SetBackground(false);
     CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
     CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
@@ -1273,8 +1383,18 @@ void CMenuNew::DrawPauseMenuExtraText() {
     CFontNew::SetColor(CRGBA(255, 255, 255, 255));
     CFontNew::SetScale(SCREEN_MULTIPLIER(1.2f), SCREEN_MULTIPLIER(2.76f));
 
-    char* gameName = CTextNew::GetText("FE_GTA").text;
-    CFontNew::PrintString(MENU_X(311.0f), MENU_Y(111.0f), gameName);
+    char* header = NULL;
+    switch (nCurrentScreen) {
+    case MENUSCREEN_SAVE:
+        header = CTextNew::GetText("FE_SGAM").text;
+        break;
+    default:
+        header = CTextNew::GetText("FE_GTA").text;
+        break;
+    }
+
+    if (header)
+        CFontNew::PrintString(MENU_X(311.0f), MENU_Y(111.0f), header);
 
     // Player info
     if (playa.m_pPed) {
@@ -1329,9 +1449,10 @@ void CMenuNew::Draw() {
     }
 
     if (bShowMenu) {
-        if (bShowMenuBar) {
+        if (bShowMenuExtraText)
             DrawPauseMenuExtraText();
 
+        if (bShowMenuBar) {
             // Menubar
             CRect menuBar;
             CRect menuBarSelected;
@@ -1482,6 +1603,10 @@ void CMenuNew::Draw() {
             header = "FE_LGAM";
             msg = "FE_LGAM1";
             break;
+        case MENUMESSAGE_SAVE_GAME:
+            header = "FE_SGAM";
+            msg = "FE_SGAM1";
+            break;
         case MENUMESSAGE_EXIT_GAME:
             header = "FE_EXITW";
             msg = "FE_EXITW1";
@@ -1616,14 +1741,14 @@ bool CMenuNew::IsLoading() {
 }
 
 int CMenuNew::GetNumOfSaveGames() {
-    if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type != MENUTAB_POPULATESAVESLOT)
-        return 0;
-
     int result = 0;
     for (int i = 0; i < 9; i++) {
         char* str = CGenericGameStorage::GetNameOfSavedGame(i);
 
         strcpy(nSaveSlots[i], str);
+
+        char* dat = CGenericGameStorage::ms_SlotSaveDate[i].m_sSavedGameDateAndTime;
+        strcpy(nSaveSlotsDate[i], dat);
 
         if (str[0] != '\0')
             result++;
@@ -1633,6 +1758,8 @@ int CMenuNew::GetNumOfSaveGames() {
 }
 
 void CMenuNew::DrawDefault() {
+    CPadNew* pad = CPadNew::GetPad(0);
+
     {
         CRect menuTab;
         CRGBA menuTabColor;
@@ -1641,18 +1768,45 @@ void CMenuNew::DrawDefault() {
         menuTab = GetMenuTabRect();
         nCurrentTabItemHover = -1;
         for (int i = 0; i < MAX_MENU_TABS; i++) {
+            char* leftText = NULL;
+            char* rightText = NULL;
+            char strTmp[32];
             if (MenuScreen[nCurrentScreen].Tab[i].tabName[0] == '\0')
                 continue;
+
+            if (MenuScreen[nCurrentScreen].Tab[i].full)
+                menuTab.right = GetMenuScreenRect().right;
+
+            if (MenuScreen[nCurrentScreen].Tab[i].type == MENUENTRY_SAVEGAME) {
+                leftText = nSaveSlots[i];
+
+                if (leftText[0] != '\0') {
+                    sprintf(strTmp, "%02d - %s", i + 1, leftText);
+                }
+                else
+                    sprintf(strTmp, "%s %d/8", CTextNew::GetText("FE_NEWSAV").text, i + 1);
+
+                leftText = strTmp;
+                rightText = nSaveSlotsDate[i];
+            }
+            else {
+                leftText = CTextNew::GetText(MenuScreen[nCurrentScreen].Tab[i].tabName).text;
+            }
 
             if (bDrawMouse && CheckHover(menuTab.left, menuTab.left + menuTab.right, menuTab.top, menuTab.top + menuTab.bottom)) {
                 nCurrentTabItemHover = i;
 
-                CPadNew* pad = CPadNew::GetPad(0);
-
+                static int prevTab = nCurrentTabItem;
                 if (pad->GetLeftMouseJustDown()) {
-                    SetInputTypeAndClear(MENUINPUT_ENTRY);
-                    SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItemHover);
-                    bRequestScreenUpdate = true;
+                    if (nCurrentTabItemHover == nCurrentTabItem)
+                        ProcessTabStuff();
+                    else {
+                        if (prevTab != nCurrentTabItem) {
+                            SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
+                            prevTab = nCurrentTabItem;
+                        }
+                        SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItemHover);
+                    }
                 }
             }
             menuTabColor = { 0, 0, 0, FadeIn(180) };
@@ -1683,14 +1837,18 @@ void CMenuNew::DrawDefault() {
             CFontNew::SetColor(menuTabTextColor);
             CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
 
-            char* str = CTextNew::GetText(MenuScreen[nCurrentScreen].Tab[i].tabName).text;
-            CFontNew::PrintString(menuTab.left + SCREEN_COORD(12.0f), menuTab.top + SCREEN_COORD(6.0f), str);
+            CFontNew::PrintString(menuTab.left + SCREEN_COORD(12.0f), menuTab.top + SCREEN_COORD(6.0f), leftText);
+
+            if (MenuScreen[nCurrentScreen].Tab[i].full && rightText) {
+                CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
+                CFontNew::PrintString(menuTab.left + menuTab.right + SCREEN_COORD(-12.0f), menuTab.top + SCREEN_COORD(6.0f), rightText);
+            }
 
             menuTab.top += menuTab.bottom + GetMenuHorSpacing();
         }
     }
 
-    if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type == MENUTAB_ACTION) {
+    if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type == MENUENTRY_ACTION) {
         CRect rect = GetMenuEntryRect();
         rect.bottom = GetMenuScreenRect().bottom;
         DrawPatternBackground(CRect(rect.left, rect.top, rect.left + rect.right, rect.top + rect.bottom), CRGBA(0, 0, 0, FadeIn(180)));
@@ -1739,12 +1897,13 @@ void CMenuNew::DrawDefault() {
             char rightTextTmp[64];
 
             if (HasToContinueLoop(i))
-                continue; 
+                continue;
 
             if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].type == MENUENTRY_LOADGAME) {
                 leftText = nSaveSlots[i];
                 sprintf(leftTextTmp, "%02d - %s", i + 1, leftText ? leftText : CTextNew::GetText("FE_UNK").text);
                 leftText = leftTextTmp;
+                rightText = nSaveSlotsDate[i];
             }
             else {
                 leftText = CTextNew::GetText(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].entryName).text;
@@ -1758,11 +1917,11 @@ void CMenuNew::DrawDefault() {
             if (bDrawMouse && CheckHover(menuEntry.left, menuEntry.left + menuEntry.right, menuEntry.top, menuEntry.top + menuEntry.bottom)) {
                 nCurrentEntryItemHover = i;
 
-                CPadNew* pad = CPadNew::GetPad(0);
-
                 if (pad->GetLeftMouseJustDown()) {
+                    if (nCurrentEntryItemHover == nCurrentEntryItem)
+                        ProcessEntryStuff(true, false);
+
                     SetInputTypeAndClear(MENUINPUT_ENTRY, nCurrentEntryItemHover);
-                    bRequestScreenUpdate = true;
                 }
             }
 
@@ -1953,7 +2112,7 @@ void CMenuNew::DrawDefault() {
             if (rightText) {
                 CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
                 CFontNew::PrintString(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f - shiftText), menuEntry.top + SCREEN_COORD(5.0f), rightText);
-                
+
                 if (shiftText) {
                     float arrowX = menuEntry.left + menuEntry.right + SCREEN_COORD(-52.0f) - CFontNew::GetStringWidth(rightText, true);
                     float arrowY = menuEntry.top + SCREEN_COORD(6.0f);
@@ -1962,7 +2121,7 @@ void CMenuNew::DrawDefault() {
 
                     if (true) {
                         if (CheckHover(arrowX - arrowScale, arrowX + arrowScale, arrowY, arrowY + arrowScale)) {
-                            if (CPadNew::GetPad(0)->GetLeftMouseJustDown()) {
+                            if (pad->GetLeftMouseJustDown()) {
                                 ProcessEntryStuff(0, -1);
 
                             }
@@ -1972,7 +2131,7 @@ void CMenuNew::DrawDefault() {
                         MenuSprites[MENU_ARROW_RIGHT]->Draw(arrowX, arrowY, arrowScale, arrowScale, CRGBA(0, 0, 0, 255));
 
                         if (CheckHover(arrowX - arrowScale, arrowX + arrowScale, arrowY, arrowY + arrowScale)) {
-                            if (CPadNew::GetPad(0)->GetLeftMouseJustDown()) {
+                            if (pad->GetLeftMouseJustDown()) {
                                 ProcessEntryStuff(0, 1);
                             }
                         }
@@ -1982,16 +2141,18 @@ void CMenuNew::DrawDefault() {
 
             menuEntry.top += menuEntry.bottom + GetMenuHorSpacing();
         }
-    }
 
-    if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_GFX")) {
-        DrawTabMemoryAvailable();
-    }
-    if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_PAD")) {
-        DrawTabGamePad();
-    }
-    if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type == MENUTAB_POPULATESAVESLOT) {
-        DrawTabNumSaveGames();
+        switch (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type) {
+        case MENUENTRY_PAD:
+            DrawTabGamePad();
+            break;
+        case MENUENTRY_GFX:
+            DrawTabMemoryAvailable();
+            break;
+        case MENUENTRY_POPULATESAVESLOT:
+            DrawTabNumSaveGames();
+            break;
+        }
     }
 }
 
@@ -2064,6 +2225,8 @@ void CMenuNew::DrawTabNumSaveGames() {
 }
 
 void CMenuNew::DrawLandingPage() {
+    CPadNew* pad = CPadNew::GetPad(0);
+
     CRect rect;
     rect = { MENU_X(522.0f), MENU_Y(218.0f), SCREEN_COORD(1302.0f), SCREEN_COORD(644.0f) };
     DrawPatternBackground(CRect(rect.left, rect.top, rect.left + rect.right, rect.top + rect.bottom), CRGBA(HudColourNew.GetRGB(HUD_COLOUR_BLACK, 150)));
@@ -2116,11 +2279,10 @@ void CMenuNew::DrawLandingPage() {
         if (bDrawMouse && CheckHover(menuEntry.right - nx, menuEntry.right, menuEntry.top, menuEntry.top + menuEntry.bottom)) {
             nCurrentTabItemHover = i;
 
-            CPadNew* pad = CPadNew::GetPad(0);
 
             if (pad->GetLeftMouseJustDown()) {
-                nPreviousTabItem = nCurrentTabItem;
-                nCurrentTabItem = nCurrentTabItemHover;
+                SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItemHover);
+
                 ProcessTabStuff();
             }
         }
