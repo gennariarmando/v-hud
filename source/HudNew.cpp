@@ -672,6 +672,26 @@ void CHudNew::DrawSimpleRectGradInverted(CRect const& rect, CRGBA const& col) {
     RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
 }
 
+void CHudNew::DrawSimpleRectGradCentered(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, CRGBA col) {
+    unsigned int savedShade;
+    unsigned int savedAlpha;
+    unsigned int savedFilter;
+    RwRenderStateGet(rwRENDERSTATESHADEMODE, &savedShade);
+    RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEFLAT);
+    RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
+    RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
+
+    CSprite2d::SetVertices(x1, y1, x2, y2, x3, y3, x4, y4, col, col, col, col);
+    RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(MenuNew.MiscSprites[MISC_RECTGRADCENTERED]->m_pTexture));
+    RwIm2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 4);
+
+    RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)savedShade);
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)savedAlpha);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
+}
+
 void CHudNew::CheckPlayerPortrait(int id) {
     CPed* playa = FindPlayerPed(id);
     char name[64];
@@ -1384,9 +1404,8 @@ void CHudNew::DrawSuccessFailedMessage() {
         float top2 = HUD_Y(offset) + SCREEN_COORD_CENTER_Y - HUD_Y(143.0f);
         float bottom2 = HUD_Y(offset) + SCREEN_COORD_CENTER_Y + HUD_Y(117.0f);
 
-        CSprite2d::SetVertices(left, top1, right, top2, left, bottom1, right, bottom2, CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150));
-        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(MenuNew.MiscSprites[MISC_RECTGRADCENTERED]->m_pTexture));
-        RwIm2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 4);
+        DrawSimpleRectGradCentered(left, top1, right, top2, left, bottom1, right, bottom2, CRGBA(0, 0, 0, 150));
+
         CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(HUD_BIG_MESSAGE).x), SCREEN_COORD_CENTER_DOWN(offset + GET_SETTING(HUD_BIG_MESSAGE).y), mainText);
 
         CFontNew::SetDropShadow(0.0f);
@@ -1609,9 +1628,8 @@ void CHudNew::DrawWastedBustedText() {
         float top2 = SCREEN_COORD_CENTER_Y - HUD_Y(143.0f);
         float bottom2 = SCREEN_COORD_CENTER_Y + HUD_Y(117.0f);
 
-        CSprite2d::SetVertices(left, top1, right, top2, left, bottom1, right, bottom2, CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150), CRGBA(0, 0, 0, 150));
-        RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(MenuNew.MiscSprites[MISC_RECTGRADCENTERED]->m_pTexture));
-        RwIm2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 4);
+        DrawSimpleRectGradCentered(left, top1, right, top2, left, bottom1, right, bottom2, CRGBA(0, 0, 0, 150));
+
         CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(i).x), SCREEN_COORD_CENTER_DOWN(GET_SETTING(i).y), str);
     }
 }
