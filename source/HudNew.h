@@ -130,6 +130,7 @@ public:
     static CSprite2d* CrosshairsSprites[NUM_CROSSHAIRS_SPRITES];
     static CSprite2d* StatsSprites[NUM_PLRSTATS_SPRITES];
     static CSprite2d* PlayerPortrait[4][2];
+    static int previousModelIndex[4];
 
 public:
     CHudNew();

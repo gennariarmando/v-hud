@@ -74,6 +74,7 @@ CSprite2d* CHudNew::WantedSprites[NUM_WANTED_SPRITES];
 CSprite2d* CHudNew::CrosshairsSprites[NUM_CROSSHAIRS_SPRITES];
 CSprite2d* CHudNew::StatsSprites[NUM_PLRSTATS_SPRITES];
 CSprite2d* CHudNew::PlayerPortrait[4][2];
+int CHudNew::previousModelIndex[4];
 
 void* simple_mask_fxc;
 
@@ -175,6 +176,10 @@ void CHudNew::ReInit() {
 
     m_bShowWastedBusted = false;
     m_bShowSuccessFailed = false;
+
+    for (int i = 0; i < 4; i++) {
+        previousModelIndex[i] = MODEL_NULL;
+    }
 }
 
 void CHudNew::Shutdown() {
@@ -705,10 +710,8 @@ void CHudNew::CheckPlayerPortrait(int id) {
 
     sprintf(mask, "%s%d_mask", "masks\\player", id + 1);
 
-    static int previousModelIndex = playa->m_nModelIndex;
-
     if (playa) {
-        if (previousModelIndex != playa->m_nModelIndex) {
+        if (previousModelIndex[id] != playa->m_nModelIndex) {
             if (PlayerPortrait[id][0]) {
                 PlayerPortrait[id][0]->Delete();
             }
@@ -716,25 +719,25 @@ void CHudNew::CheckPlayerPortrait(int id) {
                 PlayerPortrait[id][1]->Delete();
             }
 
-            previousModelIndex = playa->m_nModelIndex;
+            previousModelIndex[id] = playa->m_nModelIndex;
         }
 
         if (playa->m_nModelIndex < MODEL_CUTOBJ14 && faststrcmp(PedNameList[playa->m_nModelIndex], "unknown")) {
-            if (!PlayerPortrait[id][0]->m_pTexture) {
+            if (PlayerPortrait[id][0] && PlayerPortrait[id][0]->m_pTexture == NULL) {
                 sprintf(name, "%s%s", "portraits\\", PedNameList[playa->m_nModelIndex]);
                 PlayerPortrait[id][0]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\stats"), name, mask, col);
             }
-            if (!PlayerPortrait[id][1]->m_pTexture) {
+            if (PlayerPortrait[id][1] && PlayerPortrait[id][1]->m_pTexture == NULL) {
                 sprintf(name, "%s%s", "portraits\\", PedNameList[playa->m_nModelIndex]);
                 PlayerPortrait[id][1]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\stats"), name);
             }
         }
     }
 
-    if (!PlayerPortrait[id][0]->m_pTexture)
+    if (PlayerPortrait[id][0] && PlayerPortrait[id][0]->m_pTexture == NULL)
         PlayerPortrait[id][0]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\stats"), "portraits\\unknown", mask, col);
 
-    if (!PlayerPortrait[id][1]->m_pTexture)
+    if (PlayerPortrait[id][1] && PlayerPortrait[id][1]->m_pTexture == NULL)
         PlayerPortrait[id][1]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\stats"), "portraits\\unknown");
 }
 
@@ -1504,7 +1507,7 @@ void CHudNew::DrawZoneName() {
             CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
             CFontNew::SetWrapX(SCREEN_COORD(640.0f));
             CFontNew::SetFontStyle(CFontNew::FONT_2);
-            CFontNew::SetDropShadow(SCREEN_COORD(3.0f));
+            CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
             CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
 
             CRGBA col = GET_SETTING(HUD_ZONE_NAME).col;
