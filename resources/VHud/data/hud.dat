@@ -34,7 +34,7 @@ HUD_ARMOUR_BAR_P2             233.0  257.0     133.0   9.0     HUD_COLOUR_RADAR_
 HUD_ARMOUR_BAR_B_P2           233.0  257.0      65.0   9.0     HUD_COLOUR_RADAR_ARMOUR    205
 HUD_BREATH_BAR_P2             301.0  257.0      65.0   9.0     HUD_COLOUR_BLUELIGHT       205
 
-HUD_RADAR_GPS_LINE              0.0    0.0      6.0   0.0      HUD_COLOUR_WHITE           255
+HUD_RADAR_GPS_LINE              0.0    0.0      8.0   0.0      HUD_COLOUR_WHITE           255
 HUD_RADAR_GPS_RECT             96.0   94.0     366.0  72.0     HUD_COLOUR_BLACK           0
 HUD_RADAR_GPS_DIST_TEXT       129.0  102.0       0.61  1.4     HUD_COLOUR_WHITE           200
 HUD_RADAR_GPS_DIST_ARROW      116.0   88.0      15.0  15.0     HUD_COLOUR_WHITE           200

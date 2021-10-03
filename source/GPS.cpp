@@ -163,15 +163,16 @@ void CGPS::ProcessPath(CLocalization& l) {
             }
         }
 
+        CRGBA col;
+        if (radar_gps_alpha_mask_fxc)
+            col = CRGBA(255, 255, 255, 255);
+        else
+            col.Set(l.pathColor);
+
+        float w = (GET_SETTING("HUD_RADAR_GPS_LINE").w * 100.0f) / CRadar::m_radarRange;
+
         for (short i = 0; i < (l.nNodesCount - 1); i++) {
-            CRGBA col;
-
-            if (radar_gps_alpha_mask_fxc)
-                col = CRGBA(255, 255, 255, 255);
-            else
-                col.Set(l.pathColor);
-
-            DrawLine(l.nodePoints[i], l.nodePoints[i + 1], (GET_SETTING("HUD_RADAR_GPS_LINE").w * 100.0f) / CRadar::m_radarRange, col);
+            DrawLine(l.nodePoints[i], l.nodePoints[i + 1], w, col);
         }
     }
 }
