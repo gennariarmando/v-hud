@@ -2316,11 +2316,9 @@ void CMenuNew::DrawLandingPage() {
         float nx = (CFontNew::GetStringWidth(leftText, true) + spacing);
         if (bDrawMouse && CheckHover(menuEntry.right - nx, menuEntry.right, menuEntry.top, menuEntry.top + menuEntry.bottom)) {
             nCurrentTabItemHover = i;
-
+            SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItemHover);
 
             if (pad->GetLeftMouseJustDown()) {
-                SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItemHover);
-
                 ProcessTabStuff();
             }
         }
