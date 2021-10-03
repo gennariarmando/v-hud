@@ -78,14 +78,6 @@ void _rwD3D9RWSetRasterStage(RwRaster* r, int arg) {
     plugin::Call<0x7FDCD0, RwRaster*, int>(r, arg);
 }
 
-RwChar** _psGetVideoModeList() {
-    return plugin::CallAndReturn<RwChar**, 0x745AF0>();
-}
-
-void _psSetVideoMode(int index) {
-    plugin::Call<0x745C70, int>(index);
-}
-
 void DrawSpriteWithBorder(CSprite2d* sprite, float x, float y, float w, float h, float outline, CRGBA const& color, CRGBA const& borderColor) {
     float outline_x[] = {
         outline,

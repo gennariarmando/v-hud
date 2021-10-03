@@ -25,8 +25,6 @@ extern void DrawProgressBarWithSprite(class CSprite2d* sprite, float x, float y,
 extern bool FileCheck(const char* name);
 extern bool faststrcmp(const char* str1, const char* str2, int offset = 0);
 extern void _rwD3D9RWSetRasterStage(RwRaster* r, int arg);
-extern RwChar** _psGetVideoModeList();
-extern void _psSetVideoMode(int index);
 extern void DrawSpriteWithBorder(class CSprite2d* sprite, float x, float y, float w, float h, float outline, CRGBA const& color, CRGBA const& borderColor = CRGBA(0, 0, 0, 255));
 extern float ConstrainAngle(float x);
 extern void* CreatePixelShaderFromResource(int id);

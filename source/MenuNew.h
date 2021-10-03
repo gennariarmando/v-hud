@@ -315,6 +315,9 @@ public:
     CMenuBar MenuBar[MAX_MENU_BAR_ITEMS];
     CMenuScreen MenuScreen[MAX_MENU_SCREENS];
 
+    int NumVideoModes;
+    char** VideoModeList;
+
 public:
     bool bInitialised;
     char nMouseType;
@@ -427,6 +430,7 @@ public:
     void DoStuffBeforeSavingAGame(int slot);
     void ProcessMessagesStuff(int enter, int esc, int space, int input);
     void ProcessAlertStuff();
+    char** GetVideoModeList();
     void ProcessEntryStuff(int enter, int input);
     void StartRadio();
     void StopRadio();

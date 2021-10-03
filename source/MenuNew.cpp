@@ -75,6 +75,8 @@ int VMenuState = 0;
 
 int& gGameState = *(int*)0xC8D4C0;
 
+bool bSaveScreenHasBeenOpened = false;
+
 CMenuNew::CMenuNew() {
     //patch::Nop(0x53E7A0, 10);
     //patch::Nop(0x53BF3F, 10);
@@ -99,7 +101,10 @@ CMenuNew::CMenuNew() {
     //patch::RedirectCall(0x748C9A, (void(__cdecl*)())doPCTitleFadeOut);
 
     auto openSavePage = [](int, int, int, int, int) {
-        MenuNew.SetSavePageBehaviour();
+        if (!bSaveScreenHasBeenOpened) {
+            MenuNew.SetSavePageBehaviour();
+            bSaveScreenHasBeenOpened = true;
+        }
     };
     patch::RedirectCall(0x48547E, (void(__fastcall*)(int, int, int, int, int))openSavePage);
     patch::Nop(0x485457, 7);
@@ -162,6 +167,8 @@ void CMenuNew::Init() {
     BuildMenuBar();
     BuildMenuScreen();
 
+    VideoModeList = GetVideoModeList();
+
     MenuNew.Settings.Load();
     TempSettings = Settings;
 
@@ -198,6 +205,8 @@ void CMenuNew::Shutdown() {
         InfoScreensSprites[i]->Delete();
         delete InfoScreensSprites[i];
     }
+
+    delete[] VideoModeList;
 
     bInitialised = false;
     Clear();
@@ -273,6 +282,8 @@ void CMenuNew::Clear() {
 
     bSavePage = false;
     bRequestMenuClose = false;
+
+    bSaveScreenHasBeenOpened = false;
 }
 
 void CMenuNew::BuildMenuBar() {
@@ -496,9 +507,6 @@ CMenuEntry* CMenuNew::AddNewEntry(CMenuTab* t, int type, char* entryName, int x,
 }
 
 void CMenuNew::SetInputTypeAndClear(int input, int n = 0) {
-    if (IsLoading() || AudioEngine.IsRadioRetuneInProgress())
-        return;
-
     if (input > 0) {
         nPreviousInputType = nCurrentInputType;
         nCurrentInputType = input;
@@ -794,7 +802,8 @@ void CMenuNew::Process() {
                         }
                     }
                     else if (bSavePage) {
-                        OpenCloseMenu(false, true);
+                        bRequestMenuClose = true;
+                        bRequestScreenUpdate = true;
                     }
                     else {
                         SetInputTypeAndClear(MENUINPUT_BAR, nCurrentBarItem);
@@ -1040,6 +1049,27 @@ void CMenuNew::ProcessAlertStuff() {
     }
 }
 
+char** CMenuNew::GetVideoModeList() {
+    int numModes = RwEngineGetNumVideoModes();
+    char** list = new char* [numModes];
+
+    NumVideoModes = numModes - 1;
+    for (int i = 0; i < numModes; i++) {
+        RwVideoMode vm;
+        RwEngineGetVideoModeInfo(&vm, i);
+
+        char tmp[32] = { NULL };
+        if (vm.width >= 640 && vm.height >= 480 && vm.depth == 32) {
+            sprintf(tmp, "%dx%d", vm.width, vm.height);
+        }
+
+        list[i] = new char[100];
+        strcpy(list[i], tmp);
+    }
+
+    return list;
+}
+
 void CMenuNew::ProcessEntryStuff(int enter, int input) {
     int type;
 
@@ -1080,7 +1110,7 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
     case MENUENTRY_PAD:
     case MENUENTRY_GFX:
     case MENUENTRY_POPULATESAVESLOT:
-    // Fall through
+        // Fall through
     case MENUENTRY_CHANGETAB:
         if (GetLastMenuScreenEntry() - 1 != -1)
             SetInputTypeAndClear(MENUINPUT_ENTRY, nPreviousEntryItem);
@@ -1099,12 +1129,12 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
     case MENUENTRY_SCREENTYPE:
         break;
     case MENUENTRY_CHANGERES:
-        if (char** modes = _psGetVideoModeList()) {
+        if (char** modes = VideoModeList) {
             if (input < 0) {
                 while (true) {
                     TempSettings.videoMode--;
                     if (TempSettings.videoMode < 0)
-                        TempSettings.videoMode = RwEngineGetNumVideoModes();
+                        TempSettings.videoMode = NumVideoModes;
 
                     if (modes[TempSettings.videoMode])
                         break;
@@ -1114,7 +1144,7 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
             else if (input > 0) {
                 while (true) {
                     TempSettings.videoMode++;
-                    if (TempSettings.videoMode > RwEngineGetNumVideoModes())
+                    if (TempSettings.videoMode > NumVideoModes)
                         TempSettings.videoMode = 0;
 
                     if (modes[TempSettings.videoMode])
@@ -1661,7 +1691,7 @@ void CMenuNew::Draw() {
 
     if (bHelpText) {
         CRect r;
-        r.left = MENU_RIGHT(96.0f);
+        r.left = HUD_RIGHT(96.0f);
         r.right = SCREEN_COORD(32.0f);
         r.top = MENU_BOTTOM(90.0f);
         r.bottom = SCREEN_COORD(36.0f);
@@ -1917,11 +1947,17 @@ void CMenuNew::DrawDefault() {
             if (bDrawMouse && CheckHover(menuEntry.left, menuEntry.left + menuEntry.right, menuEntry.top, menuEntry.top + menuEntry.bottom)) {
                 nCurrentEntryItemHover = i;
 
+                static int prevEntry = nCurrentEntryItem;
                 if (pad->GetLeftMouseJustDown()) {
                     if (nCurrentEntryItemHover == nCurrentEntryItem)
-                        ProcessEntryStuff(true, false);
-
-                    SetInputTypeAndClear(MENUINPUT_ENTRY, nCurrentEntryItemHover);
+                        ProcessEntryStuff(1, 0);
+                    else {
+                        if (prevEntry != nCurrentEntryItem) {
+                            SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
+                            prevEntry = nCurrentEntryItem;
+                        }
+                        SetInputTypeAndClear(MENUINPUT_ENTRY, nCurrentEntryItemHover);
+                    }
                 }
             }
 
@@ -1956,6 +1992,7 @@ void CMenuNew::DrawDefault() {
             CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
             CFontNew::PrintString(menuEntry.left + SCREEN_COORD(12.0f), menuEntry.top + SCREEN_COORD(5.0f), leftText);
 
+            bool arrows = true;
             switch (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].type) {
             case MENUENTRY_NONE:
                 break;
@@ -1963,12 +2000,10 @@ void CMenuNew::DrawDefault() {
                 rightText = CTextNew::GetText(TempSettings.screenType ? "FE_SCN1" : "FE_SCN0").text;
                 break;
             case MENUENTRY_CHANGERES:
-                if (char* mode = _psGetVideoModeList()[TempSettings.videoMode]) {
+                if (char* mode = VideoModeList[TempSettings.videoMode]) {
                     strcpy(rightTextTmp, mode);
                     rightText = rightTextTmp;
                 }
-                else
-                    rightText = CTextNew::GetText("FE_UNK").text;
                 break;
             case MENUENTRY_ASPECTRATIO:
                 if (char* ar[] = { "Auto", "4:3", "16:9" }) {
@@ -2107,33 +2142,36 @@ void CMenuNew::DrawDefault() {
             case MENUENTRY_MOUSESENSITIVITY:
                 DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.mouseSensitivity * 200.0f);
                 break;
+            default:
+                arrows = false;
+                break;
             }
 
+            if (!arrows)
+                shiftText = 0.0f;
+            
             if (rightText) {
                 CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
                 CFontNew::PrintString(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f - shiftText), menuEntry.top + SCREEN_COORD(5.0f), rightText);
 
-                if (shiftText) {
+                if (shiftText && arrows) {
                     float arrowX = menuEntry.left + menuEntry.right + SCREEN_COORD(-52.0f) - CFontNew::GetStringWidth(rightText, true);
                     float arrowY = menuEntry.top + SCREEN_COORD(6.0f);
                     float arrowScale = SCREEN_COORD(24.0f);
                     MenuSprites[MENU_ARROW_LEFT]->Draw(arrowX, arrowY, arrowScale, arrowScale, CRGBA(0, 0, 0, 255));
 
-                    if (true) {
-                        if (CheckHover(arrowX - arrowScale, arrowX + arrowScale, arrowY, arrowY + arrowScale)) {
-                            if (pad->GetLeftMouseJustDown()) {
-                                ProcessEntryStuff(0, -1);
-
-                            }
+                    if (CheckHover(arrowX - arrowScale, arrowX + arrowScale, arrowY, arrowY + arrowScale)) {
+                        if (pad->GetLeftMouseJustDown()) {
+                            ProcessEntryStuff(0, -1);
                         }
+                    }
 
-                        arrowX = menuEntry.left + menuEntry.right + SCREEN_COORD(-28.0f);
-                        MenuSprites[MENU_ARROW_RIGHT]->Draw(arrowX, arrowY, arrowScale, arrowScale, CRGBA(0, 0, 0, 255));
+                    arrowX = menuEntry.left + menuEntry.right + SCREEN_COORD(-28.0f);
+                    MenuSprites[MENU_ARROW_RIGHT]->Draw(arrowX, arrowY, arrowScale, arrowScale, CRGBA(0, 0, 0, 255));
 
-                        if (CheckHover(arrowX - arrowScale, arrowX + arrowScale, arrowY, arrowY + arrowScale)) {
-                            if (pad->GetLeftMouseJustDown()) {
-                                ProcessEntryStuff(0, 1);
-                            }
+                    if (CheckHover(arrowX - arrowScale, arrowX + arrowScale, arrowY, arrowY + arrowScale)) {
+                        if (pad->GetLeftMouseJustDown()) {
+                            ProcessEntryStuff(0, 1);
                         }
                     }
                 }
@@ -2228,7 +2266,7 @@ void CMenuNew::DrawLandingPage() {
     CPadNew* pad = CPadNew::GetPad(0);
 
     CRect rect;
-    rect = { MENU_X(522.0f), MENU_Y(218.0f), SCREEN_COORD(1302.0f), SCREEN_COORD(644.0f) };
+    rect = { HUD_RIGHT(96.0f + 1302.0f), HUD_Y(218.0f), SCREEN_COORD(1302.0f), SCREEN_COORD(644.0f) };
     DrawPatternBackground(CRect(rect.left, rect.top, rect.left + rect.right, rect.top + rect.bottom), CRGBA(HudColourNew.GetRGB(HUD_COLOUR_BLACK, 150)));
     InfoScreensSprites[INFOSCREEN_0]->Draw(CRect(rect.left + SCREEN_COORD(870.0f), rect.top, rect.left + rect.right, rect.top + rect.bottom), CRGBA(255, 255, 255, 255));
 
@@ -2253,7 +2291,7 @@ void CMenuNew::DrawLandingPage() {
     CRect menuEntry;
     CRGBA menuEntryTextColor;
 
-    menuEntry = { MENU_X(532.0f), SCREEN_COORD_BOTTOM(128.0f), MENU_RIGHT(96.0f), SCREEN_COORD(74.0f) };
+    menuEntry = { HUD_X(532.0f), SCREEN_COORD_BOTTOM(128.0f), HUD_RIGHT(96.0f), SCREEN_COORD(74.0f) };
 
     CHudNew::DrawSimpleRectGradInverted(CRect(menuEntry.left, menuEntry.top, menuEntry.right, menuEntry.top + menuEntry.bottom), CRGBA(0, 0, 0, 150));
 
@@ -2526,7 +2564,7 @@ void CMenuNew::FindOutUsedMemory() {
     RwVideoMode vm;
     RwEngineGetVideoModeInfo(&vm, TempSettings.videoMode);
     int vidPix = (vm.width * vm.height);
-    int vidBits = vidPix * vm.depth;
+    int vidBits = vidPix * 32;
     int vidBytes = vidBits / 8;
     int vidKB = vidBytes / 1024;
     int vidMB = vidKB / 1024;
@@ -2580,8 +2618,6 @@ void CMenuNew::ChangeVideoMode(int mode, int msaa) {
 
     RsGlobal.maximumWidth = w;
     RsGlobal.maximumHeight = h;
-
-    CTextureMgr::ReloadTextures();
 }
 
 void CMenuNew::ApplyGraphicsChanges() {
@@ -2730,7 +2766,7 @@ void CMenuSettings::Clear() {
     safeZoneSize = 0.0f;
     measurementSys = 0;
 
-    videoMode = 1;
+    videoMode = 0;
     aspectRatio = 0;
     mipMapping = true;
     antiAliasing = 1;

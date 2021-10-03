@@ -1,9 +1,7 @@
 #include "VHud.h"
 #include "TextureMgr.h"
 #include "Utility.h"
-
-int texturesCount = 0;
-CTextureRel* CTextureMgr::pTex[1024];
+#include "MenuNew.h"
 
 CTextureMgr textureMgr;
 
@@ -12,74 +10,17 @@ CTextureMgr::CTextureMgr() {
 }
 
 void CTextureMgr::Init() {
-	texturesCount = 0;
+	;;
 }
 
 void CTextureMgr::Shutdown() {
-	for (int i = 0; i < texturesCount; i++) {
-		CTextureRel* t = pTex[i];
-
-		if (t) {
-			t->texture = NULL;
-			delete t;
-		}
-	}
-
-	texturesCount = 0;
+	;;
 }
 
-void CTextureMgr::ReloadTextures() {
-	int c = texturesCount;
-	texturesCount = 0;
-	for (int i = 0; i < c; i++) {
-		CTextureRel* t = pTex[i];
-		if (t) {
-			if (t->texture) {
-				RwTextureDestroy(t->texture);
-				t->texture = CTextureMgr::LoadPNGTextureCB(t->path, t->name);
-			}
-		}
-	}
-}
-
-void CTextureMgr::LimitTextureSize(int& w, int& h) {
-	if (RsGlobal.maximumWidth == 0 || RsGlobal.maximumHeight == 0)
-		return;
-
-	float lx = RsGlobal.maximumWidth / 100;
-	float ly = RsGlobal.maximumHeight / 100;
-
-	int _w = w;
-	int _h = h;
-
-	if (ly > 0.0f && ly <= 5.0f) {
-		_w = 512;
-		_h = 512;
-	}
-	else if (ly > 5.0f && ly <= 7.0f) {
-		_w = 512;
-		_h = 512;
-	}
-	else if (ly > 7.0f && ly <= 10.0f) {
-		_w = 1024;
-		_h = 1024;
-	}
-	else if (ly > 10.0f && ly <= 20.0f) {
-		_w = 2048;
-		_h = 2048;
-	}
-	else if (ly > 20.0f) {
-		_w = 4096;
-		_h = 4096;
-	}
-
-	w = clamp(w, 0, _w);
-	h = clamp(h, 0, _h);
-}
-
-RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name) {
+RwTexture* CTextureMgr::LoadPNGTextureCB(const char* path, const char* name) {
 	int w, h, d, f;
 	char file[512];
+	RwTexture* texture = NULL;
 
 	strcpy_s(file, path);
 	strcat_s(file, "\\");
@@ -88,27 +29,22 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name) {
 	puts(file);
 
 	if (file && FileCheck(file)) {
-		RwImage* img = RtPNGImageRead(file);
-		RwImageFindRasterFormat(img, rwRASTERTYPETEXTURE, &w, &h, &d, &f);
+		if (RwImage* img = RtPNGImageRead(file)) {
+			RwImageFindRasterFormat(img, rwRASTERTYPETEXTURE, &w, &h, &d, &f);
 
-		// Little hack to ensure visibility
-		//LimitTextureSize(w, h);
+			if (RwRaster* raster = RwRasterCreate(w, h, d, f)) {
+				RwRasterSetFromImage(raster, img);
 
-		RwRaster* raster = RwRasterCreate(w, h, d, f);
-		RwRasterSetFromImage(raster, img);
+				if (texture = RwTextureCreate(raster)) {
+					RwTextureSetName(texture, name);
+				}
+			}
 
-		RwImageDestroy(img);
-
-		RwTexture* texture = RwTextureCreate(raster);
-		strcpy_s(texture->name, 0x20u, name);
-
-		RwTextureSetFilterMode(texture, rwFILTERLINEARMIPLINEAR);
-
-		//pTex[texturesCount] = new CTextureRel(texture, path, name);
-		//texturesCount++;
-		return texture;
+			RwImageDestroy(img);
+		}
 	}
-	return NULL;
+
+	return texture;
 }
 
 RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name, const char* namea) {
@@ -116,6 +52,7 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name, con
 	char file[512];
 	char maskFile[512];
 	char colFile[512];
+	RwTexture* texture = NULL;
 
 	strcpy_s(file, path);
 	strcat_s(file, "\\");
@@ -130,24 +67,27 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name, con
 	puts(maskFile);
 
 	if (file && FileCheck(file)) {
-		RwImage* img = RtPNGImageRead(file);
-		
-		RwImage* mask = RtPNGImageRead(maskFile);
-		RwImageMakeMask(mask);
-		RwImageApplyMask(img, mask);
-		RwImageFindRasterFormat(img, rwRASTERTYPETEXTURE, &w, &h, &d, &f);
+		if (RwImage* img = RtPNGImageRead(file)) {
+			if (RwImage* mask = RtPNGImageRead(maskFile)) {
+				RwImageMakeMask(mask);
+				RwImageApplyMask(img, mask);
+				RwImageFindRasterFormat(img, rwRASTERTYPETEXTURE, &w, &h, &d, &f);
 
-		RwRaster* raster = RwRasterCreate(w, h, d, f);
-		RwRasterSetFromImage(raster, img);
-		
-		RwImageDestroy(img);
-		RwImageDestroy(mask);
+				if (RwRaster* raster = RwRasterCreate(w, h, d, f)) {
+					RwRasterSetFromImage(raster, img);
 
-		RwTexture* texture = RwTextureCreate(raster);
-		strcpy_s(texture->name, 0x20u, name);
-		return texture;
+					if (texture = RwTextureCreate(raster)) {
+						RwTextureSetName(texture, name);
+					}
+				}
+
+				RwImageDestroy(img);
+				RwImageDestroy(mask);
+			}
+		}
 	}
-	return NULL;
+
+	return texture;
 }
 
 RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name, const char* namea, const char* namec) {
@@ -155,6 +95,7 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name, con
 	char file[512];
 	char maskFile[512];
 	char colFile[512];
+	RwTexture* texture = NULL;
 
 	strcpy_s(file, path);
 	strcat_s(file, "\\");
@@ -177,49 +118,51 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name, con
 	if (file && FileCheck(file)
 		&& maskFile && FileCheck(maskFile)
 		&& colFile && FileCheck(colFile)) {
-		 RwImage* img = RtPNGImageRead(file);
-		 RwImageFindRasterFormat(img, rwRASTERTYPETEXTURE, &w, &h, &d, &f);
-		 RwRaster* iraster = RwRasterCreate(w, h, d, f);
+		if (RwImage* img = RtPNGImageRead(file)) {
+			RwImageFindRasterFormat(img, rwRASTERTYPETEXTURE, &w, &h, &d, &f);
 
-		 RwRasterSetFromImage(iraster, img);
-		 RwImageDestroy(img);
-		 
-		 RwImage* col = RtPNGImageRead(colFile);
-		 RwImageFindRasterFormat(col, rwRASTERTYPETEXTURE, &w, &h, &d, &f);
-		 RwRaster* craster = RwRasterCreate(w, h, d, f);
-		 RwRasterSetFromImage(craster, col);
-		 RwImageDestroy(col);
+			if (RwRaster* iraster = RwRasterCreate(w, h, d, f)) {
+				RwRasterSetFromImage(iraster, img);
 
-		 Combine(iraster, craster);
+				if (RwImage* col = RtPNGImageRead(colFile)) {
+					RwImageFindRasterFormat(col, rwRASTERTYPETEXTURE, &w, &h, &d, &f);
 
-		 RwRasterDestroy(iraster);
+					if (RwRaster* craster = RwRasterCreate(w, h, d, f)) {
+						RwRasterSetFromImage(craster, col);
 
-		 RwImage* newimg = RwImageCreate(w, h, 32);
-		 RwImageAllocatePixels(newimg);
-		 RwImageSetFromRaster(newimg, craster);
-		 RwRasterDestroy(craster);
+						Combine(iraster, craster);
 
-		 RwImage* mask = RtPNGImageRead(maskFile);
-		 RwImageMakeMask(mask);
-		 RwImageApplyMask(newimg, mask);
-		 RwImageFindRasterFormat(newimg, rwRASTERTYPETEXTURE, &w, &h, &d, &f);
+						if (RwImage* newimg = RwImageCreate(w, h, 32)) {
+							RwImageAllocatePixels(newimg);
+							RwImageSetFromRaster(newimg, craster);
 
-		 RwRaster* niraster = RwRasterCreate(w, h, d, f);
-		 RwRasterSetFromImage(niraster, newimg);
-		 RwImageDestroy(newimg);
-		 RwImageDestroy(mask);
+							if (RwImage* mask = RtPNGImageRead(maskFile)) {
+								RwImageMakeMask(mask);
+								RwImageApplyMask(newimg, mask);
+								RwImageFindRasterFormat(newimg, rwRASTERTYPETEXTURE, &w, &h, &d, &f);
 
-		 RwTexture* texture = RwTextureCreate(niraster);
-		 strcpy_s(texture->name, 0x20u, name);
-		return texture;
+								if (RwRaster* niraster = RwRasterCreate(w, h, d, f)) {
+									RwRasterSetFromImage(niraster, newimg);
+
+									if (texture = RwTextureCreate(niraster)) {
+										RwTextureSetName(texture, name);
+									}
+								}
+								RwImageDestroy(mask);
+							}
+							RwImageDestroy(newimg);
+						}
+						RwRasterDestroy(craster);
+					}
+					RwImageDestroy(col);
+				}
+				RwRasterDestroy(iraster);
+			}
+			RwImageDestroy(img);
+		}
 	}
-	return NULL;
-}
 
-void CTextureMgr::Delete(RwTexture* t) {
-	if (t && t->refCount <= 1) {
-		RwTextureDestroy(t);
-	}
+	return texture;
 }
 
 void CTextureMgr::Combine(RwRaster* raster1, RwRaster* raster2) {
@@ -296,16 +239,4 @@ void CTextureMgr::Combine(RwRaster* raster1, RwRaster* raster2) {
 	}
 	RwRasterUnlock(raster1);
 	RwRasterUnlock(raster2);
-}
-
-CTextureRel::CTextureRel() {
-	texture = NULL;
-	path[0] = '\0';
-	name[0] = '\0';
-}
-
-CTextureRel::CTextureRel(RwTexture* tex, const char* _path, const char* _name) {
-	texture = tex;
-	strcpy(path,  _path);
-	strcpy(name, _name);
 }
