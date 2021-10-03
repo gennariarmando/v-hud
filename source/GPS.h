@@ -5,19 +5,32 @@
 
 class CSprite2d;
 
+enum ePathDir {
+    DIR_RIGHT,
+    DIR_FORWARD,
+    DIR_LEFT,
+    DIR_NONE = 8
+};
+
+struct CLocalization {
+    bool bDestFound;
+    CVector vecDest;
+    float fGPSDistance;
+    char nPathDirection;
+    short nNodesCount;
+    CNodeAddress resultNodes[MAX_NODE_POINTS];
+    CVector2D nodePoints[MAX_NODE_POINTS];
+    unsigned int pathColor;
+
+public:
+    void Clear();
+};
+
 class CGPS {
 public:
+    static CLocalization Dest;
     static bool bShowGPS;
-    static float fGPSDistance;
-    static char nPathDirection;
-    static short nNodesCount;
-    static CNodeAddress resultNodes[MAX_NODE_POINTS];
-    static CVector2D nodePoints[MAX_NODE_POINTS];
-    static CRGBA highlightColor;
     static CSprite2d pathDirSprite;
-    static CVector vecDest;
-    static bool bDestFound;
-    static unsigned int pathColor;
 
 public:
     CGPS();
@@ -25,12 +38,9 @@ public:
     static void Shutdown();
     static void DrawDistanceFromWaypoint();
     static void DrawPathLine();
-    static void FindMissionMarker();
-    static void CalculateRoute(CVector vec);
-    static void FindNearestObjective();
-    static void SetRoute(CVector vec);
+
     static void DrawLine(CVector2D const& a, CVector2D const& b, float width, CRGBA color);
+    static void ProcessPath(CLocalization& l);
     static char GetPathDirection(CVector start, CVector plr, CVector end);
 };
 
-float FindClosest(float* array, int size, int& id);

@@ -1147,13 +1147,13 @@ void CRadarNew::DrawRadarMap(int x, int y) {
         _rwSetPixelShader(radar_gps_alpha_mask_fxc);
 
         CRGBA rgb;
-        rgb.Set(CGPS::pathColor);
+        rgb.Set(CGPS::Dest.pathColor);
 
         float color[4];
         color[0] = rgb.r / 255.0f;
         color[1] = rgb.g / 255.0f;
         color[2] = rgb.b / 255.0f;
-        color[3] = 1.0f;
+        color[3] = 3.0f;
 
         GetD3DDevice()->SetPixelShaderConstantF(0, color, 1);
 

@@ -19,25 +19,9 @@
 
 using namespace plugin;
 
+CLocalization CGPS::Dest;
 bool CGPS::bShowGPS;
-float CGPS::fGPSDistance;
-char CGPS::nPathDirection;
-short CGPS::nNodesCount = 0;
-CRGBA CGPS::highlightColor;
 CSprite2d CGPS::pathDirSprite;
-CVector CGPS::vecDest;
-bool CGPS::bDestFound;
-unsigned int CGPS::pathColor;
-
-enum ePathDir {
-    DIR_RIGHT,
-    DIR_FORWARD,
-    DIR_LEFT,
-    DIR_NONE = 8
-};
-
-CNodeAddress CGPS::resultNodes[MAX_NODE_POINTS];
-CVector2D CGPS::nodePoints[MAX_NODE_POINTS];
 
 CGPS::CGPS() {
     patch::SetUInt(0x4518F8, 50000);
@@ -85,19 +69,19 @@ void CGPS::DrawDistanceFromWaypoint() {
         char text[16];
 
         if (MenuNew.Settings.measurementSys == 0) {
-            if (fGPSDistance > 1000.0f)
-                sprintf(text, "%.2fkm", fGPSDistance / 1000.0f);
+            if (Dest.fGPSDistance > 1000.0f)
+                sprintf(text, "%.2fkm", Dest.fGPSDistance / 1000.0f);
             else
-                sprintf(text, "%dm", (int)(fGPSDistance));
+                sprintf(text, "%dm", (int)(Dest.fGPSDistance));
         }
         else if (MenuNew.Settings.measurementSys == 1) {
             int feet, totalInches, remainderInches;
 
-            totalInches = (int)(fGPSDistance * 39.3701);
+            totalInches = (int)(Dest.fGPSDistance * 39.3701);
             feet = (int)(totalInches / 12);
             remainderInches = totalInches - (feet * 12);
 
-            if (fGPSDistance > 1000.0f)
+            if (Dest.fGPSDistance > 1000.0f)
                 sprintf(text, "%dft", feet);
             else
                 sprintf(text, "%in", remainderInches);
@@ -108,13 +92,13 @@ void CGPS::DrawDistanceFromWaypoint() {
 
         CFontNew::PrintString(HUD_X(x), SCREEN_COORD_BOTTOM(y), text);
 
-        if (nPathDirection != 8) {
+        if (Dest.nPathDirection != 8) {
             x = HUD_X(GET_SETTING(HUD_RADAR_GPS_DIST_ARROW).x);
             y = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_GPS_DIST_ARROW).y);
             w = SCREEN_COORD(GET_SETTING(HUD_RADAR_GPS_DIST_ARROW).w);
             h = SCREEN_COORD(GET_SETTING(HUD_RADAR_GPS_DIST_ARROW).h);
 
-            float a = (nPathDirection * 90.0f) / 57.2957795f;
+            float a = (Dest.nPathDirection * 90.0f) / 57.2957795f;
             CRadarNew::DrawRotatingRadarSprite(&pathDirSprite, x, y, -a, w, h, GET_SETTING(HUD_RADAR_GPS_DIST_ARROW).col);
         }
     }
@@ -158,12 +142,48 @@ void CGPS::DrawLine(CVector2D const&a, CVector2D const&b, float width, CRGBA col
     RwIm2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 4);
 }
 
+void CGPS::ProcessPath(CLocalization& l) {
+    ThePaths.DoPathSearch(0, FindPlayerCoors(-1), CNodeAddress(), l.vecDest, l.resultNodes, &l.nNodesCount, MAX_NODE_POINTS, &l.fGPSDistance,
+        999999.0f, NULL, 999999.0f, false, CNodeAddress(), false, FindPlayerPed()->m_pVehicle->m_nVehicleSubClass == VEHICLE_BOAT);
+
+    if (l.nNodesCount > 0) {
+        for (short i = 0; i < l.nNodesCount; i++) {
+            CVector nodePosn = ThePaths.GetPathNode(l.resultNodes[i])->GetNodeCoors();
+            CVector2D tmpPoint;
+            CRadar::TransformRealWorldPointToRadarSpace(tmpPoint, CVector2D(nodePosn.x, nodePosn.y));
+            if (!FrontEndMenuManager.m_bDrawRadarOrMap) {
+                CRadarNew::TransformRadarPoint(l.nodePoints[i], tmpPoint);
+            }
+            else {
+                CRadar::LimitRadarPoint(tmpPoint);
+                CRadar::TransformRadarPointToScreenSpace(l.nodePoints[i], tmpPoint);
+                l.nodePoints[i].x *= static_cast<float>(RsGlobal.maximumWidth) / 640.0f;
+                l.nodePoints[i].y *= static_cast<float>(RsGlobal.maximumHeight) / 448.0f;
+                CRadar::LimitToMap(&l.nodePoints[i].x, &l.nodePoints[i].y);
+            }
+        }
+
+        for (short i = 0; i < (l.nNodesCount - 1); i++) {
+            CRGBA col;
+
+            if (radar_gps_alpha_mask_fxc)
+                col = CRGBA(255, 255, 255, 255);
+            else
+                col.Set(l.pathColor);
+
+            DrawLine(l.nodePoints[i], l.nodePoints[i + 1], (GET_SETTING("HUD_RADAR_GPS_LINE").w * 100.0f) / CRadar::m_radarRange, col);
+        }
+    }
+}
+
 void CGPS::DrawPathLine() {
     if (!MenuNew.Settings.gpsRoute)
         return;
 
     bShowGPS = false;
     CPed* playa = FindPlayerPed(0);
+
+    Dest.Clear();
 
     if (playa) {
         if (FrontEndMenuManager.m_nTargetBlipIndex
@@ -173,91 +193,51 @@ void CGPS::DrawPathLine() {
             CRadar::ClearBlip(FrontEndMenuManager.m_nTargetBlipIndex);
             FrontEndMenuManager.m_nTargetBlipIndex = 0;
         }
-    }
 
-    bDestFound = false;
-    CGPS::FindNearestObjective();
+        if (CRadarNew::IsPlayerInVehicle()
+            && playa->m_pVehicle->m_nVehicleSubClass != VEHICLE_PLANE
+            && playa->m_pVehicle->m_nVehicleSubClass != VEHICLE_HELI
+            && playa->m_pVehicle->m_nVehicleSubClass != VEHICLE_BMX) {
+            if (FrontEndMenuManager.m_nTargetBlipIndex
+                && CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nCounter == HIWORD(FrontEndMenuManager.m_nTargetBlipIndex)
+                && CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nBlipDisplayFlag) {
+                CVector destPosn = CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_vPosition;
+                destPosn.z = CWorld::FindGroundZForCoord(destPosn.x, destPosn.y);
 
-    if (CRadarNew::IsPlayerInVehicle()
-        && playa->m_pVehicle->m_nVehicleSubClass != VEHICLE_PLANE
-        && playa->m_pVehicle->m_nVehicleSubClass != VEHICLE_HELI
-        && playa->m_pVehicle->m_nVehicleSubClass != VEHICLE_BMX
-        && bDestFound) {
-
-        ThePaths.DoPathSearch(0, FindPlayerCoors(-1), CNodeAddress(), vecDest, resultNodes, &nNodesCount, MAX_NODE_POINTS, &fGPSDistance,
-            999999.0f, NULL, 999999.0f, false, CNodeAddress(), false, playa->m_pVehicle->m_nVehicleSubClass == VEHICLE_BOAT);
-
-        if (nNodesCount > 0) {
-            for (short i = 0; i < nNodesCount; i++) {
-                CVector nodePosn = ThePaths.GetPathNode(resultNodes[i])->GetNodeCoors();
-                CVector2D tmpPoint;
-                CRadar::TransformRealWorldPointToRadarSpace(tmpPoint, CVector2D(nodePosn.x, nodePosn.y));
-                if (!FrontEndMenuManager.m_bDrawRadarOrMap) {
-                    CRadarNew::TransformRadarPoint(nodePoints[i], tmpPoint);
-                }
-                else {
-                    CRadar::LimitRadarPoint(tmpPoint);
-                    CRadar::TransformRadarPointToScreenSpace(nodePoints[i], tmpPoint);
-                    nodePoints[i].x *= static_cast<float>(RsGlobal.maximumWidth) / 640.0f;
-                    nodePoints[i].y *= static_cast<float>(RsGlobal.maximumHeight) / 448.0f;
-                    CRadar::LimitToMap(&nodePoints[i].x, &nodePoints[i].y);
-                }
-            }
-
-            for (short i = 0; i < (nNodesCount - 1); i++) {
-                CRGBA col;
-
-                if (radar_gps_alpha_mask_fxc)
-                    col = CRGBA(255, 255, 255, 255);
-                else
-                    col.Set(pathColor);
-
-                DrawLine(nodePoints[i], nodePoints[i + 1], (GET_SETTING("HUD_RADAR_GPS_LINE").w * 100.0f) / CRadar::m_radarRange, col);
-            }
-
-            fGPSDistance += DistanceBetweenPoints(FindPlayerCoors(-1), ThePaths.GetPathNode(resultNodes[0])->GetNodeCoors());
-            bShowGPS = true;
-
-            if (nNodesCount <= 2) {
-                nPathDirection = DIR_NONE;
+                Dest.pathColor = CRadarNew::m_BlipsList[RADAR_SPRITE_WAYPOINT].color.ToInt();
+                Dest.vecDest = destPosn;
+                Dest.bDestFound = true;
             }
             else {
-                nPathDirection = GetPathDirection(ThePaths.GetPathNode(resultNodes[1])->GetNodeCoors(), FindPlayerCoors(-1), ThePaths.GetPathNode(resultNodes[2])->GetNodeCoors());
+                for (int i = 0; i < CRadarNew::m_nMissionBlipCount; i++) {
+                    int j = CRadarNew::m_nMissionLegendList[i];
+                    tRadarTrace* trace = &CRadar::ms_RadarTrace[j];
+
+                    if (trace) {
+                        Dest.pathColor = CRadar::GetRadarTraceColour(trace->m_dwColour, trace->m_bBright, trace->m_bFriendly);
+                        Dest.vecDest = trace->m_vPosition;
+                        Dest.bDestFound = true;
+                    }
+                }
+
+                CRadarNew::m_nMissionBlipCount = 0;
+            }
+
+            if (Dest.bDestFound) {
+                ProcessPath(Dest);
+
+                Dest.fGPSDistance += DistanceBetweenPoints(FindPlayerCoors(-1), ThePaths.GetPathNode(Dest.resultNodes[0])->GetNodeCoors());
+                bShowGPS = true;
+
+                if (Dest.nNodesCount <= 2) {
+                    Dest.nPathDirection = DIR_NONE;
+                }
+                else {
+                    Dest.nPathDirection = GetPathDirection(ThePaths.GetPathNode(Dest.resultNodes[1])->GetNodeCoors(), FindPlayerCoors(-1), ThePaths.GetPathNode(Dest.resultNodes[2])->GetNodeCoors());
+                }
             }
         }
     }
-    CRadarNew::m_nMissionBlipCount = 0;
-}
-
-void CGPS::FindNearestObjective() {
-    if (FrontEndMenuManager.m_nTargetBlipIndex
-        && CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nCounter == HIWORD(FrontEndMenuManager.m_nTargetBlipIndex)
-        && CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nBlipDisplayFlag) {
-        CVector destPosn = CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_vPosition;
-        destPosn.z = CWorld::FindGroundZForCoord(destPosn.x, destPosn.y);
-
-        pathColor = CRadarNew::m_BlipsList[RADAR_SPRITE_WAYPOINT].color.ToInt();
-        SetRoute(destPosn);
-    }
-    else {
-        for(int i = 0; i < CRadarNew::m_nMissionBlipCount; i++) {
-            int j = CRadarNew::m_nMissionLegendList[i];
-            tRadarTrace* trace = &CRadar::ms_RadarTrace[j];
-
-            if (trace) {
-                pathColor = CRadar::GetRadarTraceColour(trace->m_dwColour, trace->m_bBright, trace->m_bFriendly);
-
-                SetRoute(trace->m_vPosition);
-            }
-        }
-    }
-
-    CRadarNew::m_nMissionBlipCount = 0;
-}
-
-void CGPS::SetRoute(CVector vec) {
-    vecDest = vec;
-    bDestFound = true;
 }
 
 char CGPS::GetPathDirection(CVector start, CVector plr, CVector end) {
@@ -405,4 +385,13 @@ char CGPS::GetPathDirection(CVector start, CVector plr, CVector end) {
     if (v37 > 330.0f || v37 <= 180.0f)
         return 1;
     return 0;
+}
+
+void CLocalization::Clear() {
+    bDestFound = false;
+    vecDest = { 0.0f, 0.0f, 0.0f };
+    fGPSDistance = 0.0f;
+    nPathDirection = DIR_NONE;
+    nNodesCount = 0;
+    pathColor = 0;
 }
