@@ -29,8 +29,6 @@ void* vignette_fxc;
 
 RwRaster* frameBuffer;
 
-CSprite2d* OverlaySprite;
-
 void* im2dPixelShader = NULL;
 void _rwSetPixelShader(void* ps) { im2dPixelShader = ps; }
 
@@ -61,9 +59,6 @@ void COverlayLayer::Init() {
     black_n_white_fxc = CreatePixelShaderFromResource(IDR_BLACK_N_WHITE);
     vignette_fxc = CreatePixelShaderFromResource(IDR_VIGNETTE);
 
-    OverlaySprite = new CSprite2d();
-    OverlaySprite->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\effects"), "overlay_color");
-
     for (int i = 0; i < 4; i++)
         fShaderConstant[i] = 1.0f;
 
@@ -73,9 +68,6 @@ void COverlayLayer::Init() {
 void COverlayLayer::Shutdown() {
     if (!bInitialised)
         return;
-
-    OverlaySprite->Delete();
-    delete OverlaySprite;
 
     bInitialised = false;
 }

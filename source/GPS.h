@@ -1,6 +1,5 @@
 #pragma once
 #define MAX_NODE_POINTS 2000
-#define GPS_LINE_WIDTH  5.0f * 0.5f
 #define MAX_TARGET_DISTANCE 10.0f
 
 class CSprite2d;

@@ -68,6 +68,7 @@ public:
     static int CalculateBlipAlpha(float dist);
     static void DrawRadarCop();
     static void DrawBlips();
+    static void TransformRadarPointToRealWorldSpace(CVector2D& out, CVector2D& in);
     static void TransformRealWorldPointToRadarSpace(CVector2D& out, CVector2D& in);
     static void TransformRadarPointToScreenSpace(CVector2D &out, CVector2D &in);
     static void TransformRadarPoint(CVector2D& out, CVector2D& in);
@@ -75,11 +76,13 @@ public:
     static void LimitPoint(float& x1, float& y1, float x2, float y2, float x3, float y3, float x4, float y4);
     static float LimitRadarPoint(CVector2D& point);
     static void DrawRadarSprite(unsigned short id, float x, float y, unsigned char alpha);
+    static void LimitToMap(float* x, float* y);
     static void AddAnyBlip(unsigned short id, CEntity e, float width, float height, float angle, bool vcone, CRGBA const& col, bool limit);
     static void DrawRadarRectangle();
     static void ScanCopPursuit();
     static void DrawRotatingRadarSprite(CSprite2d* sprite, float x, float y, float angle, float width, float height, CRGBA color);
     static void DrawMap();
+    static void DrawRadarSectionMap(int x, int y, CRect const& rect, CRGBA const& col);
     static void DrawRadarSection(int x, int y);
     static void DrawRadarMap(int x, int y);
     static void ShowRadarTraceWithHeight(float x, float y, unsigned int size, unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha, unsigned char type);

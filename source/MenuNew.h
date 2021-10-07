@@ -116,6 +116,7 @@ enum eMenuEntries {
     MENUENTRY_STORYMODE,
     MENUENTRY_SETTINGS,
     MENUENTRY_QUIT,
+    MENUENTRY_MAP,
 };
 
 enum eMenuMessages {
@@ -392,6 +393,11 @@ public:
 
     bool bRequestMenuClose;
 
+    bool bCleanMapScreenNextFrame;
+    bool bDrawMenuMap;
+    CVector2D vMapBase;
+    float fMapZoom;
+
 public:
     CMenuNew();
     void Init();
@@ -422,6 +428,7 @@ public:
     void OpenCloseMenu(bool on, bool force);
     void OpenMenuScreen(int screen);
     void CenterCursor();
+    void DoMapZoomInOut(float x, float y, bool out);
     void Process();
     unsigned int GetTimeInMillisecondsRight();
     unsigned char FadeIn(unsigned char alpha);
@@ -450,6 +457,11 @@ public:
     void DrawSliderRightAlign(float x, float y, float progress);
     void DrawTabRadioIcons(float x, float y);
     void DrawSpinningWheel(float x, float y, float w, float h);
+    void ResetMap();
+    void SetWaypoint(float x, float y);
+    float GetMenuMapTileSize();
+    int GetMenuMapTiles();
+    float GetMenuMapWholeSize();
     void DrawMap();
     void DrawPatternBackground(CRect rect, CRGBA col);
     void DrawGallery();

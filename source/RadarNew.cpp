@@ -74,6 +74,8 @@ CRadarNew::CRadarNew() {
     patch::RedirectJump(0x585FF0, (void(__cdecl *)(unsigned short, float, float, unsigned char))DrawRadarSprite);
     patch::RedirectCall(0x58563E, TransformRadarPoint); // Gang overlay
     patch::RedirectCall(0x586408, TransformRadarPoint);
+    //patch::RedirectJump(0x583350, LimitToMap);
+    patch::RedirectJump(0x5835A0, TransformRadarPointToRealWorldSpace); 
 
     patch::RedirectJump(0x584070, ShowRadarTraceWithHeight);
     patch::RedirectCall(0x586FE8, AddBlipToLegendList);
@@ -210,6 +212,8 @@ void CRadarNew::DrawBlips() {
     RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)(rwBLENDINVSRCALPHA));
     RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)(FALSE));
 
+    CRadarNew::DrawRadarCop();
+
     tRadarTrace* trace = CRadar::ms_RadarTrace;
     for (int i = 0; i < 175; i++) {
         if (!trace[i].m_bTrackingBlip)
@@ -230,16 +234,21 @@ void CRadarNew::DrawBlips() {
             break;
         case BLIP_SPOTLIGHT:
         case BLIP_AIRSTRIP:
-            if (!CTheScripts::bPlayerIsOffTheMap && !FrontEndMenuManager.m_bDrawRadarOrMap)
+            if (!CTheScripts::bPlayerIsOffTheMap && !MenuNew.bDrawMenuMap)
                 CRadar::DrawEntityBlip(i, 1);
             break;
         }
     }
 
-    if (FrontEndMenuManager.m_bDrawRadarOrMap) {
-        if (FrontEndMenuManager.m_bMapLoaded) {
-            
-        }
+    if (MenuNew.bDrawMenuMap) {
+        CVector2D in = FindPlayerCoors(0);
+        CVector2D out;
+        TransformRealWorldPointToRadarSpace(out, in);
+        in = out;
+        TransformRadarPointToScreenSpace(out, in);
+
+        float angle = FindPlayerHeading(0) - M_PI;
+        DrawRotatingRadarSprite(m_BlipsSprites[RADAR_SPRITE_CENTRE], out.x, out.y, angle, SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).w), SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).h), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
     }
     else {
         CVector2D in, out;
@@ -299,7 +308,7 @@ void CRadarNew::DrawRadarCop() {
             || ped->m_nModelIndex == MODEL_ARMY
             || ped->m_nModelIndex == MODEL_DSHER) {
 
-            CRGBA color = CTimer::m_snTimeInMilliseconds % 800 < 400 ? HudColourNew.GetRGB("HUD_COLOUR_REDDARK", 255) : HudColourNew.GetRGB("HUD_COLOUR_BLUEDARK", 255);
+            CRGBA color = CTimer::m_snTimeInMillisecondsPauseMode % 800 < 400 ? HudColourNew.GetRGB("HUD_COLOUR_REDDARK", 255) : HudColourNew.GetRGB("HUD_COLOUR_BLUEDARK", 255);
             AddAnyBlip(RADAR_SPRITE_COP, *(CEntity*)ped, SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_COP_SIZE).w), SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_COP_SIZE).h), 0.0f, !m_bCopPursuit, color, false);
         }
         else {
@@ -317,34 +326,64 @@ void CRadarNew::DrawRadarCop() {
         // Is heli
         if (veh->m_nModelIndex == MODEL_POLMAV) {
             static float angle = 0.0f;
-            angle += CTimer::ms_fTimeStep * 0.02f * (M_PI * 1.5f);
+            angle += 0.02f * (M_PI * 1.5f);
             angle = CGeneral::LimitRadianAngle(angle);
 
-            CRGBA color = CTimer::m_snTimeInMilliseconds % 800 < 400 ? HudColourNew.GetRGB("HUD_COLOUR_REDDARK", 255) : HudColourNew.GetRGB("HUD_COLOUR_BLUEDARK", 255);
+            CRGBA color = CTimer::m_snTimeInMillisecondsPauseMode % 800 < 400 ? HudColourNew.GetRGB("HUD_COLOUR_REDDARK", 255) : HudColourNew.GetRGB("HUD_COLOUR_BLUEDARK", 255);
             AddAnyBlip(RADAR_SPRITE_COP_HELI, *(CEntity*)veh, SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_COP_HELI_SIZE).w), SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_COP_HELI_SIZE).h), angle, !m_bCopPursuit, color, false);
         }
     }
 }
+const float world = 6000.0f;
+
+void CRadarNew::TransformRadarPointToRealWorldSpace(CVector2D& out, CVector2D& in) {
+    if (MenuNew.bDrawMenuMap) {
+        float w = (world / 2) / world;
+        out.x = (in.x - w) * world;
+        out.y = (w + in.y) * world;
+    }
+    else {
+        float s = -CRadar::cachedSin;
+        float c = CRadar::cachedCos;
+
+        out.x = s * in.y + c * in.x;
+        out.y = c * in.y - s * in.x;
+
+        out.x = out.x * CRadar::m_radarRange + CRadar::vec2DRadarOrigin.x;
+        out.y = out.y * CRadar::m_radarRange + CRadar::vec2DRadarOrigin.y;
+    }
+}
 
 void CRadarNew::TransformRealWorldPointToRadarSpace(CVector2D& out, CVector2D& in) {
-    float s, c;
+    if (MenuNew.bDrawMenuMap) {
+        out.x = (in.x + world / 2) / world;
+        out.y = ((world / 2) - in.y) / world;
+    }
+    else {
+        float s = CRadar::cachedSin;
+        float c = CRadar::cachedCos;
+        float x = (in.x - CRadar::vec2DRadarOrigin.x) * (1.0f / CRadar::m_radarRange);
+        float y = (in.y - CRadar::vec2DRadarOrigin.y) * (1.0f / CRadar::m_radarRange);
 
-    s = CRadar::cachedSin;
-    c = CRadar::cachedCos;
-
-    float x = (in.x - CRadar::vec2DRadarOrigin.x) * (1.0f / CRadar::m_radarRange);
-    float y = (in.y - CRadar::vec2DRadarOrigin.y) * (1.0f / CRadar::m_radarRange);
-
-    out.x = s * y + c * x;
-    out.y = c * y - s * x;
+        out.x = s * y + c * x;
+        out.y = c * y - s * x;
+    }
 }
 
 void CRadarNew::TransformRadarPointToScreenSpace(CVector2D &out, CVector2D &in) {
     __asm push edx
 
-    if (FrontEndMenuManager.m_bDrawRadarOrMap) {
-        out.x = FrontEndMenuManager.m_fMapZoom * in.x + FrontEndMenuManager.m_fMapBaseX;
-        out.y = FrontEndMenuManager.m_fMapBaseY - FrontEndMenuManager.m_fMapZoom * in.y;
+    if (MenuNew.bDrawMenuMap) {
+        float x = in.x;
+        float y = in.y;
+        x *= MenuNew.GetMenuMapWholeSize() * MenuNew.fMapZoom;
+        y *= MenuNew.GetMenuMapWholeSize() * MenuNew.fMapZoom;
+
+        x += MenuNew.vMapBase.x - MenuNew.GetMenuMapWholeSize() / 2;
+        y += MenuNew.vMapBase.y - MenuNew.GetMenuMapWholeSize() / 2;
+
+        out.x = x;
+        out.y = y;
     }
     else {
         out.x = ((GET_SETTING(HUD_RADAR).h / GET_SETTING(HUD_RADAR).w * in.x) * SCREEN_COORD(GET_SETTING(HUD_RADAR).w) + HUD_X(GET_SETTING(HUD_RADAR).x));  
@@ -357,9 +396,17 @@ void CRadarNew::TransformRadarPointToScreenSpace(CVector2D &out, CVector2D &in) 
 void CRadarNew::TransformRadarPoint(CVector2D& out, CVector2D& in) {
     __asm push edx
 
-    if (FrontEndMenuManager.m_bDrawRadarOrMap) {
-        out.x = FrontEndMenuManager.m_fMapZoom * in.x + FrontEndMenuManager.m_fMapBaseX;
-        out.y = FrontEndMenuManager.m_fMapBaseY - FrontEndMenuManager.m_fMapZoom * in.y;
+    if (MenuNew.bDrawMenuMap) {
+        float x = in.x;
+        float y = in.y;
+        x *= MenuNew.GetMenuMapWholeSize() * MenuNew.fMapZoom;
+        y *= MenuNew.GetMenuMapWholeSize() * MenuNew.fMapZoom;
+
+        x += MenuNew.vMapBase.x - MenuNew.GetMenuMapWholeSize() / 2;
+        y += MenuNew.vMapBase.y - MenuNew.GetMenuMapWholeSize() / 2;
+
+        out.x = x;
+        out.y = y;
     }
     else {
         out.x = ((((GET_SETTING(HUD_RADAR).h / GET_SETTING(HUD_RADAR).w) * in.x) * (m_vRadarMapQuality.x * 0.5f)) + (m_vRadarMapQuality.x * 0.5f));
@@ -536,7 +583,7 @@ float CRadarNew::LimitRadarPoint(CVector2D& point) {
     float v42;
     CPed* playa = FindPlayerPed(0);
 
-    if (FrontEndMenuManager.m_bDrawRadarOrMap) {
+    if (MenuNew.bDrawMenuMap) {
         return point.Magnitude();
     }
 
@@ -638,20 +685,14 @@ void CRadarNew::DrawRadarSprite(unsigned short id, float x, float y, unsigned ch
     float w = GET_SETTING(HUD_RADAR_BLIPS_SIZE).w;
     float h = GET_SETTING(HUD_RADAR_BLIPS_SIZE).h;
 
-    if (FrontEndMenuManager.m_bDrawRadarOrMap) {
-        x = SCREEN_WIDTH * 0.0015625 * x;
-        y = SCREEN_HEIGHT * 0.002232143 * y;
-
-        w += 2.0f;
-        h += 2.0f;
-
-        CRadar::LimitToMap(&x, &y);
-    }
-
     if (CRadar::DisplayThisBlip(id, -99)) {
         m_BlipsSprites[id]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), CRGBA(m_BlipsList[id].color.r, m_BlipsList[id].color.g, m_BlipsList[id].color.b, alpha));
         CRadar::AddBlipToLegendList(0, id);
     }
+}
+
+void CRadarNew::LimitToMap(float* x, float* y) {
+
 }
 
 void CRadarNew::AddAnyBlip(unsigned short id, CEntity e, float width, float height, float angle, bool vcone, CRGBA const& col, bool limit) {
@@ -668,22 +709,14 @@ void CRadarNew::AddAnyBlip(unsigned short id, CEntity e, float width, float heig
     float dist = LimitRadarPoint(in);
     TransformRadarPointToScreenSpace(out, in);
 
-    if (!limit)
-    if (dist > 1.0f)
-        return;
+    if (!MenuNew.bDrawMenuMap) {
+        if (!limit)
+            if (dist > 1.0f)
+                return;
+    }
 
     x = out.x;
     y = out.y;
-
-    if (FrontEndMenuManager.m_bDrawRadarOrMap) {
-        x = SCREEN_WIDTH * 0.0015625 * x;
-        y = SCREEN_HEIGHT * 0.002232143 * y;
-
-        w += 2.0f;
-        h += 2.0f;
-
-        CRadar::LimitToMap(&x, &y);
-    }
 
     if (CRadar::DisplayThisBlip(id, -99)) {
         if (vcone) {
@@ -883,6 +916,28 @@ void CRadarNew::DrawMap() {
     CRadar::vec2DRadarOrigin.y = centreOfWorld.y - s * (radarShift);
 
     DrawRadarMap(x, y);
+}
+
+void CRadarNew::DrawRadarSectionMap(int x, int y, CRect const& rect, CRGBA const& col) {
+    int index = x + 12 * y;
+    CSprite2d* sprite = m_MiniMapSprites[index];
+
+    bool inBounds = (x >= 0 && x <= 11) && (y >= 0 && y <= 11);
+
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERMIPLINEAR);
+    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
+    RwRenderStateSet(rwRENDERSTATETEXTUREPERSPECTIVE, (void*)FALSE);
+    RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
+
+    if (inBounds) {
+        if (sprite && sprite->m_pTexture) {
+            RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(sprite->m_pTexture));
+            CSprite2d::SetVertices(rect, col, col, col, col);
+            RwIm2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 4);
+        }
+    }
 }
 
 void CRadarNew::DrawRadarSection(int x, int y) {
@@ -1193,12 +1248,6 @@ void CRadarNew::ShowRadarTraceWithHeight(float x, float y, unsigned int size, un
     float h = ((float)size * 0.5f) + (GET_SETTING(HUD_RADAR_BLIPS_LEVEL_SIZE).h);
 
     CSprite2d* sprite = NULL;
-
-    if (FrontEndMenuManager.m_bDrawRadarOrMap) {
-        x = SCREEN_WIDTH * 0.0015625 * x;
-        y = SCREEN_HEIGHT * 0.002232143 * y;
-        CRadar::LimitToMap(&x, &y);
-    }
 
     switch (type) {
     case 0:

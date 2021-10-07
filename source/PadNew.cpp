@@ -63,6 +63,14 @@ bool CPadNew::GetOpenCloseMenuJustDown() {
         (NewKeyState.esc && !OldKeyState.esc);
 }
 
+bool CPadNew::GetMenuMapZoomInJustDown() {
+    return (NewMouseControllerState.wheelUp && !OldMouseControllerState.wheelUp);
+}
+
+bool CPadNew::GetMenuMapZoomOutJustDown() {
+    return (NewMouseControllerState.wheelDown && !OldMouseControllerState.wheelDown);
+}
+
 bool CPadNew::GetMenuUpJustDown() {
     return
         (NewKeyState.up && !OldKeyState.up)
@@ -99,6 +107,19 @@ bool CPadNew::GetMenuEnterJustDown() {
 bool CPadNew::GetMenuSpaceJustDown() {
     return
         (NewKeyState.standardKeys[32] && !OldKeyState.standardKeys[32]);
+}
+
+bool CPadNew::GetLeftMouseDown() {
+    return !!(NewMouseControllerState.lmb);
+}
+
+bool CPadNew::GetMiddleMouseDown() {
+    return !!(NewMouseControllerState.mmb);
+}
+
+bool CPadNew::GetMiddleMouseJustDown() {
+    return !!(NewMouseControllerState.mmb && !OldMouseControllerState.mmb);
+
 }
 
 bool CPadNew::GetLeftMouseJustDown() {

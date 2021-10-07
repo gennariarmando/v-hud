@@ -112,17 +112,12 @@ void CGPS::DrawLine(CVector2D const&a, CVector2D const&b, float width, CRGBA col
     dir.x = b.x - a.x;
     dir.y = b.y - a.y;
     float angle = atan2f(dir.y, dir.x);
-    if (FrontEndMenuManager.m_bDrawRadarOrMap) {
-        float mp = FrontEndMenuManager.m_fMapZoom - 140.0f;
-        if (mp < 140.0f)
-            mp = 140.0f;
-        else if (mp > 960.0f)
-            mp = 960.0f;
-        mp = mp / 960.0f + 0.4f;
-        shift[0].x = cosf(angle - 1.5707963f) * width * mp;
-        shift[0].y = sinf(angle - 1.5707963f) * width * mp;
-        shift[1].x = cosf(angle + 1.5707963f) * width * mp;
-        shift[1].y = sinf(angle + 1.5707963f) * width * mp;
+    if (MenuNew.bDrawMenuMap) {
+        float mp = MenuNew.fMapZoom / 2;
+        shift[0].x = cosf(angle - 1.5707963f) * 4.0f * mp;
+        shift[0].y = sinf(angle - 1.5707963f) * 4.0f * mp;
+        shift[1].x = cosf(angle + 1.5707963f) * 4.0f * mp;
+        shift[1].y = sinf(angle + 1.5707963f) * 4.0f * mp;
     }
     else {
         shift[0].x = cosf(angle - 1.5707963f) * width * (CRadarNew::m_vRadarMapQuality.x * 0.00390625f);
@@ -150,21 +145,18 @@ void CGPS::ProcessPath(CLocalization& l) {
         for (short i = 0; i < l.nNodesCount; i++) {
             CVector nodePosn = ThePaths.GetPathNode(l.resultNodes[i])->GetNodeCoors();
             CVector2D tmpPoint;
-            CRadar::TransformRealWorldPointToRadarSpace(tmpPoint, CVector2D(nodePosn.x, nodePosn.y));
-            if (!FrontEndMenuManager.m_bDrawRadarOrMap) {
+            CRadarNew::TransformRealWorldPointToRadarSpace(tmpPoint, CVector2D(nodePosn.x, nodePosn.y));
+            if (!MenuNew.bDrawMenuMap) {
                 CRadarNew::TransformRadarPoint(l.nodePoints[i], tmpPoint);
             }
             else {
-                CRadar::LimitRadarPoint(tmpPoint);
-                CRadar::TransformRadarPointToScreenSpace(l.nodePoints[i], tmpPoint);
-                l.nodePoints[i].x *= static_cast<float>(RsGlobal.maximumWidth) / 640.0f;
-                l.nodePoints[i].y *= static_cast<float>(RsGlobal.maximumHeight) / 448.0f;
-                CRadar::LimitToMap(&l.nodePoints[i].x, &l.nodePoints[i].y);
+                CRadarNew::TransformRadarPointToScreenSpace(l.nodePoints[i], tmpPoint);
+                CRadarNew::LimitToMap(&l.nodePoints[i].x, &l.nodePoints[i].y);
             }
         }
 
         CRGBA col;
-        if (radar_gps_alpha_mask_fxc)
+        if (radar_gps_alpha_mask_fxc && !MenuNew.bDrawMenuMap)
             col = CRGBA(255, 255, 255, 255);
         else
             col.Set(l.pathColor);

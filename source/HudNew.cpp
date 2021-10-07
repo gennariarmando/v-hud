@@ -1080,7 +1080,6 @@ void CHudNew::DrawRadar() {
 
         CRadarNew::DrawMap();
 
-        CRadarNew::DrawRadarCop();
         CRadarNew::DrawRadarRectangle();
         CRadarNew::DrawBlips();
 
