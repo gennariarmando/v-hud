@@ -376,8 +376,8 @@ void CRadarNew::TransformRadarPointToScreenSpace(CVector2D &out, CVector2D &in) 
     if (MenuNew.bDrawMenuMap) {
         float x = in.x;
         float y = in.y;
-        x *= MenuNew.GetMenuMapWholeSize() * MenuNew.fMapZoom;
-        y *= MenuNew.GetMenuMapWholeSize() * MenuNew.fMapZoom;
+        x *= MenuNew.GetMenuMapWholeSize();
+        y *= MenuNew.GetMenuMapWholeSize();
 
         x += MenuNew.vMapBase.x - MenuNew.GetMenuMapWholeSize() / 2;
         y += MenuNew.vMapBase.y - MenuNew.GetMenuMapWholeSize() / 2;
@@ -399,8 +399,8 @@ void CRadarNew::TransformRadarPoint(CVector2D& out, CVector2D& in) {
     if (MenuNew.bDrawMenuMap) {
         float x = in.x;
         float y = in.y;
-        x *= MenuNew.GetMenuMapWholeSize() * MenuNew.fMapZoom;
-        y *= MenuNew.GetMenuMapWholeSize() * MenuNew.fMapZoom;
+        x *= MenuNew.GetMenuMapWholeSize();
+        y *= MenuNew.GetMenuMapWholeSize();
 
         x += MenuNew.vMapBase.x - MenuNew.GetMenuMapWholeSize() / 2;
         y += MenuNew.vMapBase.y - MenuNew.GetMenuMapWholeSize() / 2;

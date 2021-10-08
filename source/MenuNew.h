@@ -34,15 +34,12 @@ enum eMiscSprites {
     NUM_MISC_SPRITES,
 };
 
-enum eLandingSprites {
-    LANDING_BACK_0,
-    LANDING_FRONT_0,
-    NUM_LANDING_SPRITES
-};
-
-enum eLandingScreenshotSprites {
-    INFOSCREEN_0,
-    NUM_SCREENSHOTS_SPRITES
+enum eFrontendSprites {
+    FRONTEND_BACK,
+    FRONTEND_FRONT,
+    FRONTEND_INFOBOX,
+    FRONTEND_GTALOGO,
+    NUM_FRONTEND_SPRITES
 };
 
 enum eMenuBarItems {
@@ -308,8 +305,7 @@ class CMenuNew {
 public:
     CSprite2d* MenuSprites[NUM_MENU_SPRITES];
     CSprite2d* MiscSprites[NUM_MISC_SPRITES];
-    CSprite2d* LandingSprites[NUM_LANDING_SPRITES];
-    CSprite2d* InfoScreensSprites[NUM_SCREENSHOTS_SPRITES];
+    CSprite2d* FrontendSprites[NUM_FRONTEND_SPRITES];
 
     CMenuSettings TempSettings;
     CMenuSettings Settings;
@@ -428,7 +424,7 @@ public:
     void OpenCloseMenu(bool on, bool force);
     void OpenMenuScreen(int screen);
     void CenterCursor();
-    void DoMapZoomInOut(float x, float y, bool out);
+    void DoMapZoomInOut(bool out);
     void Process();
     unsigned int GetTimeInMillisecondsRight();
     unsigned char FadeIn(unsigned char alpha);

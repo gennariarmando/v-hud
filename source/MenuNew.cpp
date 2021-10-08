@@ -61,9 +61,11 @@ char* MiscSpritesFileNames[] = {
     "spinner",
 };
 
-char* LandingPageSpritesFileNames[] = {
-    "landing_back_0",
-    "landing_front_0",
+char* FrontendSpritesFileNames[] = {
+    "back",
+    "front",
+    "infobox",
+    "gtalogo"
 };
 
 char* SettingsFileName = "VHud\\ufiles\\settings.xml";
@@ -155,18 +157,10 @@ void CMenuNew::Init() {
         MiscSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\misc"), MiscSpritesFileNames[i]);
     }
 
-    for (int i = 0; i < NUM_LANDING_SPRITES; i++) {
-        LandingSprites[i] = new CSprite2d();
-        LandingSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\landing_page"), LandingPageSpritesFileNames[i]);    
+    for (int i = 0; i < NUM_FRONTEND_SPRITES; i++) {
+        FrontendSprites[i] = new CSprite2d();
+        FrontendSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\frontend"), FrontendSpritesFileNames[i]);    
     }
-
-    for (int i = 0; i < NUM_SCREENSHOTS_SPRITES; i++) {
-        char str[32];
-        sprintf(str, "info_screen_%d", i);
-        InfoScreensSprites[i] = new CSprite2d();
-        InfoScreensSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\landing_page\\info_screens"), str);
-    }
-
     BuildMenuBar();
     BuildMenuScreen();
 
@@ -199,14 +193,9 @@ void CMenuNew::Shutdown() {
         delete MiscSprites[i];
     }
 
-    for (int i = 0; i < NUM_LANDING_SPRITES; i++) {
-        LandingSprites[i]->Delete();
-        delete LandingSprites[i];
-    }
-
-    for (int i = 0; i < NUM_SCREENSHOTS_SPRITES; i++) {
-        InfoScreensSprites[i]->Delete();
-        delete InfoScreensSprites[i];
+    for (int i = 0; i < NUM_FRONTEND_SPRITES; i++) {
+        FrontendSprites[i]->Delete();
+        delete FrontendSprites[i];
     }
 
     delete[] VideoModeList;
@@ -424,8 +413,12 @@ void CMenuNew::DrawBackground() {
     CSprite2d::DrawRect(CRect(-5.0f, -5.0f, SCREEN_WIDTH + 5.0f, SCREEN_HEIGHT + 5.0f), CRGBA(0, 0, 0, 255));
 
     if (bStylizedBackground) {
-        MenuNew.LandingSprites[LANDING_BACK_0]->Draw(CRect(MENU_X(0.0f), MENU_Y(0.0f), MENU_RIGHT(0.0f), MENU_BOTTOM(0.0f)), CRGBA(255, 255, 255, 255));
-        MenuNew.LandingSprites[LANDING_FRONT_0]->Draw(CRect(MENU_X(0.0f), MENU_Y(-3.0f), MENU_X(764.0f), MENU_BOTTOM(-3.0f)), CRGBA(255, 255, 255, 255));
+        RwRenderStateSet(rwRENDERSTATETEXTUREPERSPECTIVE, (void*)FALSE);
+        RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
+        MenuNew.FrontendSprites[FRONTEND_BACK]->Draw(CRect(MENU_X(0.0f), MENU_Y(0.0f), MENU_RIGHT(0.0f), MENU_BOTTOM(0.0f)), CRGBA(255, 255, 255, 255));
+        MenuNew.FrontendSprites[FRONTEND_FRONT]->Draw(CRect(MENU_X(0.0f), MENU_BOTTOM(1078.0f), MENU_X(1080.0f), MENU_BOTTOM(-2.0f)), CRGBA(255, 255, 255, 255));
+        MenuNew.FrontendSprites[FRONTEND_GTALOGO]->Draw(CRect(MENU_X(96.0f), MENU_BOTTOM(312.0f), MENU_X(96.0f + 280.0f), MENU_BOTTOM(312.0f - 278.0f)), CRGBA(255, 255, 255, 255));
+
     }
 }
 
@@ -635,6 +628,7 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
         pad->Clear(0, 1);
         //pad->ClearKeyBoardHistory();
         pad->ClearMouseHistory();
+        pad->DisablePlayerControls = true;
 
         AudioEngine.StopRadio(NULL, 0);
     }
@@ -644,6 +638,7 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
         pad->Clear(1, 1);
         //pad->ClearKeyBoardHistory();
         pad->ClearMouseHistory();
+        pad->DisablePlayerControls = false;
 
         Clear();
         SetInputTypeAndClear(MENUINPUT_BAR);
@@ -678,16 +673,22 @@ void CMenuNew::CenterCursor() {
     }
 }
 
-void CMenuNew::DoMapZoomInOut(float x, float y, bool out) {
+void CMenuNew::DoMapZoomInOut(bool out) {
     float value = out ? -0.1f : 0.1f;
 
-    float prev = fMapZoom;
+    float prevZ = fMapZoom;
     fMapZoom += value;
-    fMapZoom = clamp(fMapZoom, 1.0f, 6.0f);
+    fMapZoom = clamp(fMapZoom, 1.0f, 8.0f);
 
-    if (fMapZoom < 6.0f) {
-        vMapBase.x += ((x - vMapBase.x) * (-value - value)) / fMapZoom;
-        vMapBase.y += ((y - vMapBase.y) * (-value - value)) / fMapZoom;
+    if (fMapZoom > 0.0f && fMapZoom < 8.0f) {
+        if (out && fMapZoom < 4.0f) {
+            vMapBase.x += (SCREEN_WIDTH / 2 - vMapBase.x) * (-value - value);
+            vMapBase.y += (SCREEN_COORD(28.0f) + SCREEN_HEIGHT / 2 - vMapBase.y) * (-value - value);
+        }
+        else {
+            vMapBase.x -= (vMousePos.x - SCREEN_WIDTH / 2) * (fMapZoom - prevZ);
+            vMapBase.y -= (vMousePos.y - (SCREEN_COORD(28.0f) + SCREEN_HEIGHT / 2)) * (fMapZoom - prevZ);
+        }
     }
 }
 
@@ -847,14 +848,16 @@ void CMenuNew::Process() {
                 if (!bShowMenu) {
                     if (nCurrentScreen == MENUSCREEN_MAP) {
                         if (WheelDown)
-                            DoMapZoomInOut(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, true);
+                            DoMapZoomInOut(true);
                         else if (WheelUp)
-                            DoMapZoomInOut(vMousePos.x, vMousePos.y, false);
+                            DoMapZoomInOut(false);
                         else if (LeftMouseDown) {
                             nMouseType = MOUSE_GRAB;
 
-                            vMapBase.x += (vMousePos.x - vOldMousePos.x);
-                            vMapBase.y += (vMousePos.y - vOldMousePos.y);
+                            if (fMapZoom > 1.0f) {
+                                vMapBase.x += (vMousePos.x - vOldMousePos.x);
+                                vMapBase.y += (vMousePos.y - vOldMousePos.y);
+                            }
                         }
                         else if (MiddleMouseJustDown) {
                             SetWaypoint(vMousePos.x, vMousePos.y);
@@ -862,10 +865,10 @@ void CMenuNew::Process() {
                             LeftMouseJustDown = false;
                         }
 
-                        const float halfMap = fMapZoom * (GetMenuMapWholeSize() / 2);
+                        const float quarterMap = fMapZoom * (GetMenuMapWholeSize() / 4);
 
-                        vMapBase.x = clamp(vMapBase.x, MENU_X(-halfMap), MENU_RIGHT(-halfMap));
-                        vMapBase.y = clamp(vMapBase.y, MENU_Y(-halfMap), MENU_BOTTOM(-halfMap));
+                        vMapBase.x = clamp(vMapBase.x, MENU_X(-quarterMap), MENU_RIGHT(-quarterMap));
+                        vMapBase.y = clamp(vMapBase.y, MENU_Y(-quarterMap), MENU_BOTTOM(-quarterMap));
                     }
                 }
             }
@@ -1527,7 +1530,7 @@ void CMenuNew::Draw() {
     if (!bMenuActive)
         return;
 
-    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)(rwFILTERMIPLINEAR));
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)(rwFILTERLINEARMIPLINEAR));
 
     // Set
     if (bNoTransparentBackg) {
@@ -1662,34 +1665,34 @@ void CMenuNew::Draw() {
         }
     }
 
-    // Screens
-    if (IsLoading()) {
-        const float mult = 1.0f;
-        const float scale = 32.0f * mult;
-        DrawSpinningWheel(SCREEN_COORD_CENTER_LEFT(0.0f), SCREEN_COORD_CENTER_DOWN(0.0f), SCREEN_COORD(scale), SCREEN_COORD(scale));
-    }
-    else {
-        switch (nCurrentScreen) {
-        case MENUSCREEN_MAP:
-            DrawMap();
-            break;
-        case MENUSCREEN_GALLERY:
-            DrawGallery();
-            break;
-        case MENUSCREEN_LANDING:
-            DrawLandingPage();
-            break;
-        default:
-            DrawDefault();
-            break;
+    if (nCurrentMessage == MENUMESSAGE_NONE) {
+        if (IsLoading()) {
+            const float mult = 1.0f;
+            const float scale = 32.0f * mult;
+            DrawSpinningWheel(SCREEN_COORD_CENTER_LEFT(0.0f), SCREEN_COORD_CENTER_DOWN(0.0f), SCREEN_COORD(scale), SCREEN_COORD(scale));
+        }
+        else {
+            switch (nCurrentScreen) {
+            case MENUSCREEN_MAP:
+                DrawMap();
+                break;
+            case MENUSCREEN_GALLERY:
+                DrawGallery();
+                break;
+            case MENUSCREEN_LANDING:
+                DrawLandingPage();
+                break;
+            default:
+                DrawDefault();
+                break;
+            }
+        }
+
+        if (nCurrentScreen != MENUSCREEN_MAP && bCleanMapScreenNextFrame) {
+            ResetMap();
         }
     }
-
-    if (nCurrentScreen != MENUSCREEN_MAP && bCleanMapScreenNextFrame) {
-        ResetMap();
-    }
-
-    if (nCurrentMessage != MENUMESSAGE_NONE) {
+    else {
         char* header = NULL;
         char* msg = NULL;
         switch (nCurrentMessage) {
@@ -2016,15 +2019,10 @@ void CMenuNew::DrawDefault() {
             if (bDrawMouse && CheckHover(menuEntry.left, menuEntry.left + menuEntry.right, menuEntry.top, menuEntry.top + menuEntry.bottom)) {
                 nCurrentEntryItemHover = i;
 
-                static int prevEntry = nCurrentEntryItem;
                 if (pad->GetLeftMouseJustDown()) {
                     if (nCurrentEntryItemHover == nCurrentEntryItem)
                         ProcessEntryStuff(1, 0);
                     else {
-                        if (prevEntry != nCurrentEntryItem) {
-                            SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
-                            prevEntry = nCurrentEntryItem;
-                        }
                         SetInputTypeAndClear(MENUINPUT_ENTRY, nCurrentEntryItemHover);
                     }
                 }
@@ -2337,7 +2335,7 @@ void CMenuNew::DrawLandingPage() {
     CRect rect;
     rect = { HUD_RIGHT(96.0f + 1302.0f), HUD_Y(218.0f), SCREEN_COORD(1302.0f), SCREEN_COORD(644.0f) };
     DrawPatternBackground(CRect(rect.left, rect.top, rect.left + rect.right, rect.top + rect.bottom), CRGBA(HudColourNew.GetRGB(HUD_COLOUR_BLACK, 150)));
-    InfoScreensSprites[INFOSCREEN_0]->Draw(CRect(rect.left + SCREEN_COORD(870.0f), rect.top, rect.left + rect.right, rect.top + rect.bottom), CRGBA(255, 255, 255, 255));
+    FrontendSprites[FRONTEND_INFOBOX]->Draw(CRect(rect.left + SCREEN_COORD(870.0f), rect.top, rect.left + rect.right, rect.top + rect.bottom), CRGBA(255, 255, 255, 255));
 
     CFontNew::SetBackground(false);
     CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
@@ -2411,10 +2409,9 @@ void CMenuNew::DrawLandingPage() {
         CFontNew::SetOutline(0.0f);
         CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
         CFontNew::SetColor(menuEntryTextColor);
-        CFontNew::SetScale(SCREEN_MULTIPLIER(0.82f), SCREEN_MULTIPLIER(1.6f));
+        CFontNew::SetScale(SCREEN_MULTIPLIER(0.92f), SCREEN_MULTIPLIER(1.8f));
 
         CTextNew::UpperCase(leftText);
-        CFontNew::PrintString(menuEntry.right, menuEntry.top + textoffset, leftText);
         CFontNew::PrintString(menuEntry.right, menuEntry.top + textoffset, leftText);
     }
 }
@@ -2488,8 +2485,8 @@ void CMenuNew::SetWaypoint(float x, float y) {
         in.x = (x + GetMenuMapWholeSize() / 2) - MenuNew.vMapBase.x;
         in.y = MenuNew.vMapBase.y - (y + GetMenuMapWholeSize() / 2);
 
-        in.x /= GetMenuMapWholeSize() * fMapZoom;
-        in.y /= GetMenuMapWholeSize() * fMapZoom;
+        in.x /= GetMenuMapWholeSize();
+        in.y /= GetMenuMapWholeSize();
 
         CRadar::TransformRadarPointToRealWorldSpace(out, in);
 
@@ -2512,7 +2509,7 @@ int CMenuNew::GetMenuMapTiles() {
 
 float CMenuNew::GetMenuMapWholeSize() {
     const float mapWholeSize = GetMenuMapTileSize() * GetMenuMapTiles();
-    return mapWholeSize;
+    return mapWholeSize * fMapZoom;
 }
 
 void CMenuNew::DrawMap() {
@@ -2543,7 +2540,7 @@ void CMenuNew::DrawMap() {
     if (!bDrawMenuMap) {
         fMapZoom = 1.0f;
         vMapBase.x = (SCREEN_WIDTH / 2);
-        vMapBase.y = (SCREEN_HEIGHT / 2);
+        vMapBase.y = SCREEN_COORD(28.0f) + (SCREEN_HEIGHT / 2);
         bCleanMapScreenNextFrame = true;
         bDrawMenuMap = true;
     }
