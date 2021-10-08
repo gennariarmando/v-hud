@@ -847,11 +847,7 @@ void CMenuNew::Process() {
 
                 if (!bShowMenu) {
                     if (nCurrentScreen == MENUSCREEN_MAP) {
-                        if (WheelDown)
-                            DoMapZoomInOut(true);
-                        else if (WheelUp)
-                            DoMapZoomInOut(false);
-                        else if (LeftMouseDown) {
+                        if (LeftMouseDown) {
                             nMouseType = MOUSE_GRAB;
 
                             if (fMapZoom > 1.0f) {
@@ -859,14 +855,20 @@ void CMenuNew::Process() {
                                 vMapBase.y += (vMousePos.y - vOldMousePos.y);
                             }
                         }
-                        else if (MiddleMouseJustDown) {
-                            SetWaypoint(vMousePos.x, vMousePos.y);
-                            LeftMouseDown = false;
-                            LeftMouseJustDown = false;
-                        }
+                        else {
+                            if (WheelDown)
+                                DoMapZoomInOut(true);
+                            if (WheelUp)
+                                DoMapZoomInOut(false);
+
+                            if (MiddleMouseJustDown) {
+                                SetWaypoint(vMousePos.x, vMousePos.y);
+                                LeftMouseDown = false;
+                                LeftMouseJustDown = false;
+                            }
+                        }                     
 
                         const float quarterMap = fMapZoom * (GetMenuMapWholeSize() / 4);
-
                         vMapBase.x = clamp(vMapBase.x, MENU_X(-quarterMap), MENU_RIGHT(-quarterMap));
                         vMapBase.y = clamp(vMapBase.y, MENU_Y(-quarterMap), MENU_BOTTOM(-quarterMap));
                     }
@@ -1573,7 +1575,7 @@ void CMenuNew::Draw() {
                     if (pad->GetLeftMouseJustDown()) {
                         SetInputTypeAndClear(MENUINPUT_ENTRY);
                         SetInputTypeAndClear(MENUINPUT_BAR, nCurrentBarItemHover);
-                        SetInputTypeAndClear(MENUINPUT_TAB);
+                        //SetInputTypeAndClear(MENUINPUT_TAB);
                         bRequestScreenUpdate = true;
                     }
                 }
@@ -2022,9 +2024,8 @@ void CMenuNew::DrawDefault() {
                 if (pad->GetLeftMouseJustDown()) {
                     if (nCurrentEntryItemHover == nCurrentEntryItem)
                         ProcessEntryStuff(1, 0);
-                    else {
-                        SetInputTypeAndClear(MENUINPUT_ENTRY, nCurrentEntryItemHover);
-                    }
+
+                    SetInputTypeAndClear(MENUINPUT_ENTRY, i);
                 }
             }
 

@@ -519,6 +519,7 @@ void CHudNew::DrawMoneyCounter() {
     CFontNew::Details.color.a = nMoneyDifferenceFadeAlpha;
     CFontNew::Details.dropColor.a = nMoneyDifferenceFadeAlpha;
 
+    CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_CASH).w * 0.86f), SCREEN_MULTIPLIER(GET_SETTING(HUD_CASH).h * 0.86f));
     CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_CASH).x), SCREEN_COORD(GET_SETTING(HUD_CASH).y + 2.0f) + CFontNew::GetHeightScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_CASH).h)) + heightLerp, str);
 
     if (nTimeToShowMoneyDifference < CTimer::m_snTimeInMilliseconds || m_nDiffMoney == 0)
