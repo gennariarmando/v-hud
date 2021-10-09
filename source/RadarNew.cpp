@@ -387,7 +387,7 @@ void CRadarNew::TransformRadarPointToScreenSpace(CVector2D &out, CVector2D &in) 
     }
     else {
         out.x = ((GET_SETTING(HUD_RADAR).h / GET_SETTING(HUD_RADAR).w * in.x) * SCREEN_COORD(GET_SETTING(HUD_RADAR).w) + HUD_X(GET_SETTING(HUD_RADAR).x));  
-        out.y = ((SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR).y)) - SCREEN_COORD(GET_SETTING(HUD_RADAR).h) * in.y);
+        out.y = ((HUD_BOTTOM(GET_SETTING(HUD_RADAR).y)) - SCREEN_COORD(GET_SETTING(HUD_RADAR).h) * in.y);
     }
 
     __asm pop edx
@@ -756,27 +756,27 @@ void CRadarNew::DrawRadarRectangle() {
     else
         sprite = m_RadarSprites[RADAR_RECT];
 
-    rect.bottom = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_FOREGROUND).h);
+    rect.bottom = HUD_BOTTOM(GET_SETTING(HUD_RADAR_FOREGROUND).h);
     rect.right = HUD_X(GET_SETTING(HUD_RADAR_FOREGROUND).w);
-    rect.top = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_FOREGROUND).y);
+    rect.top = HUD_BOTTOM(GET_SETTING(HUD_RADAR_FOREGROUND).y);
     rect.left = HUD_X(GET_SETTING(HUD_RADAR_FOREGROUND).x);
 
     if (sprite && sprite->m_pTexture != NULL)
         sprite->Draw(rect, col);
 
     col = GET_SETTING(HUD_RADAR_BACKGROUND).col;
-    rect.bottom = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_BACKGROUND).h);
+    rect.bottom = HUD_BOTTOM(GET_SETTING(HUD_RADAR_BACKGROUND).h);
     rect.right = HUD_X(GET_SETTING(HUD_RADAR_BACKGROUND).w);
-    rect.top = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_BACKGROUND).y);
+    rect.top = HUD_BOTTOM(GET_SETTING(HUD_RADAR_BACKGROUND).y);
     rect.left = HUD_X(GET_SETTING(HUD_RADAR_BACKGROUND).x);
     
     CSprite2d::DrawRect(rect, col);
 
     if (InTwoPlayersMode() && playa2.m_pPed) {
         col = GET_SETTING(HUD_RADAR_BACKGROUND_P2).col;
-        rect.bottom = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_BACKGROUND_P2).h);
+        rect.bottom = HUD_BOTTOM(GET_SETTING(HUD_RADAR_BACKGROUND_P2).h);
         rect.right = HUD_X(GET_SETTING(HUD_RADAR_BACKGROUND_P2).w);
-        rect.top = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_BACKGROUND_P2).y);
+        rect.top = HUD_BOTTOM(GET_SETTING(HUD_RADAR_BACKGROUND_P2).y);
         rect.left = HUD_X(GET_SETTING(HUD_RADAR_BACKGROUND_P2).x);
 
         CSprite2d::DrawRect(rect, col);
@@ -790,7 +790,7 @@ void CRadarNew::DrawRadarRectangle() {
         col = GET_SETTING(HUD_HEALTH_BAR).col;
         if (CHud::m_ItemToFlash != 4 || CTimer::m_FrameCounter & 8) {
             progress = playa.m_pPed->m_fHealth / static_cast<float>(playa.m_nMaxHealth);
-            DrawProgressBar(HUD_X(GET_SETTING(HUD_HEALTH_BAR).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_HEALTH_BAR).y), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR).w), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR).h), progress,
+            DrawProgressBar(HUD_X(GET_SETTING(HUD_HEALTH_BAR).x), HUD_BOTTOM(GET_SETTING(HUD_HEALTH_BAR).y), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR).w), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR).h), progress,
                 (playa.m_pPed->m_fHealth <= 20.0f && CTimer::m_FrameCounter & 8) ? HudColourNew.GetRGB("HUD_COLOUR_RED", col.a) : col);
         }
 
@@ -798,7 +798,7 @@ void CRadarNew::DrawRadarRectangle() {
         col = GET_SETTING(HUD_ARMOUR_BAR).col;
         if (CHud::m_ItemToFlash != 3 || CTimer::m_FrameCounter & 8) {
             progress = playa.m_pPed->m_fArmour / static_cast<float>(playa.m_nMaxArmour);
-            DrawProgressBar(HUD_X(GET_SETTING(HUD_ARMOUR_BAR).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_ARMOUR_BAR).y), SCREEN_COORD(playa.m_pPed->m_nPhysicalFlags.bSubmergedInWater ? GET_SETTING(HUD_ARMOUR_BAR_B).w : GET_SETTING(HUD_ARMOUR_BAR).w), SCREEN_COORD(GET_SETTING(HUD_ARMOUR_BAR).h), progress,
+            DrawProgressBar(HUD_X(GET_SETTING(HUD_ARMOUR_BAR).x), HUD_BOTTOM(GET_SETTING(HUD_ARMOUR_BAR).y), SCREEN_COORD(playa.m_pPed->m_nPhysicalFlags.bSubmergedInWater ? GET_SETTING(HUD_ARMOUR_BAR_B).w : GET_SETTING(HUD_ARMOUR_BAR).w), SCREEN_COORD(GET_SETTING(HUD_ARMOUR_BAR).h), progress,
                 col);
         }
 
@@ -807,7 +807,7 @@ void CRadarNew::DrawRadarRectangle() {
         if (CHud::m_ItemToFlash != 10 || CTimer::m_FrameCounter & 8) {
             if (playa.m_pPed->m_nPhysicalFlags.bSubmergedInWater) {
                 progress = playa.m_pPed->m_pPlayerData->m_fBreath / CStats::GetFatAndMuscleModifier(STAT_MOD_AIR_IN_LUNG);
-                DrawProgressBar(HUD_X(GET_SETTING(HUD_BREATH_BAR).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_BREATH_BAR).y), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR).w), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR).h), progress,
+                DrawProgressBar(HUD_X(GET_SETTING(HUD_BREATH_BAR).x), HUD_BOTTOM(GET_SETTING(HUD_BREATH_BAR).y), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR).w), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR).h), progress,
                     col);
             }
         }
@@ -819,7 +819,7 @@ void CRadarNew::DrawRadarRectangle() {
             // Health bar
             if (CHud::m_ItemToFlash != 4 || CTimer::m_FrameCounter & 8) {
                 progress = playa2.m_pPed->m_fHealth / static_cast<float>(playa2.m_nMaxHealth);
-                DrawProgressBar(HUD_X(GET_SETTING(HUD_HEALTH_BAR_P2).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_HEALTH_BAR_P2).y), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR_P2).w), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR_P2).h), progress,
+                DrawProgressBar(HUD_X(GET_SETTING(HUD_HEALTH_BAR_P2).x), HUD_BOTTOM(GET_SETTING(HUD_HEALTH_BAR_P2).y), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR_P2).w), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR_P2).h), progress,
                     (playa2.m_pPed->m_fHealth <= 20.0f && CTimer::m_FrameCounter & 8) ? HudColourNew.GetRGB("HUD_COLOUR_RED", col.a) : col);
             }
 
@@ -827,7 +827,7 @@ void CRadarNew::DrawRadarRectangle() {
             col = GET_SETTING(HUD_ARMOUR_BAR_P2).col;
             if (CHud::m_ItemToFlash != 3 || CTimer::m_FrameCounter & 8) {
                 progress = playa2.m_pPed->m_fArmour / static_cast<float>(playa2.m_nMaxArmour);
-                DrawProgressBar(HUD_X(GET_SETTING(HUD_ARMOUR_BAR_P2).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_ARMOUR_BAR_P2).y), SCREEN_COORD(playa2.m_pPed->m_nPhysicalFlags.bSubmergedInWater ? GET_SETTING(HUD_ARMOUR_BAR_B_P2).w : GET_SETTING(HUD_ARMOUR_BAR_P2).w), SCREEN_COORD(GET_SETTING(HUD_ARMOUR_BAR_P2).h), progress,
+                DrawProgressBar(HUD_X(GET_SETTING(HUD_ARMOUR_BAR_P2).x), HUD_BOTTOM(GET_SETTING(HUD_ARMOUR_BAR_P2).y), SCREEN_COORD(playa2.m_pPed->m_nPhysicalFlags.bSubmergedInWater ? GET_SETTING(HUD_ARMOUR_BAR_B_P2).w : GET_SETTING(HUD_ARMOUR_BAR_P2).w), SCREEN_COORD(GET_SETTING(HUD_ARMOUR_BAR_P2).h), progress,
                     col);
             }
 
@@ -836,7 +836,7 @@ void CRadarNew::DrawRadarRectangle() {
             if (CHud::m_ItemToFlash != 10 || CTimer::m_FrameCounter & 8) {
                 if (playa2.m_pPed->m_nPhysicalFlags.bSubmergedInWater) {
                     progress = playa2.m_pPed->m_pPlayerData->m_fBreath / CStats::GetFatAndMuscleModifier(STAT_MOD_AIR_IN_LUNG);
-                    DrawProgressBar(HUD_X(GET_SETTING(HUD_BREATH_BAR_P2).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_BREATH_BAR_P2).y), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR_P2).w), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR_P2).h), progress, 
+                    DrawProgressBar(HUD_X(GET_SETTING(HUD_BREATH_BAR_P2).x), HUD_BOTTOM(GET_SETTING(HUD_BREATH_BAR_P2).y), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR_P2).w), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR_P2).h), progress, 
                         col);
                 }
             }
@@ -1033,9 +1033,9 @@ void CRadarNew::DrawRadarMap(int x, int y) {
     CRGBA col;
     CRect rect;
 
-    rect.bottom = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_RECT).h);
+    rect.bottom = HUD_BOTTOM(GET_SETTING(HUD_RADAR_RECT).h);
     rect.right = HUD_X(GET_SETTING(HUD_RADAR_RECT).w);
-    rect.top = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_RECT).y);
+    rect.top = HUD_BOTTOM(GET_SETTING(HUD_RADAR_RECT).y);
     rect.left = HUD_X(GET_SETTING(HUD_RADAR_RECT).x);
 
     col = GET_SETTING(HUD_RADAR_RECT).col;
@@ -1170,9 +1170,9 @@ void CRadarNew::DrawRadarMap(int x, int y) {
 
     // Mask radar map
     col = { 255, 255, 255, 255 };
-    rect.bottom = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_MASK).h);
+    rect.bottom = HUD_BOTTOM(GET_SETTING(HUD_RADAR_MASK).h);
     rect.right = HUD_X(GET_SETTING(HUD_RADAR_MASK).w);
-    rect.top = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_MASK).y);
+    rect.top = HUD_BOTTOM(GET_SETTING(HUD_RADAR_MASK).y);
     rect.left = HUD_X(GET_SETTING(HUD_RADAR_MASK).x);
 
     unsigned int savedFilter;
@@ -1190,9 +1190,9 @@ void CRadarNew::DrawRadarMap(int x, int y) {
     _rwSetPixelShader(NULL);
 
     if (CGPS::bShowGPS) {
-        rect.bottom = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR).y - GET_SETTING(HUD_RADAR).h);
+        rect.bottom = HUD_BOTTOM(GET_SETTING(HUD_RADAR).y - GET_SETTING(HUD_RADAR).h);
         rect.right = HUD_X(GET_SETTING(HUD_RADAR).w + GET_SETTING(HUD_RADAR).x);
-        rect.top = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR).h + GET_SETTING(HUD_RADAR).y);
+        rect.top = HUD_BOTTOM(GET_SETTING(HUD_RADAR).h + GET_SETTING(HUD_RADAR).y);
         rect.left = HUD_X(GET_SETTING(HUD_RADAR).x - GET_SETTING(HUD_RADAR).w);
 
         col = { 255, 255, 255, 255 };
@@ -1230,9 +1230,9 @@ void CRadarNew::DrawRadarMap(int x, int y) {
     alpha = interpF(alpha, dmgAlpha, 0.2f * CTimer::ms_fTimeStep);
 
     if (alpha > 0) {
-        rect.bottom = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_DAMAGE).h);
+        rect.bottom = HUD_BOTTOM(GET_SETTING(HUD_RADAR_DAMAGE).h);
         rect.right = HUD_X(GET_SETTING(HUD_RADAR_DAMAGE).w);
-        rect.top = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_DAMAGE).y);
+        rect.top = HUD_BOTTOM(GET_SETTING(HUD_RADAR_DAMAGE).y);
         rect.left = HUD_X(GET_SETTING(HUD_RADAR_DAMAGE).x);
 
         col = GET_SETTING(HUD_RADAR_DAMAGE).col;

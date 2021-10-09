@@ -394,6 +394,8 @@ public:
     CVector2D vMapBase;
     float fMapZoom;
 
+    int nTimeForSafeZonesToShow;
+
 public:
     CMenuNew();
     void Init();
@@ -445,6 +447,7 @@ public:
     void UnSetMenuMessage();
     bool IsLoading();
     int GetNumOfSaveGames();
+    void DrawSafeZoneAngle(float x, float y, int w, int h);
     void DrawDefault();
     void DrawTabMemoryAvailable();
     void DrawTabGamePad();

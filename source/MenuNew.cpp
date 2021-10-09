@@ -417,8 +417,7 @@ void CMenuNew::DrawBackground() {
         RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
         MenuNew.FrontendSprites[FRONTEND_BACK]->Draw(CRect(MENU_X(0.0f), MENU_Y(0.0f), MENU_RIGHT(0.0f), MENU_BOTTOM(0.0f)), CRGBA(255, 255, 255, 255));
         MenuNew.FrontendSprites[FRONTEND_FRONT]->Draw(CRect(MENU_X(0.0f), MENU_BOTTOM(1078.0f), MENU_X(1080.0f), MENU_BOTTOM(-2.0f)), CRGBA(255, 255, 255, 255));
-        MenuNew.FrontendSprites[FRONTEND_GTALOGO]->Draw(CRect(MENU_X(96.0f), MENU_BOTTOM(312.0f), MENU_X(96.0f + 280.0f), MENU_BOTTOM(312.0f - 278.0f)), CRGBA(255, 255, 255, 255));
-
+        MenuNew.FrontendSprites[FRONTEND_GTALOGO]->Draw(CRect(HUD_X(96.0f), HUD_BOTTOM(312.0f), HUD_X(96.0f + 280.0f), HUD_BOTTOM(312.0f - 278.0f)), CRGBA(255, 255, 255, 255));
     }
 }
 
@@ -521,6 +520,13 @@ void CMenuNew::SetInputTypeAndClear(int input, int n = 0) {
                 nCurrentBarItem = n;
                 nCurrentBarItemHover = MENU_HOVER_NONE;
                 nPreviousBarItemHover = MENU_HOVER_NONE;
+
+                if (bCleanMapScreenNextFrame) {
+                    ResetMap();
+                    bShowMenu = true;
+                    bDrawMenuMap = false;
+                    bCleanMapScreenNextFrame = false;
+                }
                 break;
             case MENUINPUT_TAB:
                 nPreviousTabItem = nCurrentTabItem;
@@ -837,7 +843,7 @@ void CMenuNew::Process() {
                         bRequestScreenUpdate = true;
                     }
                     else if (bDrawMenuMap) {
-                        ResetMap();
+                        //ResetMap();
                         SetInputTypeAndClear(MENUINPUT_BAR, nCurrentBarItem);
                     }
                     else {
@@ -1135,16 +1141,20 @@ char** CMenuNew::GetVideoModeList() {
 }
 
 void CMenuNew::ProcessEntryStuff(int enter, int input) {
-    int type;
+    int type = -1;
 
     switch (nCurrentInputType) {
+    case MENUINPUT_BAR:
     case MENUINPUT_TAB:
         type = MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type;
         break;
-    default:
+    case MENUINPUT_ENTRY:
         type = MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[nCurrentEntryItem].type;
         break;
     }
+
+    if (type == -1)
+        return;
 
     if (!enter && !input)
         return;
@@ -1440,8 +1450,8 @@ void CMenuNew::CheckSliderMovement(double value) {
         gamma.SetGamma(ts.gamma, 1);
         break;
     case MENUENTRY_SAFEZONESIZE:
-        ts.safeZoneSize += float(value * 32.0f);
-        ts.safeZoneSize = clamp(ts.safeZoneSize, 0, 32.0f);
+        ts.safeZoneSize += float(value * 96.0f);
+        ts.safeZoneSize = clamp(ts.safeZoneSize, 0, 96.0f);
         break;
     case MENUENTRY_SFXVOLUME:
         ts.sfxVolume += char(value * 100);
@@ -1533,6 +1543,8 @@ void CMenuNew::Draw() {
         return;
 
     RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)(rwFILTERLINEARMIPLINEAR));
+    RwRenderStateSet(rwRENDERSTATETEXTUREPERSPECTIVE, (void*)FALSE);
+    RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
 
     // Set
     if (bNoTransparentBackg) {
@@ -1573,10 +1585,12 @@ void CMenuNew::Draw() {
                     CPadNew* pad = CPadNew::GetPad(0);
 
                     if (pad->GetLeftMouseJustDown()) {
+                        if (nCurrentBarItemHover != nCurrentBarItem)
+                            bRequestScreenUpdate = true;
+
+                        SetInputTypeAndClear(MENUINPUT_TAB);
                         SetInputTypeAndClear(MENUINPUT_ENTRY);
-                        SetInputTypeAndClear(MENUINPUT_BAR, nCurrentBarItemHover);
-                        //SetInputTypeAndClear(MENUINPUT_TAB);
-                        bRequestScreenUpdate = true;
+                        SetInputTypeAndClear(MENUINPUT_BAR, nCurrentBarItemHover);         
                     }
                 }
 
@@ -1690,8 +1704,30 @@ void CMenuNew::Draw() {
             }
         }
 
-        if (nCurrentScreen != MENUSCREEN_MAP && bCleanMapScreenNextFrame) {
-            ResetMap();
+        static float previousSafeZone = TempSettings.safeZoneSize;
+        if (TempSettings.safeZoneSize != previousSafeZone) {
+            nTimeForSafeZonesToShow = 1500 + CTimer::m_snTimeInMillisecondsPauseMode;
+            previousSafeZone = TempSettings.safeZoneSize;
+        }
+
+        if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[nCurrentEntryItem].type == MENUENTRY_SAFEZONESIZE) {
+            if (nTimeForSafeZonesToShow > CTimer::m_snTimeInMillisecondsPauseMode) {
+                DrawSafeZoneAngle(HUD_X(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), 1, 1);
+                CSprite2d::DrawRect(CRect(HUD_X(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), 0.0f, 0.0f), CRGBA(0, 0, 0, 100));
+                CSprite2d::DrawRect(CRect(0.0f, HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), HUD_X(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT)), CRGBA(0, 0, 0, 100));
+
+                DrawSafeZoneAngle(HUD_RIGHT(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), -1, 1);
+                CSprite2d::DrawRect(CRect(HUD_RIGHT(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), SCREEN_WIDTH, 0.0f), CRGBA(0, 0, 0, 100));
+                CSprite2d::DrawRect(CRect(HUD_RIGHT(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), SCREEN_WIDTH, HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT)), CRGBA(0, 0, 0, 100));
+
+                DrawSafeZoneAngle(HUD_X(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT), 1, -1);
+                CSprite2d::DrawRect(CRect(HUD_X(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT), 0.0f, SCREEN_HEIGHT), CRGBA(0, 0, 0, 100));
+                CSprite2d::DrawRect(CRect(HUD_X(96.0f), 0.0f, HUD_RIGHT(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT)), CRGBA(0, 0, 0, 100));
+
+                DrawSafeZoneAngle(HUD_RIGHT(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT), -1, -1);
+                CSprite2d::DrawRect(CRect(HUD_RIGHT(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT), SCREEN_WIDTH, SCREEN_HEIGHT), CRGBA(0, 0, 0, 100));
+                CSprite2d::DrawRect(CRect(HUD_X(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT), HUD_RIGHT(96.0f), SCREEN_HEIGHT), CRGBA(0, 0, 0, 100));
+            }
         }
     }
     else {
@@ -1766,7 +1802,7 @@ void CMenuNew::Draw() {
         CRect r;
         r.left = HUD_RIGHT(96.0f);
         r.right = SCREEN_COORD(32.0f);
-        r.top = MENU_BOTTOM(90.0f);
+        r.top = HUD_BOTTOM(90.0f);
         r.bottom = SCREEN_COORD(36.0f);
 
         static float b = 0.0f;
@@ -1861,6 +1897,20 @@ int CMenuNew::GetNumOfSaveGames() {
     return result;
 }
 
+void CMenuNew::DrawSafeZoneAngle(float x, float y, int w, int h) {
+    CRect rect;
+    rect.left = x;
+    rect.top = y;
+    rect.right = x + (SCREEN_COORD(14.0f) * w);
+    rect.bottom = y + (SCREEN_COORD(50.0f) * h);
+    CSprite2d::DrawRect(rect, HudColourNew.GetRGB(HUD_COLOUR_WHITE, 200));
+
+    rect.left = rect.right;
+    rect.right = x + (SCREEN_COORD(50.0f) * w);
+    rect.bottom = y + (SCREEN_COORD(14.0f) * h);
+    CSprite2d::DrawRect(rect, HudColourNew.GetRGB(HUD_COLOUR_WHITE, 200));
+}
+
 void CMenuNew::DrawDefault() {
     CPadNew* pad = CPadNew::GetPad(0);
 
@@ -1900,17 +1950,11 @@ void CMenuNew::DrawDefault() {
             if (bDrawMouse && CheckHover(menuTab.left, menuTab.left + menuTab.right, menuTab.top, menuTab.top + menuTab.bottom)) {
                 nCurrentTabItemHover = i;
 
-                static int prevTab = nCurrentTabItem;
                 if (pad->GetLeftMouseJustDown()) {
                     if (nCurrentTabItemHover == nCurrentTabItem)
                         ProcessTabStuff();
-                    else {
-                        if (prevTab != nCurrentTabItem) {
-                            SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
-                            prevTab = nCurrentTabItem;
-                        }
+                    else
                         SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItemHover);
-                    }
                 }
             }
             menuTabColor = { 0, 0, 0, FadeIn(180) };
@@ -2024,8 +2068,8 @@ void CMenuNew::DrawDefault() {
                 if (pad->GetLeftMouseJustDown()) {
                     if (nCurrentEntryItemHover == nCurrentEntryItem)
                         ProcessEntryStuff(1, 0);
-
-                    SetInputTypeAndClear(MENUINPUT_ENTRY, i);
+                    else
+                        SetInputTypeAndClear(MENUINPUT_ENTRY, nCurrentEntryItemHover);
                 }
             }
 
@@ -2196,7 +2240,7 @@ void CMenuNew::DrawDefault() {
                 DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.gamma / 1.0f);
                 break;
             case MENUENTRY_SAFEZONESIZE:
-                DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.safeZoneSize / 32.0f);
+                DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.safeZoneSize / 96.0f);
                 break;
             case MENUENTRY_RADIOVOLUME:
                 DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.radioVolume / 100.0f);
@@ -2217,7 +2261,7 @@ void CMenuNew::DrawDefault() {
 
             if (!arrows)
                 shiftText = 0.0f;
-            
+
             if (rightText) {
                 CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
                 CFontNew::PrintString(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f - shiftText), menuEntry.top + SCREEN_COORD(5.0f), rightText);
@@ -2359,7 +2403,7 @@ void CMenuNew::DrawLandingPage() {
     CRect menuEntry;
     CRGBA menuEntryTextColor;
 
-    menuEntry = { HUD_X(532.0f), SCREEN_COORD_BOTTOM(128.0f), HUD_RIGHT(96.0f), SCREEN_COORD(74.0f) };
+    menuEntry = { HUD_X(532.0f), HUD_BOTTOM(128.0f), HUD_RIGHT(96.0f), SCREEN_COORD(74.0f) };
 
     CHudNew::DrawSimpleRectGradInverted(CRect(menuEntry.left, menuEntry.top, menuEntry.right, menuEntry.top + menuEntry.bottom), CRGBA(0, 0, 0, 150));
 
@@ -2514,16 +2558,16 @@ float CMenuNew::GetMenuMapWholeSize() {
 }
 
 void CMenuNew::DrawMap() {
+    CRect mask;
+    mask.left = MENU_X(311.0f);
+    mask.top = MENU_Y(181.0f + 39.0f + 20.0f);
+    mask.right = SCREEN_COORD((214.0f + 3.0f) * 6.0f);
+    mask.bottom = SCREEN_COORD(645.0f);
+
     if (nCurrentInputType == MENUINPUT_TAB) {
         bShowMenu = false;
     }
     else {
-        CRect mask;
-        mask.left = MENU_X(311.0f);
-        mask.top = MENU_Y(181.0f + 39.0f + 20.0f);
-        mask.right = SCREEN_COORD((214.0f + 3.0f) * 6.0f);
-        mask.bottom = SCREEN_COORD(645.0f);
-
         CSprite2d::DrawRect(CRect(mask.left, mask.top, mask.left + mask.right, mask.top + mask.bottom), HudColourNew.GetRGB(HUD_COLOUR_BLACK, FadeIn(150)));
         if (CheckHover(mask.left, mask.left + mask.right, mask.top, mask.top + mask.bottom)) {
             CPadNew* pad = CPadNew::GetPad(0);
@@ -2538,12 +2582,13 @@ void CMenuNew::DrawMap() {
     CRect rect;
     CRGBA col = { 255, 255, 255, 255 };
 
-    if (!bDrawMenuMap) {
+    bDrawMenuMap = true;
+    bCleanMapScreenNextFrame = true;
+
+    if (vMapBase.x == 0 && vMapBase.y == 0) {
         fMapZoom = 1.0f;
         vMapBase.x = (SCREEN_WIDTH / 2);
         vMapBase.y = SCREEN_COORD(28.0f) + (SCREEN_HEIGHT / 2);
-        bCleanMapScreenNextFrame = true;
-        bDrawMenuMap = true;
     }
 
     float mapZoom = GetMenuMapTileSize() * fMapZoom;
@@ -2555,6 +2600,7 @@ void CMenuNew::DrawMap() {
     for (int y = 0; y < GetMenuMapTiles(); y++) {
         for (int x = 0; x < GetMenuMapTiles(); x++) {
             CRadarNew::DrawRadarSectionMap(x, y, CRect((rect.left - mapHalfSize), (rect.top - mapHalfSize), (rect.right - mapHalfSize), (rect.bottom - mapHalfSize)), col);
+
             rect.left += mapZoom;
             rect.right = rect.left + mapZoom;
         }

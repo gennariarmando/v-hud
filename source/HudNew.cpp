@@ -277,10 +277,11 @@ void CHudNew::Draw() {
         RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
         RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
         RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
-        RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSMIRROR);
+        RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
         RwRenderStateSet(rwRENDERSTATETEXTURERASTER, (void*)FALSE);
         RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEFLAT);
         RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)(rwFILTERLINEARMIPLINEAR));
+        RwRenderStateSet(rwRENDERSTATETEXTUREPERSPECTIVE, (void*)FALSE);
 
         CWeaponSelector::ProcessWeaponSelector();
         CWeaponSelector::DrawWheel();
@@ -497,7 +498,7 @@ void CHudNew::DrawMoneyCounter() {
     CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_CASH).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_CASH).h));
 
     sprintf_s(str, "$%d", playa.m_nDisplayMoney);
-    CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_CASH).x), SCREEN_COORD(GET_SETTING(HUD_CASH).y) + heightLerp, str);
+    CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_CASH).x), HUD_Y(GET_SETTING(HUD_CASH).y) + heightLerp, str);
 
     if (m_nPreviousMoney != playa.m_nMoney) {
         bShowMoney = true;
@@ -520,7 +521,7 @@ void CHudNew::DrawMoneyCounter() {
     CFontNew::Details.dropColor.a = nMoneyDifferenceFadeAlpha;
 
     CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_CASH).w * 0.86f), SCREEN_MULTIPLIER(GET_SETTING(HUD_CASH).h * 0.86f));
-    CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_CASH).x), SCREEN_COORD(GET_SETTING(HUD_CASH).y + 2.0f) + CFontNew::GetHeightScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_CASH).h)) + heightLerp, str);
+    CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_CASH).x), HUD_Y(GET_SETTING(HUD_CASH).y + 2.0f) + CFontNew::GetHeightScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_CASH).h)) + heightLerp, str);
 
     if (nTimeToShowMoneyDifference < CTimer::m_snTimeInMilliseconds || m_nDiffMoney == 0)
         bShowMoneyDifference = false;
@@ -605,10 +606,10 @@ void CHudNew::DrawAmmo() {
     }
     else {
         CFontNew::SetColor(HudColourNew.GetRGB("HUD_COLOUR_WHITE", nAmmoFadeAlpha));
-        CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_AMMO).x + 6.0f) - CFontNew::GetStringWidth(str_clip, false), SCREEN_COORD(GET_SETTING(HUD_AMMO).y) + heightLerp, str_ammo);
+        CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_AMMO).x + 6.0f) - CFontNew::GetStringWidth(str_clip, false), HUD_Y(GET_SETTING(HUD_AMMO).y) + heightLerp, str_ammo);
 
         CFontNew::SetColor(HudColourNew.GetRGB("HUD_COLOUR_GREY", nAmmoFadeAlpha));
-        CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_AMMO).x), SCREEN_COORD(GET_SETTING(HUD_AMMO).y) + heightLerp, str_clip);
+        CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_AMMO).x), HUD_Y(GET_SETTING(HUD_AMMO).y) + heightLerp, str_clip);
     }
 
     if (nTimeToShowAmmoDifference < CTimer::m_snTimeInMilliseconds)
@@ -754,16 +755,16 @@ void CHudNew::DrawPlayerPortrait(int id, float x, float y, float w, float h) {
     if (PlayerPortrait[id] && PlayerPortrait[id][0]->m_pTexture) {
         switch (id) {
             case 0:
-                PlayerPortrait[id][0]->Draw(HUD_RIGHT(_x + (24.0f * scale)), SCREEN_COORD_BOTTOM(_y), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
+                PlayerPortrait[id][0]->Draw(HUD_RIGHT(_x + (24.0f * scale)), HUD_BOTTOM(_y), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
                 break;
             case 1:
-                PlayerPortrait[id][0]->Draw(HUD_RIGHT(_x - (_w * scale)), SCREEN_COORD_BOTTOM(_y + (_h * scale)), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
+                PlayerPortrait[id][0]->Draw(HUD_RIGHT(_x - (_w * scale)), HUD_BOTTOM(_y + (_h * scale)), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
                 break;
             case 2:
-                PlayerPortrait[id][0]->Draw(HUD_RIGHT(_x - (24.0f * scale) - ((_w * scale) * 2.0f)), SCREEN_COORD_BOTTOM(_y), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
+                PlayerPortrait[id][0]->Draw(HUD_RIGHT(_x - (24.0f * scale) - ((_w * scale) * 2.0f)), HUD_BOTTOM(_y), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
                 break;
             case 3:
-                PlayerPortrait[id][0]->Draw(HUD_RIGHT(_x - (_w * scale)), SCREEN_COORD_BOTTOM(_y - (_h * scale)), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
+                PlayerPortrait[id][0]->Draw(HUD_RIGHT(_x - (_w * scale)), HUD_BOTTOM(_y - (_h * scale)), SCREEN_COORD(_w), SCREEN_COORD(_h), CRGBA(255, 255, 255, id == CWorld::PlayerInFocus ? 235 : 100));
                 break;
         }
     }
@@ -771,16 +772,16 @@ void CHudNew::DrawPlayerPortrait(int id, float x, float y, float w, float h) {
     if (id == CWorld::PlayerInFocus) {
         switch (id) {
             case 0:
-                StatsSprites[PLRSTAT_PLAYER1_ACTIVE]->Draw(HUD_RIGHT(x), SCREEN_COORD_BOTTOM(y), SCREEN_COORD(64.0f * 0.75f), SCREEN_COORD(h), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+                StatsSprites[PLRSTAT_PLAYER1_ACTIVE]->Draw(HUD_RIGHT(x), HUD_BOTTOM(y), SCREEN_COORD(64.0f * 0.75f), SCREEN_COORD(h), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
                 break;
             case 1:
-                StatsSprites[PLRSTAT_PLAYER2_ACTIVE]->Draw(HUD_RIGHT(x), SCREEN_COORD_BOTTOM(y), SCREEN_COORD(w), SCREEN_COORD(64.0f * 0.75f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+                StatsSprites[PLRSTAT_PLAYER2_ACTIVE]->Draw(HUD_RIGHT(x), HUD_BOTTOM(y), SCREEN_COORD(w), SCREEN_COORD(64.0f * 0.75f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
                 break;
             case 2:
-                StatsSprites[PLRSTAT_PLAYER3_ACTIVE]->Draw(HUD_RIGHT(x - w + (64.0f * 0.75f)), SCREEN_COORD_BOTTOM(y), SCREEN_COORD(64.0f * 0.75f), SCREEN_COORD(h), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+                StatsSprites[PLRSTAT_PLAYER3_ACTIVE]->Draw(HUD_RIGHT(x - w + (64.0f * 0.75f)), HUD_BOTTOM(y), SCREEN_COORD(64.0f * 0.75f), SCREEN_COORD(h), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
                 break;
             case 3:
-                StatsSprites[PLRSTAT_PLAYER4_ACTIVE]->Draw(HUD_RIGHT(x), SCREEN_COORD_BOTTOM(y - h + (64.0f * 0.75f)), SCREEN_COORD(w), SCREEN_COORD(64.0f * 0.75f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+                StatsSprites[PLRSTAT_PLAYER4_ACTIVE]->Draw(HUD_RIGHT(x), HUD_BOTTOM(y - h + (64.0f * 0.75f)), SCREEN_COORD(w), SCREEN_COORD(64.0f * 0.75f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
                 break;
         }
     }
@@ -817,7 +818,7 @@ void CHudNew::DrawStats() {
         float h = GET_SETTING(HUD_VITAL_STATS).h;
         CRGBA col = GET_SETTING(HUD_VITAL_STATS).col;
 
-        DrawSimpleRect(CRect(HUD_RIGHT(x), SCREEN_COORD_BOTTOM(y), HUD_RIGHT(x) + SCREEN_COORD(w), SCREEN_COORD_BOTTOM(y) + SCREEN_COORD(h)), col);
+        DrawSimpleRect(CRect(HUD_RIGHT(x), HUD_BOTTOM(y), HUD_RIGHT(x) + SCREEN_COORD(w), HUD_BOTTOM(y) + SCREEN_COORD(h)), col);
 
         CFontNew::SetBackground(false);
         CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
@@ -865,10 +866,10 @@ void CHudNew::DrawStats() {
             unsigned int savedFilter;
             RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, (void*)&savedFilter);
             RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
-            DrawProgressBarWithSprite(StatsSprites[PLRSTAT_PROGRESS_BAR], HUD_RIGHT((x - 12.0f)), SCREEN_COORD_BOTTOM(spacing + (y - 34.0f)), SCREEN_COORD(164.0f), SCREEN_COORD(8.0f), CStats::GetStatValue(stat[i]) / 1000, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+            DrawProgressBarWithSprite(StatsSprites[PLRSTAT_PROGRESS_BAR], HUD_RIGHT((x - 12.0f)), HUD_BOTTOM(spacing + (y - 34.0f)), SCREEN_COORD(164.0f), SCREEN_COORD(8.0f), CStats::GetStatValue(stat[i]) / 1000, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
             RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
 
-            CFontNew::PrintString(HUD_RIGHT(x - 12.0f), SCREEN_COORD_BOTTOM(spacing + ((y - 34.0f) + 28.0f)), TheText.Get(str[i]));
+            CFontNew::PrintString(HUD_RIGHT(x - 12.0f), HUD_BOTTOM(spacing + ((y - 34.0f) + 28.0f)), TheText.Get(str[i]));
             spacing -= (34.0f + 8.0f);
         }
 
@@ -879,7 +880,7 @@ void CHudNew::DrawStats() {
         h = GetSetting(HUD_PLAYER_WHEEL).h;
         col = GetSetting(HUD_PLAYER_WHEEL).col;
 
-        StatsSprites[PLRSTAT_WHEEL]->Draw(HUD_RIGHT(x), SCREEN_COORD_BOTTOM(y), SCREEN_COORD(w), SCREEN_COORD(h), col);
+        StatsSprites[PLRSTAT_WHEEL]->Draw(HUD_RIGHT(x), HUD_BOTTOM(y), SCREEN_COORD(w), SCREEN_COORD(h), col);
 
         for (int i = 0; i < 4; i++)
             DrawPlayerPortrait(i, x, y, w, h);
@@ -1046,7 +1047,7 @@ void CHudNew::DrawVehicleName() {
             CRGBA col = GET_SETTING(HUD_VEHICLE_NAME).col;
             CFontNew::SetColor(CRGBA(col.r, col.g, col.b, alpha));
             CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_VEHICLE_NAME).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_VEHICLE_NAME).h));
-            CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_VEHICLE_NAME).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_VEHICLE_NAME).y), vehicleName);
+            CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_VEHICLE_NAME).x), HUD_BOTTOM(GET_SETTING(HUD_VEHICLE_NAME).y), vehicleName);
         }
     }
     else {
@@ -1065,7 +1066,7 @@ void CHudNew::DrawRadar() {
     if (CEntryExitManager::ms_exitEnterState != 1
         && CEntryExitManager::ms_exitEnterState != 2
         && (CHud::m_ItemToFlash != 8 || CTimer::m_FrameCounter & 8)) {
-        RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSWRAP);
+        RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
         RwRenderStateSet(rwRENDERSTATETEXTUREPERSPECTIVE, (void*)TRUE);
         RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)TRUE);
         RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)TRUE);
@@ -1118,7 +1119,7 @@ void CHudNew::DrawSubtitles() {
         CFontNew::SetColor(GET_SETTING(HUD_SUBTITLES).col);
         CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_SUBTITLES).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_SUBTITLES).h));
 
-        CFontNew::PrintStringFromBottom(SCREEN_COORD_CENTER_LEFT(GET_SETTING(HUD_SUBTITLES).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_SUBTITLES).y), CHud::m_Message);
+        CFontNew::PrintStringFromBottom(SCREEN_COORD_CENTER_LEFT(GET_SETTING(HUD_SUBTITLES).x), HUD_BOTTOM(GET_SETTING(HUD_SUBTITLES).y), CHud::m_Message);
     }
 }
 
@@ -1513,7 +1514,7 @@ void CHudNew::DrawZoneName() {
             CRGBA col = GET_SETTING(HUD_ZONE_NAME).col;
             CFontNew::SetColor(CRGBA(col.r, col.g, col.b, alpha));
             CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_ZONE_NAME).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_ZONE_NAME).h));
-            CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_ZONE_NAME).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_ZONE_NAME).y), CHud::m_ZoneToPrint);
+            CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_ZONE_NAME).x), HUD_BOTTOM(GET_SETTING(HUD_ZONE_NAME).y), CHud::m_ZoneToPrint);
         }
     }
     else {
@@ -1567,7 +1568,7 @@ void CHudNew::DrawLevelName() {
         CRGBA col = GET_SETTING(HUD_LEVEL_NAME).col;
         CFontNew::SetColor(CRGBA(col.r, col.g, col.b, alpha));
         CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_LEVEL_NAME).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_LEVEL_NAME).h));
-        CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_LEVEL_NAME).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_LEVEL_NAME).y), CTextNew::GetText(m_CurrentLevelName).text);
+        CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_LEVEL_NAME).x), HUD_BOTTOM(GET_SETTING(HUD_LEVEL_NAME).y), CTextNew::GetText(m_CurrentLevelName).text);
     }
 }
 
@@ -1678,7 +1679,7 @@ void CHudNew::DrawMissionTitle() {
         CRGBA col = HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255);
         CFontNew::SetColor(CRGBA(col.r, col.g, col.b, alpha));
         CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_MISSION_TITLE).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_MISSION_TITLE).h));
-        CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_MISSION_TITLE).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_MISSION_TITLE).y), m_LastMissionName);
+        CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_MISSION_TITLE).x), HUD_BOTTOM(GET_SETTING(HUD_MISSION_TITLE).y), m_LastMissionName);
     } 
     else {
         time = -1;

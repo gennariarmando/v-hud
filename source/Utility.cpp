@@ -1,6 +1,45 @@
 #include "VHud.h"
 #include "Utility.h"
 #include "CSprite2d.h"
+#include "MenuNew.h"
+
+bool hudSafeZones = true;
+
+void SetHUDSafeZone(bool on) {
+    hudSafeZones = on;
+}
+
+float ScaleHudX(float x) {
+    return ((SCREEN_WIDTH / SCREEN_HEIGHT <= DEFAULT_WIDTH / DEFAULT_HEIGHT) ? SCREEN_COORD(x) : (SCREEN_WIDTH * 0.5f) + (SCREEN_COORD(x - (DEFAULT_WIDTH * 0.5f)))) - (hudSafeZones ? SCREEN_COORD(MenuNew.TempSettings.safeZoneSize) : 0.0f);
+}
+
+float ScaleHudY(float y) {
+    return SCREEN_COORD(y) - (hudSafeZones ? SCREEN_COORD(MenuNew.TempSettings.safeZoneSize * SAFE_ZONE_HEIGHT_MULT) : 0.0f);
+}
+
+float ScaleHudRight(float x) {
+    return SCREEN_WIDTH - ScaleHudX(x);
+}
+
+float ScaleHudBottom(float y) {
+    return SCREEN_HEIGHT - ScaleHudY(y);
+}
+
+float ScaleMenuX(float x) {
+    return  ((SCREEN_WIDTH / SCREEN_HEIGHT == DEFAULT_WIDTH / DEFAULT_HEIGHT) ? SCREEN_COORD(x) : (SCREEN_WIDTH * 0.5f) + (SCREEN_COORD(x - (DEFAULT_WIDTH * 0.5f))));
+}
+
+float ScaleMenuY(float y) {
+    return SCREEN_COORD(y);
+}
+
+float ScaleMenuRight(float x) {
+    return SCREEN_WIDTH - MENU_X(x);
+}
+
+float ScaleMenuBottom(float x) {
+    return SCREEN_HEIGHT - MENU_Y(x);
+}
 
 void RotateVertices(CVector2D *rect, float x, float y, float angle) {
     float xold, yold;

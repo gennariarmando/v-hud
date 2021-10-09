@@ -982,7 +982,7 @@ void CWeaponSelector::DrawStats(int active_id, int selected_id) {
 
     static float heightLerp = 0.0f;
     heightLerp = interpF(heightLerp, GetShiftOffsetForStatsBox(), 0.8f * CTimer::ms_fTimeStep);
-    CHudNew::DrawSimpleRect(CRect(HUD_RIGHT(x), SCREEN_COORD(y) + heightLerp, HUD_RIGHT(x) + SCREEN_COORD(w), SCREEN_COORD(y) + heightLerp + SCREEN_COORD(h)), col);
+    CHudNew::DrawSimpleRect(CRect(HUD_RIGHT(x), HUD_Y(y) + heightLerp, HUD_RIGHT(x) + SCREEN_COORD(w), HUD_Y(y) + heightLerp + SCREEN_COORD(h)), col);
 
     x = x - GET_SETTING("HUD_WEAPON_STATS_BAR").x;
     y = y + GET_SETTING("HUD_WEAPON_STATS_BAR").y;
@@ -1075,8 +1075,8 @@ void CWeaponSelector::DrawStats(int active_id, int selected_id) {
         else
             col = HudColourNew.GetRGB("HUD_COLOUR_RED", 255);
 
-        DrawProgressBarWithProgressDifference(HUD_RIGHT(x), SCREEN_COORD(spacing + y) + heightLerp, SCREEN_COORD(w), SCREEN_COORD(h), fStatsProgress[i], GET_SETTING("HUD_WEAPON_STATS_BAR").col, fStatsDiff[i], col);
-        CFontNew::PrintString(HUD_RIGHT(x), SCREEN_COORD(spacing + (y - 28.0f)) + heightLerp, CTextNew::GetText(statName[i]).text);
+        DrawProgressBarWithProgressDifference(HUD_RIGHT(x), HUD_Y(spacing + y) + heightLerp, SCREEN_COORD(w), SCREEN_COORD(h), fStatsProgress[i], GET_SETTING("HUD_WEAPON_STATS_BAR").col, fStatsDiff[i], col);
+        CFontNew::PrintString(HUD_RIGHT(x), HUD_Y(spacing + (y - 28.0f)) + heightLerp, CTextNew::GetText(statName[i]).text);
         spacing += 42.0f;
     }
 

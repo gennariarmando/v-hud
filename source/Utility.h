@@ -1,13 +1,16 @@
 #define DEFAULT_WIDTH 1920.0f
 #define DEFAULT_HEIGHT 1080.0f
-#define HUD_X(x) ((SCREEN_WIDTH / SCREEN_HEIGHT <= DEFAULT_WIDTH / DEFAULT_HEIGHT) ? SCREEN_COORD(x) : (SCREEN_WIDTH * 0.5f) + (SCREEN_COORD(x - (DEFAULT_WIDTH * 0.5f))))
-#define HUD_Y(y) SCREEN_COORD(y)
-#define HUD_RIGHT(x) SCREEN_WIDTH - HUD_X(x)
+#define SAFE_ZONE_HEIGHT_MULT (DEFAULT_HEIGHT / DEFAULT_WIDTH)
 
-#define MENU_X(x) ((SCREEN_WIDTH / SCREEN_HEIGHT == DEFAULT_WIDTH / DEFAULT_HEIGHT) ? SCREEN_COORD(x) : (SCREEN_WIDTH * 0.5f) + (SCREEN_COORD(x - (DEFAULT_WIDTH * 0.5f))))
-#define MENU_Y(y) SCREEN_COORD(y)
-#define MENU_RIGHT(x) SCREEN_WIDTH - MENU_X(x)
-#define MENU_BOTTOM(x) SCREEN_HEIGHT - MENU_Y(x)
+#define HUD_X(x) ScaleHudX(x)
+#define HUD_Y(y) ScaleHudY(y)
+#define HUD_RIGHT(x) ScaleHudRight(x)
+#define HUD_BOTTOM(y) ScaleHudBottom(y)
+
+#define MENU_X(x) ScaleMenuX(x)
+#define MENU_Y(y) ScaleMenuY(y)
+#define MENU_RIGHT(x) ScaleMenuRight(x)
+#define MENU_BOTTOM(y) ScaleMenuBottom(y)
 
 #define ABS(a)  (((a) < 0) ? (-(a)) : (a))
 #define isNearlyEqualF(a, b, t) fabs(a - b) <= ( (fabs(a) < fabs(b) ? fabs(b) : fabs(a)) * t)
@@ -17,6 +20,19 @@
 
 #define clamp(v, low, high) ((v)<(low) ? (low) : (v)>(high) ? (high) : (v))
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
+
+
+extern bool hudSafeZones;
+extern void SetHUDSafeZone(bool on);
+extern float ScaleHudX(float x);
+extern float ScaleHudY(float y);
+extern float ScaleHudRight(float x);
+extern float ScaleHudBottom(float y);
+       
+extern float ScaleMenuX(float x);
+extern float ScaleMenuY(float y);
+extern float ScaleMenuRight(float x);
+extern float ScaleMenuBottom(float y);
 
 extern void RotateVertices(CVector2D *rect, float x, float y, float angle);
 extern void DrawProgressBar(float x, float y, float width, float height, float progress, CRGBA const& col, CRGBA const& colBack = NULL);

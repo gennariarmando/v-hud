@@ -48,9 +48,9 @@ void CGPS::DrawDistanceFromWaypoint() {
         float x, y, w, h;
 
         x = HUD_X(GET_SETTING(HUD_RADAR_GPS_RECT).x);
-        y = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_GPS_RECT).y);
+        y = HUD_BOTTOM(GET_SETTING(HUD_RADAR_GPS_RECT).y);
         w = HUD_X(GET_SETTING(HUD_RADAR_GPS_RECT).w);
-        h = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_GPS_RECT).h);
+        h = HUD_BOTTOM(GET_SETTING(HUD_RADAR_GPS_RECT).h);
 
         CSprite2d::DrawRect(CRect(x, y, w, h), GET_SETTING(HUD_RADAR_GPS_RECT).col);
 
@@ -90,11 +90,11 @@ void CGPS::DrawDistanceFromWaypoint() {
         x = GET_SETTING(HUD_RADAR_GPS_DIST_TEXT).x;
         y = GET_SETTING(HUD_RADAR_GPS_DIST_TEXT).y;
 
-        CFontNew::PrintString(HUD_X(x), SCREEN_COORD_BOTTOM(y), text);
+        CFontNew::PrintString(HUD_X(x), HUD_BOTTOM(y), text);
 
         if (Dest.nPathDirection != 8) {
             x = HUD_X(GET_SETTING(HUD_RADAR_GPS_DIST_ARROW).x);
-            y = SCREEN_COORD_BOTTOM(GET_SETTING(HUD_RADAR_GPS_DIST_ARROW).y);
+            y = HUD_BOTTOM(GET_SETTING(HUD_RADAR_GPS_DIST_ARROW).y);
             w = SCREEN_COORD(GET_SETTING(HUD_RADAR_GPS_DIST_ARROW).w);
             h = SCREEN_COORD(GET_SETTING(HUD_RADAR_GPS_DIST_ARROW).h);
 
