@@ -18,6 +18,7 @@
 #include "CGenericGameStorage.h"
 #include "C_PcSave.h"
 #include "CRadar.h"
+#include "CMessages.h"
 
 #include "GPS.h"
 #include "PedNew.h"
@@ -1689,6 +1690,9 @@ void CMenuNew::Draw() {
         }
         else {
             switch (nCurrentScreen) {
+            case MENUSCREEN_BRIEF:
+                PrintBrief();
+                break;
             case MENUSCREEN_MAP:
                 DrawMap();
                 break;
@@ -2555,6 +2559,56 @@ int CMenuNew::GetMenuMapTiles() {
 float CMenuNew::GetMenuMapWholeSize() {
     const float mapWholeSize = GetMenuMapTileSize() * GetMenuMapTiles();
     return mapWholeSize * fMapZoom;
+}
+
+void CMenuNew::PrintBrief() {
+    CRect mask;
+    mask.left = MENU_X(311.0f);
+    mask.top = MENU_Y(181.0f + 39.0f + 20.0f);
+    mask.right = SCREEN_COORD((214.0f + 3.0f) * 6.0f);
+    mask.bottom = SCREEN_COORD(645.0f);
+    DrawPatternBackground(CRect(mask.left, mask.top, mask.left + mask.right, mask.top + mask.bottom), HudColourNew.GetRGB(HUD_COLOUR_BLACK, FadeIn(150)));
+
+    CFontNew::SetBackground(false);
+    CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+    CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
+    CFontNew::SetWrapX(SCREEN_COORD(1920.0f));
+    CFontNew::SetFontStyle(CFontNew::FONT_1);
+    CFontNew::SetDropShadow(0.0f);
+    CFontNew::SetOutline(0.0f);
+    CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+    CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(255)));
+    CFontNew::SetScale(SCREEN_MULTIPLIER(2.6f), SCREEN_MULTIPLIER(4.8f));
+
+    bool noBrief = true;
+    for (int i = 4; i >= 0; i--) {
+        tPreviousBrief& brief = CMessages::PreviousBriefs[i];
+        if (brief.m_pText) {
+            CMessages::InsertNumberInString(brief.m_pText,
+                brief.m_nNumber[0], brief.m_nNumber[1],
+                brief.m_nNumber[2], brief.m_nNumber[3],
+                brief.m_nNumber[4], brief.m_nNumber[5], gString);
+            CMessages::InsertStringInString(gString, brief.m_pString);
+            CMessages::InsertPlayerControlKeysInString(gString);
+
+            CFontNew::SetTokenToIgnore('N', 'n');
+            CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
+            CFontNew::PrintString(mask.left + SCREEN_COORD(8.0f), mask.top + SCREEN_COORD(4.0f), gString);
+            mask.top += SCREEN_COORD(24.0f);
+
+            noBrief = false;
+        }
+    }
+    CFontNew::SetTokenToIgnore(NULL, NULL);
+
+    if (noBrief) {
+        char* str = CTextNew::GetText("FE_BRF").text;
+        CFontNew::PrintString(mask.left + SCREEN_COORD(32.0f), mask.top + SCREEN_COORD(19.0f), str);
+
+        char* str1 = CTextNew::GetText("FE_BRF1").text;
+        CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
+        CFontNew::PrintString(mask.left + SCREEN_COORD(32.0f), mask.top + SCREEN_COORD(148.0f), str1);
+    }
 }
 
 void CMenuNew::DrawMap() {

@@ -17,6 +17,7 @@ struct CFontDetailsNew {
 	CRGBA backgroundColor;
 	CRect backgroundBorder;
 	bool isBlip;
+	char ignoreTokens[2];
 
 	CFontDetailsNew() {}
 };
@@ -146,6 +147,7 @@ public:
 	static float GetCharacterSize(char c);
 	static float GetStringWidth(char* s, bool spaces = false);
 	static char* GetNextSpace(char* s);
+	static void SetTokenToIgnore(char t1, char t2);
 	static int GetNumberLines(bool print, float x, float y, char* s);
 	static char* ParseToken(char *s);
 	static bool ParseGInputActions(char* s);

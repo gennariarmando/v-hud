@@ -461,6 +461,7 @@ public:
     float GetMenuMapTileSize();
     int GetMenuMapTiles();
     float GetMenuMapWholeSize();
+    void PrintBrief();
     void DrawMap();
     void DrawPatternBackground(CRect rect, CRGBA col);
     void DrawGallery();

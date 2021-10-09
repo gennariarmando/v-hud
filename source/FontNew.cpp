@@ -226,6 +226,7 @@ void CFontNew::Clear() {
     NumLines = 0;
     bNewLine = false;
     PS2Symbol = NULL;
+    SetTokenToIgnore(NULL, NULL);
 }
 
 void CFontNew::Shutdown() {
@@ -281,6 +282,11 @@ char* CFontNew::GetNextSpace(char* s) {
         }
 
     return s;
+}
+
+void CFontNew::SetTokenToIgnore(char t1, char t2) {
+    Details.ignoreTokens[0] = t1;
+    Details.ignoreTokens[1] = t2;
 }
 
 int CFontNew::PrintString(float x, float y, char* s) {
@@ -436,172 +442,177 @@ void CFontNew::PrintString(bool print, float x, float y, char* start, char* end,
 
 char* CFontNew::ParseToken(char* s) {
     char* c = s + 1;
-    switch (*c) {
-    case '<':
-        PS2Symbol = ButtonSprite[BUTTON_LEFT];
-        break;
-    case '>':
-        PS2Symbol = ButtonSprite[BUTTON_RIGHT];
-        break;
-    case 'A':
-    case 'a':
-        PS2Symbol = ButtonSprite[BUTTON_L3];
-        break;
-    case 'B':
-    case 'b':
-        SetColor(HudColourNew.GetRGB(HUD_COLOUR_BLUE, 255));
-        break;
-    case 'C':
-    case 'c':
-        PS2Symbol = ButtonSprite[BUTTON_R3];
-        break;
-    case 'D':
-    case 'd':
-        PS2Symbol = ButtonSprite[BUTTON_DOWN];
-        break;
-    case 'G':
-    case 'g':
-        SetColor(HudColourNew.GetRGB(HUD_COLOUR_GREEN, 255));
-        break;
-    case 'H':
-    case 'h':
-        SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
-        break;
-    case 'J':
-    case 'j':
-        PS2Symbol = ButtonSprite[BUTTON_R1];
-        break;
-    case 'K':
-    case 'k':
-        PS2Symbol = ButtonSprite[BUTTON_L1];
-        break;
-    case 'M':
-    case 'm':
-        PS2Symbol = ButtonSprite[BUTTON_L2];
-        break;
-    case 'N':
-    case 'n':
-        bNewLine = true;
-        NumLines++;
-        break;
-    case 'O':
-    case 'o':
-        PS2Symbol = ButtonSprite[BUTTON_CIRCLE];
-        break;
-    case 'P':
-    case 'p':
-        SetColor(HudColourNew.GetRGB(HUD_COLOUR_PURPLE, 255));
-        break;
-    case 'Q':
-    case 'q':
-        PS2Symbol = ButtonSprite[BUTTON_SQUARE];
-        break;
-    case 'R':
-    case 'r':
-        SetColor(HudColourNew.GetRGB(HUD_COLOUR_RED, 255));
-        break;
-    case 'S':
-    case 's':
-        SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
-        break;
-    case 'T':
-    case 't':
-        PS2Symbol = bHasPadInHands ? ButtonSprite[BUTTON_TRIANGLE] : ButtonSprite[BUTTON_PC_ESC];
-        break;
-    case 'U':
-    case 'u':
-        if (c[1] == 'd' || c[1] == 'D') {
-            PS2Symbol = ButtonSprite[BUTTON_UPDOWN];
-            c++;
-        }
-        else
-            PS2Symbol = ButtonSprite[BUTTON_UP];
-        break;
-    case 'V':
-    case 'v':
-        PS2Symbol = ButtonSprite[BUTTON_R2];
-        break;
-    case 'W':
-    case 'w':
-        SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
-        break;
-    case 'X':
-    case 'x':
-        PS2Symbol = bHasPadInHands ? ButtonSprite[BUTTON_CROSS] : ButtonSprite[BUTTON_PC_ENTER];
-        break;
-    case 'Y':
-    case 'y':
-        SetColor(HudColourNew.GetRGB(HUD_COLOUR_ORANGELIGHT, 255));
-        break;
-    case 'l':
-        SetColor(HudColourNew.GetRGB(HUD_COLOUR_BLACK, 255));
-        break;
-    case '[':
-        switch (c[1]) {
-        case '~':
-            PS2Symbol = ButtonSprite[BUTTON_THUMBL];
-            break;
-        case 'x':
-            PS2Symbol = ButtonSprite[BUTTON_THUMBLX];
-            break;
-        case 'y':
-            PS2Symbol = ButtonSprite[BUTTON_THUMBLY];
-            break;
+    int a = Details.color.a;
+
+    if (Details.ignoreTokens[0] != *c && Details.ignoreTokens[1] != *c) {
+        switch (*c) {
         case '<':
-            PS2Symbol = ButtonSprite[BUTTON_THUMBLXL];
+            PS2Symbol = ButtonSprite[BUTTON_LEFT];
             break;
         case '>':
-            PS2Symbol = ButtonSprite[BUTTON_THUMBLXR];
+            PS2Symbol = ButtonSprite[BUTTON_RIGHT];
             break;
-        case 'u':
-            PS2Symbol = ButtonSprite[BUTTON_THUMBLYU];
+        case 'A':
+        case 'a':
+            PS2Symbol = ButtonSprite[BUTTON_L3];
             break;
+        case 'B':
+        case 'b':
+            SetColor(HudColourNew.GetRGB(HUD_COLOUR_BLUE, a));
+            break;
+        case 'C':
+        case 'c':
+            PS2Symbol = ButtonSprite[BUTTON_R3];
+            break;
+        case 'D':
         case 'd':
-            PS2Symbol = ButtonSprite[BUTTON_THUMBLYD];
+            PS2Symbol = ButtonSprite[BUTTON_DOWN];
             break;
-        }
-        c++;
-        break;
-    case ']':
-        switch (*(++c)) {
-        case '~':
-            PS2Symbol = ButtonSprite[BUTTON_THUMBR];
+        case 'G':
+        case 'g':
+            SetColor(HudColourNew.GetRGB(HUD_COLOUR_GREEN, a));
             break;
-        case 'x':
-            PS2Symbol = ButtonSprite[BUTTON_THUMBRX];
+        case 'H':
+        case 'h':
+            SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, a));
             break;
-        case 'y':
-            PS2Symbol = ButtonSprite[BUTTON_THUMBRY];
+        case 'J':
+        case 'j':
+            PS2Symbol = ButtonSprite[BUTTON_R1];
             break;
-        case '<':
-            PS2Symbol = ButtonSprite[BUTTON_THUMBRXL];
+        case 'K':
+        case 'k':
+            PS2Symbol = ButtonSprite[BUTTON_L1];
             break;
-        case '>':
-            PS2Symbol = ButtonSprite[BUTTON_THUMBRXR];
+        case 'M':
+        case 'm':
+            PS2Symbol = ButtonSprite[BUTTON_L2];
             break;
+        case 'N':
+        case 'n':
+            bNewLine = true;
+            NumLines++;
+            break;
+        case 'O':
+        case 'o':
+            PS2Symbol = ButtonSprite[BUTTON_CIRCLE];
+            break;
+        case 'P':
+        case 'p':
+            SetColor(HudColourNew.GetRGB(HUD_COLOUR_PURPLE, a));
+            break;
+        case 'Q':
+        case 'q':
+            PS2Symbol = ButtonSprite[BUTTON_SQUARE];
+            break;
+        case 'R':
+        case 'r':
+            SetColor(HudColourNew.GetRGB(HUD_COLOUR_RED, a));
+            break;
+        case 'S':
+        case 's':
+            SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, a));
+            break;
+        case 'T':
+        case 't':
+            PS2Symbol = bHasPadInHands ? ButtonSprite[BUTTON_TRIANGLE] : ButtonSprite[BUTTON_PC_ESC];
+            break;
+        case 'U':
         case 'u':
-            PS2Symbol = ButtonSprite[BUTTON_THUMBRYU];
-            break;
-        case 'd':
-            PS2Symbol = ButtonSprite[BUTTON_THUMBRYD];
-            break;
-        }
-        break;
-    case '@':
-        if (char* nx = c) {
-            if (!ParseGInputActions(++c)) {
-                switch (*(++nx)) {
-                case 'E':
-                    PS2Symbol = ButtonSprite[BUTTON_PC_ENTER];
-                    break;
-                case 'B':
-                    PS2Symbol = ButtonSprite[BUTTON_PC_ESC];
-                    break;
-                }
+            if (c[1] == 'd' || c[1] == 'D') {
+                PS2Symbol = ButtonSprite[BUTTON_UPDOWN];
+                c++;
             }
-            c = nx;
+            else
+                PS2Symbol = ButtonSprite[BUTTON_UP];
+            break;
+        case 'V':
+        case 'v':
+            PS2Symbol = ButtonSprite[BUTTON_R2];
+            break;
+        case 'W':
+        case 'w':
+            SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, a));
+            break;
+        case 'X':
+        case 'x':
+            PS2Symbol = bHasPadInHands ? ButtonSprite[BUTTON_CROSS] : ButtonSprite[BUTTON_PC_ENTER];
+            break;
+        case 'Y':
+        case 'y':
+            SetColor(HudColourNew.GetRGB(HUD_COLOUR_YELLOW, a));
+            break;
+        case 'l':
+            SetColor(HudColourNew.GetRGB(HUD_COLOUR_BLACK, a));
+            break;
+        case '[':
+            switch (c[1]) {
+            case '~':
+                PS2Symbol = ButtonSprite[BUTTON_THUMBL];
+                break;
+            case 'x':
+                PS2Symbol = ButtonSprite[BUTTON_THUMBLX];
+                break;
+            case 'y':
+                PS2Symbol = ButtonSprite[BUTTON_THUMBLY];
+                break;
+            case '<':
+                PS2Symbol = ButtonSprite[BUTTON_THUMBLXL];
+                break;
+            case '>':
+                PS2Symbol = ButtonSprite[BUTTON_THUMBLXR];
+                break;
+            case 'u':
+                PS2Symbol = ButtonSprite[BUTTON_THUMBLYU];
+                break;
+            case 'd':
+                PS2Symbol = ButtonSprite[BUTTON_THUMBLYD];
+                break;
+            }
+            c++;
+            break;
+        case ']':
+            switch (*(++c)) {
+            case '~':
+                PS2Symbol = ButtonSprite[BUTTON_THUMBR];
+                break;
+            case 'x':
+                PS2Symbol = ButtonSprite[BUTTON_THUMBRX];
+                break;
+            case 'y':
+                PS2Symbol = ButtonSprite[BUTTON_THUMBRY];
+                break;
+            case '<':
+                PS2Symbol = ButtonSprite[BUTTON_THUMBRXL];
+                break;
+            case '>':
+                PS2Symbol = ButtonSprite[BUTTON_THUMBRXR];
+                break;
+            case 'u':
+                PS2Symbol = ButtonSprite[BUTTON_THUMBRYU];
+                break;
+            case 'd':
+                PS2Symbol = ButtonSprite[BUTTON_THUMBRYD];
+                break;
+            }
+            break;
+        case '@':
+            if (char* nx = c) {
+                if (!ParseGInputActions(++c)) {
+                    switch (*(++nx)) {
+                    case 'E':
+                        PS2Symbol = ButtonSprite[BUTTON_PC_ENTER];
+                        break;
+                    case 'B':
+                        PS2Symbol = ButtonSprite[BUTTON_PC_ESC];
+                        break;
+                    }
+                }
+                c = nx;
+            }
         }
     }
+
     while (*c != '~') ++c;
 
     if (*c)
