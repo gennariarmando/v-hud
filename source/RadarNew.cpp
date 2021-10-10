@@ -248,7 +248,7 @@ void CRadarNew::DrawBlips() {
         TransformRadarPointToScreenSpace(out, in);
 
         float angle = FindPlayerHeading(0) - M_PI;
-        DrawRotatingRadarSprite(m_BlipsSprites[RADAR_SPRITE_CENTRE], out.x, out.y, angle, SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).w), SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).h), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+        DrawRotatingRadarSprite(m_BlipsSprites[RADAR_SPRITE_CENTRE], out.x, out.y, angle, SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).w + 1.0f), SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).h + 1.0f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
     }
     else {
         CVector2D in, out;
@@ -269,7 +269,7 @@ void CRadarNew::DrawBlips() {
         TransformRadarPointToScreenSpace(out, in);
         
         float angle = FindPlayerHeading(0) - (CRadar::m_fRadarOrientation + M_PI);
-        DrawRotatingRadarSprite(m_BlipsSprites[RADAR_SPRITE_CENTRE], out.x, out.y, angle, SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).w), SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).h), CRGBA(255, 255, 255, 255));
+        DrawRotatingRadarSprite(m_BlipsSprites[RADAR_SPRITE_CENTRE], out.x, out.y, angle, SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).w + 1.0f), SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).h + 1.0f), CRGBA(255, 255, 255, 255));
     }
 }
 
@@ -1038,7 +1038,10 @@ void CRadarNew::DrawRadarMap(int x, int y) {
     rect.top = HUD_BOTTOM(GET_SETTING(HUD_RADAR_RECT).y);
     rect.left = HUD_X(GET_SETTING(HUD_RADAR_RECT).x);
 
-    col = GET_SETTING(HUD_RADAR_RECT).col;
+    if (FindPlayerWanted(-1)->m_nWantedLevel > 0 && m_bCopPursuit)
+        col = HudColourNew.GetRGB(HUD_COLOUR_BLACK, 50);
+    else
+        col = GET_SETTING(HUD_RADAR_RECT).col;
     CHudNew::DrawSimpleRect(rect, col);
 
     m_pCamera->frameBuffer = m_pFrameBuffer1;

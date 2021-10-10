@@ -53,6 +53,14 @@ char* MenuSpritesFileNames[] = {
     "xbox_gamepad",
     "arrow_left",
     "arrow_right",
+    "menu_bought",
+    "menu_bought",
+    "menu_car",
+    "menu_car_b",
+    "menu_clothes",
+    "menu_clothes_b",
+    "menu_weapons",
+    "menu_weapons_b",
 };
 
 char* MiscSpritesFileNames[] = {

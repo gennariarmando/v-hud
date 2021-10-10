@@ -5,6 +5,7 @@
 #include "GPS.h"
 #include "HudNew.h"
 #include "MenuNew.h"
+#include "MenuPanels.h"
 #include "OverlayLayer.h"
 #include "RadarNew.h"
 #include "RadioHud.h"
@@ -48,6 +49,7 @@ VHud::VHud() {
         CHudNew::Init();
         CRadarNew::Init();
         CWeaponSelector::Init();
+        CMenuPanels::Init();
     };
 
     Events::reInitGameEvent += [] {
@@ -74,5 +76,6 @@ VHud::VHud() {
         COverlayLayer::Shutdown();
         CFontNew::Shutdown();
         CWeaponSelector::Shutdown();
+        CMenuPanels::Shutdown();
     };
 }

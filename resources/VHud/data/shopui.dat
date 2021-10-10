@@ -1,0 +1,23 @@
+# SHOPUI.DAT
+# This file contais some values for displaying the in game menu panels.
+
+# Menu title gxt: Name of gxt key which is used for the menu.
+# Interior name: Name of interior where menu is opened, 0 to disable.
+# Items type: This is used to select special icons for menu.
+#   -Type WEAP uses menu_weapons texture.
+#   -Type CLOT uses menu_clothes texture.
+#   -Type CAR uses menu_car texture.
+#   -Type NULL uses the generic texture.
+# Logo tex name: The logo will be placed at top of the menu
+
+# Menu title gxt # Interior name # Items type # logo tex name
+AMMUN            0               WEAP         shopui_title_gunclub
+AMMUN1           0               WEAP         shopui_title_gunclub
+AMMUN2           0               WEAP         shopui_title_gunclub
+AMMUN3           0               WEAP         shopui_title_gunclub
+AMMUN4           0               WEAP         shopui_title_gunclub
+AMMUN5           0               WEAP         shopui_title_gunclub
+CLOTCHO          Binco           CLOT         shopui_title_lowendfashion2     
+CLOTCHO          Sub_Urban       CLOT         shopui_title_midfashion     
+CLOTCHO          Pro_Laps        CLOT         shopui_title_tennisstore     
+UPGRADE          0               CAR          shopui_title_carmod

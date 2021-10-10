@@ -114,10 +114,10 @@ void CGPS::DrawLine(CVector2D const&a, CVector2D const&b, float width, CRGBA col
     float angle = atan2f(dir.y, dir.x);
     if (MenuNew.bDrawMenuMap) {
         float mp = MenuNew.fMapZoom / 2;
-        shift[0].x = cosf(angle - 1.5707963f) * 4.0f * mp;
-        shift[0].y = sinf(angle - 1.5707963f) * 4.0f * mp;
-        shift[1].x = cosf(angle + 1.5707963f) * 4.0f * mp;
-        shift[1].y = sinf(angle + 1.5707963f) * 4.0f * mp;
+        shift[0].x = cosf(angle - 1.5707963f) * 3.0f * mp;
+        shift[0].y = sinf(angle - 1.5707963f) * 3.0f * mp;
+        shift[1].x = cosf(angle + 1.5707963f) * 3.0f * mp;
+        shift[1].y = sinf(angle + 1.5707963f) * 3.0f * mp;
     }
     else {
         shift[0].x = cosf(angle - 1.5707963f) * width * (CRadarNew::m_vRadarMapQuality.x * 0.00390625f);
@@ -138,20 +138,19 @@ void CGPS::DrawLine(CVector2D const&a, CVector2D const&b, float width, CRGBA col
 }
 
 void CGPS::ProcessPath(CLocalization& l) {
-    ThePaths.DoPathSearch(0, FindPlayerCoors(-1), CNodeAddress(), l.vecDest, l.resultNodes, &l.nNodesCount, MAX_NODE_POINTS, &l.fGPSDistance,
-        999999.0f, NULL, 999999.0f, false, CNodeAddress(), false, FindPlayerPed()->m_pVehicle->m_nVehicleSubClass == VEHICLE_BOAT);
+    ThePaths.DoPathSearch(0, FindPlayerCoors(0), CNodeAddress(), l.vecDest, l.resultNodes, &l.nNodesCount, MAX_NODE_POINTS, &l.fGPSDistance,
+        999999.0f, NULL, 999999.0f, false, CNodeAddress(), false, false);
 
     if (l.nNodesCount > 0) {
         for (short i = 0; i < l.nNodesCount; i++) {
             CVector nodePosn = ThePaths.GetPathNode(l.resultNodes[i])->GetNodeCoors();
             CVector2D tmpPoint;
             CRadarNew::TransformRealWorldPointToRadarSpace(tmpPoint, CVector2D(nodePosn.x, nodePosn.y));
-            if (!MenuNew.bDrawMenuMap) {
-                CRadarNew::TransformRadarPoint(l.nodePoints[i], tmpPoint);
+            if (MenuNew.bDrawMenuMap) {
+                CRadarNew::TransformRadarPointToScreenSpace(l.nodePoints[i], tmpPoint);
             }
             else {
-                CRadarNew::TransformRadarPointToScreenSpace(l.nodePoints[i], tmpPoint);
-                CRadarNew::LimitToMap(&l.nodePoints[i].x, &l.nodePoints[i].y);
+                CRadarNew::TransformRadarPoint(l.nodePoints[i], tmpPoint);
             }
         }
 
@@ -187,10 +186,10 @@ void CGPS::DrawPathLine() {
             FrontEndMenuManager.m_nTargetBlipIndex = 0;
         }
 
-        if (CRadarNew::IsPlayerInVehicle()
+        if ((CRadarNew::IsPlayerInVehicle()
             && playa->m_pVehicle->m_nVehicleSubClass != VEHICLE_PLANE
             && playa->m_pVehicle->m_nVehicleSubClass != VEHICLE_HELI
-            && playa->m_pVehicle->m_nVehicleSubClass != VEHICLE_BMX) {
+            && playa->m_pVehicle->m_nVehicleSubClass != VEHICLE_BMX) || MenuNew.bDrawMenuMap) {
             if (FrontEndMenuManager.m_nTargetBlipIndex
                 && CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nCounter == HIWORD(FrontEndMenuManager.m_nTargetBlipIndex)
                 && CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nBlipDisplayFlag) {

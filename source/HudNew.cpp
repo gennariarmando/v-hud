@@ -35,6 +35,7 @@
 #include "Utility.h"
 #include "GPS.h"
 #include "MenuNew.h"
+#include "MenuPanels.h"
 #include "TextureMgr.h"
 #include "resource.h"
 
@@ -341,7 +342,7 @@ void CHudNew::Draw() {
             CRadar::Draw3dMarkers();
 
         if (CMenuSystem::num_menus_in_use)
-            CMenuSystem::Process(-99);
+            CMenuPanels::Process(-99);
 
         DrawScriptText(0);
     }
@@ -1240,7 +1241,7 @@ void CHudNew::PrintSmallHelpText(int alpha) {
 
         CRect r;
         r.left = HUD_X(96.0f);
-        r.top = SCREEN_COORD_BOTTOM(324.0f);
+        r.top = HUD_BOTTOM(324.0f);
         r.right = r.left + SCREEN_COORD(270.0f);
         r.bottom = r.top + SCREEN_COORD(64.0f);
 
@@ -1258,12 +1259,12 @@ void CHudNew::PrintSmallHelpText(int alpha) {
         c = GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).col;
         CFontNew::SetColor(CRGBA(c.r, c.g, c.b, clamp(alpha, 0, c.a)));
         CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
-        CFontNew::PrintString(HUD_X(96.0f + 50.0f), SCREEN_COORD_BOTTOM(324.0f), string);
-        CFontNew::PrintString(HUD_X(96.0f + 50.0f), SCREEN_COORD_BOTTOM(304.0f), percentage);
+        CFontNew::PrintString(HUD_X(96.0f + 50.0f), HUD_BOTTOM(324.0f), string);
+        CFontNew::PrintString(HUD_X(96.0f + 50.0f), HUD_BOTTOM(304.0f), percentage);
 
         CheckPlayerPortrait(CWorld::PlayerInFocus);
         r.left = HUD_X(96.0f + 4.0f);
-        r.top = SCREEN_COORD_BOTTOM(324.0f - 4.0f);
+        r.top = HUD_BOTTOM(324.0f - 4.0f);
         r.right = r.left + SCREEN_COORD(38.0f);
         r.bottom = r.top + SCREEN_COORD(38.0f);
         DrawSimpleRect(r, HudColourNew.GetRGB(HUD_COLOUR_BLACK, 200));
@@ -1271,20 +1272,20 @@ void CHudNew::PrintSmallHelpText(int alpha) {
         unsigned int savedFilter;
         RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, (void*)&savedFilter);
         RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
-        DrawProgressBarWithSprite(StatsSprites[PLRSTAT_PROGRESS_BAR], HUD_X(96.0f + 4.0f), SCREEN_COORD_BOTTOM(300.0f - 23.0f), SCREEN_COORD(262.0f), SCREEN_COORD(13.0f), progress / 1000, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+        DrawProgressBarWithSprite(StatsSprites[PLRSTAT_PROGRESS_BAR], HUD_X(96.0f + 4.0f), HUD_BOTTOM(300.0f - 23.0f), SCREEN_COORD(262.0f), SCREEN_COORD(13.0f), progress / 1000, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
         RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
     }
     else if (ShowTripSkipMessage) {
         CRect r;
         r.left = HUD_X(96.0f);
-        r.top = SCREEN_COORD_BOTTOM(324.0f);
+        r.top = HUD_BOTTOM(324.0f);
         r.right = r.left + SCREEN_COORD(270.0f);
         r.bottom = r.top + SCREEN_COORD(64.0f);
 
         DrawSimpleRectGrad(r, c);
 
         r.left = HUD_X(104.0f);
-        r.top = SCREEN_COORD_BOTTOM(324.0f);
+        r.top = HUD_BOTTOM(324.0f);
         r.right = r.left + SCREEN_COORD(64.0f);
         r.bottom = r.top + SCREEN_COORD(64.0f);
         MenuNew.MiscSprites[MISC_SKIPICON]->Draw(r, CRGBA(255, 255, 255, 255));
@@ -1292,7 +1293,7 @@ void CHudNew::PrintSmallHelpText(int alpha) {
         c = GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).col;
         CFontNew::SetColor(CRGBA(c.r, c.g, c.b, clamp(alpha, 0, c.a)));
         CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).h));
-        CFontNew::PrintString(HUD_X(96.0f + 50.0f), SCREEN_COORD_BOTTOM(324.0f), "TRIP SKIP");
+        CFontNew::PrintString(HUD_X(96.0f + 50.0f), HUD_BOTTOM(324.0f), "TRIP SKIP");
     }
     else {
         CFontNew::SetBackground(true);
@@ -1304,7 +1305,7 @@ void CHudNew::PrintSmallHelpText(int alpha) {
         c = GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).col;
         CFontNew::SetColor(CRGBA(c.r, c.g, c.b, clamp(alpha, 0, c.a)));
         CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).h));
-        CFontNew::PrintStringFromBottom(HUD_X(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).x), SCREEN_COORD_BOTTOM(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).y), CHud::m_pHelpMessageToPrint);
+        CFontNew::PrintStringFromBottom(HUD_X(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).x), HUD_BOTTOM(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).y), CHud::m_pHelpMessageToPrint);
         CFontNew::SetGradBackground(false);
     }
 }
