@@ -313,9 +313,10 @@ void CHudNew::Draw() {
 
                 DrawMissionTimers();
                 DrawHelpText();
+
+                CRadioHud::Draw();
             }
             DrawStats();
-
         }
 
         ShowTripSkipMessage = false;
