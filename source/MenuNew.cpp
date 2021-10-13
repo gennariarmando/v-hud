@@ -1419,7 +1419,7 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
 }
 
 void CMenuNew::StartRadio() {
-    if (bRadioEnabled)
+    if (bRadioEnabled || AudioEngine.IsRadioRetuneInProgress())
         return;
 
     if (!AECutsceneTrackManager.GetCutsceneTrackStatus()) {
@@ -1429,7 +1429,7 @@ void CMenuNew::StartRadio() {
 }
 
 void CMenuNew::StopRadio() {
-    if (!bRadioEnabled)
+    if (!bRadioEnabled || AudioEngine.IsRadioRetuneInProgress())
         return;
 
     AERadioTrackManager.StopRadio(NULL, 0);
