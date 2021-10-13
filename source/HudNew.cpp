@@ -1342,6 +1342,8 @@ void CHudNew::DrawSuccessFailedMessage() {
     static int time = -1;
     CRGBA col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 150);
 
+    SetHUDSafeZone(false);
+
     m_bShowSuccessFailed = true;
     if (CHud::m_BigMessage[0][0] && !strcmp(CHud::m_BigMessage[0], TheText.Get("M_PASS"))) {
         mainText = CTextNew::GetText("M_PASS").text;
@@ -1422,6 +1424,8 @@ void CHudNew::DrawSuccessFailedMessage() {
         CFontNew::SetScale(SCREEN_MULTIPLIER(0.96f), SCREEN_MULTIPLIER(1.8f));
         CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(HUD_BIG_MESSAGE).x), SCREEN_COORD_CENTER_DOWN(offset + GET_SETTING(HUD_BIG_MESSAGE).y + 114.0f), bottomText);
     }
+
+    SetHUDSafeZone(true);
 }
 
 void CHudNew::DrawZoneName() {
@@ -1588,6 +1592,8 @@ void CHudNew::DrawWastedBustedText() {
     if (m_bShowSuccessFailed)
         return;
 
+    SetHUDSafeZone(false);
+
     char* str = NULL;
     static eHudSettings i;
     static int time = -1;
@@ -1638,6 +1644,8 @@ void CHudNew::DrawWastedBustedText() {
 
         CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(i).x), SCREEN_COORD_CENTER_DOWN(GET_SETTING(i).y), str);
     }
+
+    SetHUDSafeZone(true);
 }
 
 void CHudNew::DrawMissionTitle() {
