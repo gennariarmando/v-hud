@@ -122,6 +122,7 @@ enum eMenuEntries {
     MENUENTRY_SETTINGS,
     MENUENTRY_QUIT,
     MENUENTRY_MAP,
+    MENUENTRY_STAT,
 };
 
 enum eMenuMessages {
@@ -470,6 +471,7 @@ public:
     int GetMenuMapTiles();
     float GetMenuMapWholeSize();
     void PrintBrief();
+    void PrintStats();
     void DrawMap();
     void DrawPatternBackground(CRect rect, CRGBA col);
     void DrawGallery();

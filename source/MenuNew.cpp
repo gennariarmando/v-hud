@@ -19,6 +19,7 @@
 #include "C_PcSave.h"
 #include "CRadar.h"
 #include "CMessages.h"
+#include "CStats.h"
 
 #include "GPS.h"
 #include "PedNew.h"
@@ -85,16 +86,13 @@ inline CRect GetMenuEntryRect() { return CRect(MENU_X(746.0f), MENU_Y(240.0f), S
 inline CRect GetMenuScreenRect() { return CRect(MENU_X(311.0f), MENU_Y(181.0f + 39.0f + 20.0f), SCREEN_COORD((214.0f + 3.0f) * 6.0f), SCREEN_COORD(645.0f)); }
 inline float GetMenuHorSpacing() { return SCREEN_COORD(3.0f); };
 
-int VMenuState = 0;
-
-int& gGameState = *(int*)0xC8D4C0;
-
 bool bSaveScreenHasBeenOpened = false;
 
-CMenuNew::CMenuNew() {
-    //patch::Nop(0x53E7A0, 10);
-    //patch::Nop(0x53BF3F, 10);
+// Used for printing stats strings
+char* gGxtString = (char*)0xC1B100;
+char* gGxtString2 = (char*)0xC1AED8;
 
+CMenuNew::CMenuNew() {
     patch::Set<BYTE>(0x53E797, 0xEB);
     patch::Nop(0x53EB85, 2);
     patch::Nop(0x53E826, 2);
@@ -103,16 +101,6 @@ CMenuNew::CMenuNew() {
     // Lock gGameState to 6
     patch::Set<BYTE>(0xC8D4C0, 5);
     patch::Nop(0x747483, 6);
-    //patch::Nop(0x748C90, 10);
-    //patch::Nop(0x748C23, 5);
-    //patch::Nop(0x748C2B, 5);
-
-    //patch::Nop(0x53E9F1, 5); // No mouse centering
-
-    //auto doPCTitleFadeOut = []() {
-    //    CLoadingScreen::DoPCTitleFadeOut();
-    //};
-    //patch::RedirectCall(0x748C9A, (void(__cdecl*)())doPCTitleFadeOut);
 
     auto openSavePage = [](int, int, int, int, int) {
         if (!bSaveScreenHasBeenOpened) {
@@ -307,7 +295,18 @@ void CMenuNew::BuildMenuScreen() {
     AddNewScreen("BLANK");
     AddNewScreen("FE_MAP");
     AddNewScreen("FE_BRF");
-    AddNewScreen("FE_STA");
+
+    // MENUSCREEN_STATS
+    if (auto stats = AddNewScreen("FE_STA")) {
+        AddNewTab(stats, MENUENTRY_STAT, "FE_STAT_1", NULL, false);
+        AddNewTab(stats, MENUENTRY_STAT, "FE_STAT_2", NULL, false);
+        AddNewTab(stats, MENUENTRY_STAT, "FE_STAT_3", NULL, false);
+        AddNewTab(stats, MENUENTRY_STAT, "FE_STAT_4", NULL, false);
+        AddNewTab(stats, MENUENTRY_STAT, "FE_STAT_5", NULL, false);
+        AddNewTab(stats, MENUENTRY_STAT, "FE_STAT_6", NULL, false);
+        AddNewTab(stats, MENUENTRY_STAT, "FE_STAT_7", NULL, false);
+        AddNewTab(stats, MENUENTRY_STAT, "FE_STAT_8", NULL, false);
+    }
 
     // MENUSCREEN_SETTINGS
     if (auto settings = AddNewScreen("FE_SET")) {
@@ -1193,6 +1192,7 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
     case MENUENTRY_PAD:
     case MENUENTRY_GFX:
     case MENUENTRY_POPULATESAVESLOT:
+    case MENUENTRY_STAT:
         // Fall through
     case MENUENTRY_CHANGETAB:
         if (GetLastMenuScreenEntry() - 1 != -1)
@@ -1710,6 +1710,9 @@ void CMenuNew::Draw() {
             case MENUSCREEN_LANDING:
                 DrawLandingPage();
                 break;
+            case MENUSCREEN_STATS:
+                PrintStats();
+            // Fall through
             default:
                 DrawDefault();
                 break;
@@ -2616,6 +2619,59 @@ void CMenuNew::PrintBrief() {
         char* str1 = CTextNew::GetText("FE_BRF1").text;
         CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
         CFontNew::PrintString(mask.left + SCREEN_COORD(32.0f), mask.top + SCREEN_COORD(148.0f), str1);
+    }
+}
+
+void CMenuNew::PrintStats() {
+    int lines = CStats::ConstructStatLine(99999, 0);
+
+    CRect menuTab  = GetMenuEntryRect();
+    CRGBA menuEntryColor;
+    bool switchCol = false;
+
+    CFontNew::SetBackground(false);
+    CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+    CFontNew::SetWrapX(SCREEN_COORD(640.0f));
+    CFontNew::SetFontStyle(CFontNew::FONT_1);
+    CFontNew::SetDropShadow(0.0f);
+    CFontNew::SetOutline(0.0f);
+    CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+    CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(255)));
+    CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
+
+    for (int i = 0; i < lines; i++) {
+        CStats::ConstructStatLine(i, nCurrentTabItem);
+
+        if (gGxtString[0] != '\0' && (gGxtString2[0] != '\0' || CStats::m_ThisStatIsABarChart)) {
+            if (switchCol = switchCol == false)
+                menuEntryColor = { 20, 20, 20, FadeIn(180) };
+            else
+                menuEntryColor = { 0, 0, 0, FadeIn(180) };
+
+            CSprite2d::DrawRect(CRect(menuTab.left, menuTab.top, menuTab.left + menuTab.right, menuTab.top + menuTab.bottom), menuEntryColor);
+
+            CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
+            CFontNew::PrintString(menuTab.left + SCREEN_COORD(12.0f), menuTab.top + SCREEN_COORD(6.0f), gGxtString);
+            
+            if (CStats::m_ThisStatIsABarChart) {
+                float x = (menuTab.left + menuTab.right + SCREEN_COORD(-12.0f)) - SCREEN_COORD(237.0f);
+                float y = menuTab.top + SCREEN_COORD(14.0f);
+                float w = SCREEN_COORD(237.0f);
+                float h = SCREEN_COORD(9.0f);
+                float p = CStats::GetStatValue(CStats::m_ThisStatIsABarChart) * 0.001f;
+
+                RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)(rwFILTERNEAREST));
+                DrawProgressBarWithSprite(CHudNew::StatsSprites[PLRSTAT_PROGRESS_BAR], x, y, w, h, p, HudColourNew.GetRGB(Settings.uiMainColor, FadeIn(255)));
+                RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)(rwFILTERLINEARMIPLINEAR));
+            }
+            else {
+                CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
+                CFontNew::PrintString(menuTab.left + menuTab.right + SCREEN_COORD(-12.0f), menuTab.top + SCREEN_COORD(6.0f), gGxtString2);
+            }
+            menuTab.top += menuTab.bottom + GetMenuHorSpacing();
+            gGxtString[0] = NULL;
+            gGxtString2[0] = NULL;
+        }
     }
 }
 
