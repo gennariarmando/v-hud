@@ -81,6 +81,7 @@ public:
     static void DrawRadarRectangle();
     static void ScanCopPursuit();
     static void DrawRotatingRadarSprite(CSprite2d* sprite, float x, float y, float angle, float width, float height, CRGBA color);
+    static void CalculateCachedSinCos();
     static void DrawMap();
     static void DrawRadarSectionMap(int x, int y, CRect const& rect, CRGBA const& col);
     static void DrawRadarSection(int x, int y);

@@ -80,6 +80,7 @@ CRadarNew::CRadarNew() {
     patch::RedirectJump(0x584070, ShowRadarTraceWithHeight);
     patch::RedirectCall(0x586FE8, AddBlipToLegendList);
     patch::RedirectJump(0x585040, ClipRadarPoly);
+    patch::RedirectJump(0x583670, CalculateCachedSinCos);
 }
 
 void CRadarNew::Init() {
@@ -860,6 +861,40 @@ void CRadarNew::DrawRotatingRadarSprite(CSprite2d* sprite, float x, float y, flo
                 posn[1].x, posn[1].y, posn[0].x, posn[0].y, color);
 }
 
+void CRadarNew::CalculateCachedSinCos() {
+    float s = 0.0f;
+    float c = 0.0f;
+
+    CVector v;
+    if (MenuNew.bDrawMenuMap) {
+        s = 0.0f;
+        c = 1.0f;
+    }
+    else if (TheCamera.GetLookDirection() == 3) {
+        if (TheCamera.m_matrix) {
+            v = TheCamera.GetMatrix()->up;
+            s = c = atan2(-v.x, v.y);
+        }
+        else
+            s = c = TheCamera.GetHeading();
+    }
+    else {
+
+        if (TheCamera.m_aCams[TheCamera.m_nActiveCam].m_nMode == MODE_1STPERSON) {
+            v = TheCamera.m_aCams[TheCamera.m_nActiveCam].m_pCamTargetEntity->GetMatrix()->up;
+            v.Normalise();
+        }
+        else
+            v = TheCamera.m_aCams[TheCamera.m_nActiveCam].m_pCamTargetEntity->GetPosition() - TheCamera.m_aCams[TheCamera.m_nActiveCam].m_vecSourceBeforeLookBehind;
+
+        s = c = atan2(-v.x, v.y);
+    }
+
+    CRadar::cachedSin = sin(s);
+    CRadar::cachedCos = cos(c);
+    CRadar::m_fRadarOrientation = s;
+}
+
 void CRadarNew::DrawMap() {
     ScanCopPursuit();
 
@@ -868,7 +903,7 @@ void CRadarNew::DrawMap() {
 
     CRadar::SetupRadarRect(x, y);
 
-    CRadar::CalculateCachedSinCos();
+    CalculateCachedSinCos();
 
     float radarRange = 80.0f;
     float radarShift = 25.0f;
