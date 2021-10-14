@@ -2709,6 +2709,17 @@ void CMenuNew::DrawMap() {
         vMapBase.y = SCREEN_COORD(28.0f) + (SCREEN_HEIGHT / 2);
     }
 
+    // Eh
+    const CVector2D currScreen = { SCREEN_WIDTH, SCREEN_HEIGHT };
+    static CVector2D prevScreen = currScreen;
+    if (currScreen.x != prevScreen.x || currScreen.y != prevScreen.y) {
+        vMapBase.x = vMapBase.x * currScreen.x / prevScreen.x;
+        vMapBase.y = vMapBase.y * currScreen.y / prevScreen.y;
+
+        prevScreen.x = currScreen.x;
+        prevScreen.y = currScreen.y;
+    }
+
     float mapZoom = GetMenuMapTileSize() * fMapZoom;
     rect.left = vMapBase.x;
     rect.top = vMapBase.y;
