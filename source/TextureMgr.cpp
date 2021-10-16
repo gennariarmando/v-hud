@@ -17,6 +17,17 @@ void CTextureMgr::Shutdown() {
 	;;
 }
 
+RwTexture* CTextureMgr::LoadDDSTextureCB(const char* path, const char* name) {
+	char file[512];
+
+	strcpy_s(file, path);
+	strcat_s(file, "\\");
+	strcat_s(file, name);
+	puts(file);
+
+	return RwD3D9DDSTextureRead(file, NULL);
+}
+
 RwTexture* CTextureMgr::LoadPNGTextureCB(const char* path, const char* name) {
 	int w, h, d, f;
 	char file[512];
@@ -37,6 +48,13 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char* path, const char* name) {
 
 				if (texture = RwTextureCreate(raster)) {
 					RwTextureSetName(texture, name);
+
+					if ((texture->raster->cFormat & 0x80) == 0)
+						RwTextureSetFilterMode(texture, rwFILTERLINEAR);
+					else
+						RwTextureSetFilterMode(texture, rwFILTERLINEARMIPLINEAR);
+
+					RwTextureSetAddressing(texture, rwTEXTUREADDRESSWRAP);
 				}
 			}
 
@@ -78,6 +96,13 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name, con
 
 					if (texture = RwTextureCreate(raster)) {
 						RwTextureSetName(texture, name);
+
+						if ((texture->raster->cFormat & 0x80) == 0)
+							RwTextureSetFilterMode(texture, rwFILTERLINEAR);
+						else
+							RwTextureSetFilterMode(texture, rwFILTERLINEARMIPLINEAR);
+
+						RwTextureSetAddressing(texture, rwTEXTUREADDRESSWRAP);
 					}
 				}
 
@@ -146,6 +171,13 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name, con
 
 									if (texture = RwTextureCreate(niraster)) {
 										RwTextureSetName(texture, name);
+
+										if ((texture->raster->cFormat & 0x80) == 0)
+											RwTextureSetFilterMode(texture, rwFILTERLINEAR);
+										else
+											RwTextureSetFilterMode(texture, rwFILTERLINEARMIPLINEAR);
+
+										RwTextureSetAddressing(texture, rwTEXTUREADDRESSWRAP);
 									}
 								}
 								RwImageDestroy(mask);

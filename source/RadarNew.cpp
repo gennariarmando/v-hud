@@ -103,7 +103,7 @@ void CRadarNew::Init() {
         char name[32];
         sprintf(name, "radar_%02d", i + 1);
         m_MiniMapSprites[i] = new CSprite2d();
-        m_MiniMapSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\map"), name);
+        m_MiniMapSprites[i]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\map"), name);
     }
 
     if (m_MiniMapSprites[0] && m_MiniMapSprites[0]->m_pTexture) {
