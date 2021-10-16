@@ -1193,7 +1193,7 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
     case MENUENTRY_GFX:
     case MENUENTRY_POPULATESAVESLOT:
     case MENUENTRY_STAT:
-        // Fall through
+        [[fallthrough]];
     case MENUENTRY_CHANGETAB:
         if (GetLastMenuScreenEntry() - 1 != -1)
             SetInputTypeAndClear(MENUINPUT_ENTRY, nPreviousEntryItem);
@@ -1712,7 +1712,7 @@ void CMenuNew::Draw() {
                 break;
             case MENUSCREEN_STATS:
                 PrintStats();
-            // Fall through
+                [[fallthrough]];
             default:
                 DrawDefault();
                 break;
