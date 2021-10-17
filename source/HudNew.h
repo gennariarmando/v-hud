@@ -176,6 +176,8 @@ public:
 
     static bool IsAmmoCounterDisplaying();
 
+    static void TakePhotograph();
+
     static void CheckPlayerPortrait(int id);
     static void DrawPlayerPortrait(int id, float x, float y, float w, float h);
     static void DrawStats();

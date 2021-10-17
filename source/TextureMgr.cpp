@@ -28,6 +28,43 @@ RwTexture* CTextureMgr::LoadDDSTextureCB(const char* path, const char* name) {
 	return RwD3D9DDSTextureRead(file, NULL);
 }
 
+RwTexture* CTextureMgr::LoadBMPTextureCB(const char* path, const char* name) {
+	int w, h, d, f;
+	char file[512];
+	RwTexture* texture = NULL;
+
+	strcpy_s(file, path);
+	strcat_s(file, "\\");
+	strcat_s(file, name);
+	strcat_s(file, ".bmp");
+	puts(file);
+
+	if (file && FileCheck(file)) {
+		if (RwImage* img = RtBMPImageRead(file)) {
+			RwImageFindRasterFormat(img, rwRASTERTYPETEXTURE, &w, &h, &d, &f);
+
+			if (RwRaster* raster = RwRasterCreate(w / 2, h / 2, d, f)) {
+				RwRasterSetFromImage(raster, img);
+
+				if (texture = RwTextureCreate(raster)) {
+					RwTextureSetName(texture, name);
+
+					if ((texture->raster->cFormat & 0x80) == 0)
+						RwTextureSetFilterMode(texture, rwFILTERLINEAR);
+					else
+						RwTextureSetFilterMode(texture, rwFILTERLINEARMIPLINEAR);
+
+					RwTextureSetAddressing(texture, rwTEXTUREADDRESSWRAP);
+				}
+			}
+
+			RwImageDestroy(img);
+		}
+	}
+
+	return texture;
+}
+
 RwTexture* CTextureMgr::LoadPNGTextureCB(const char* path, const char* name) {
 	int w, h, d, f;
 	char file[512];

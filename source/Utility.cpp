@@ -177,3 +177,57 @@ HMONITOR GetPrimaryMonitorHandle() {
     const POINT ptZero = { 0, 0 };
     return MonitorFromPoint(ptZero, MONITOR_DEFAULTTOPRIMARY);
 }
+
+void TakeScreenShot(const char* path, const char* name) {
+    HWND wnd = RsGlobal.ps->window;
+    RECT rect;
+    GetWindowRect(wnd, &rect);
+    unsigned long w = rect.right - rect.left;
+    unsigned long h = rect.bottom - rect.top;
+
+    unsigned long fileSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + (sizeof(RGBTRIPLE) + 1 * (w * h * 4));
+    char* data = (char*)GlobalAlloc(0x0040, fileSize);
+
+    if (!data)
+        return;
+
+    PBITMAPFILEHEADER fileHeader = (PBITMAPFILEHEADER)data;
+    PBITMAPINFOHEADER infoHeader = (PBITMAPINFOHEADER)&data[sizeof(BITMAPFILEHEADER)];
+
+    fileHeader->bfType = 0x4D42; // BM
+    fileHeader->bfSize = sizeof(BITMAPFILEHEADER);
+    fileHeader->bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+
+    infoHeader->biSize = sizeof(BITMAPINFOHEADER);
+    infoHeader->biPlanes = 1;
+    infoHeader->biBitCount = 24;
+    infoHeader->biCompression = BI_RGB;
+    infoHeader->biHeight = h;
+    infoHeader->biWidth = w;
+
+    RGBTRIPLE* img = (RGBTRIPLE*)&data[sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER)];
+    RGBTRIPLE color;
+
+    HDC dc = CreateCompatibleDC(GetDC(wnd));
+    HBITMAP bmp = CreateCompatibleBitmap(GetDC(wnd), w, h);
+    SelectObject(dc, bmp);
+    BitBlt(dc, 0, 0, w, h, GetDC(wnd), 0, 0, SRCCOPY | CAPTUREBLT);
+    GetDIBits(dc, bmp, 0, h, img, (LPBITMAPINFO)infoHeader, DIB_RGB_COLORS);
+
+    char filePath[512];
+    strcpy_s(filePath, path);
+    strcat_s(filePath, "\\");
+    strcat_s(filePath, name);
+    strcat_s(filePath, ".bmp");
+    puts(filePath);
+
+    unsigned long j;
+    if (!FileCheck(path))
+        CreateDirectory(path, NULL);
+
+    void* hfile = CreateFileA(filePath, GENERIC_WRITE, FILE_SHARE_WRITE, 0, CREATE_ALWAYS, 0, 0);
+
+    WriteFile(hfile, data, fileSize, &j, 0);
+    CloseHandle(hfile);
+    GlobalFree(data);
+}

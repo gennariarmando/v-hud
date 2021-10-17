@@ -21,6 +21,8 @@
 #include "CStats.h"
 #include "CKeyGen.h"
 #include "CTheZones.h"
+#include "CPickups.h"
+#include "CWeapon.h"
 
 #include "PedNew.h"
 #include "TextNew.h"
@@ -91,6 +93,13 @@ CHudNew::CHudNew() {
     patch::Nop(0x53E448, 5);
     patch::Nop(0x53E3F9, 5);
     patch::Nop(0x53E398, 5);
+
+
+    CdeclEvent<AddressList<0x705310, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> onTakingScreenShot;
+    onTakingScreenShot += [] {
+        CHudNew::TakePhotograph();
+    };
+    patch::RedirectJump(0x705331, (void*)0x7053AF);
 }
 
 void CHudNew::Init() {
@@ -385,77 +394,78 @@ void CHudNew::DrawCrosshairs() {
 
         if (!playa->m_pPlayerData->m_bHaveTargetSelected) {
             if (CTheScripts::bDrawCrossHair || !TheCamera.m_bTransitionState) {
-                if (1) {
-                    if (!faststrcmp(crosshairName, "sniper")) {
-                        COverlayLayer::SetEffect(EFFECT_LENS_DISTORTION);
+                if (!faststrcmp(crosshairName, "cam")) {
 
-                        static int shoot = playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTotalAmmo;
-                        static int time = 0;
+                }
+                else if (!faststrcmp(crosshairName, "sniper")) {
+                    COverlayLayer::SetEffect(EFFECT_LENS_DISTORTION);
 
-                        rect.left = (SCREEN_WIDTH / 2) - SCREEN_COORD(960.0f);
-                        rect.right = (SCREEN_WIDTH / 2) + SCREEN_COORD(960.0f);
-                        rect.top = (SCREEN_HEIGHT / 2) - SCREEN_COORD(960.0f);
-                        rect.bottom = (SCREEN_HEIGHT / 2) + SCREEN_COORD(960.0f);
+                    static int shoot = playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTotalAmmo;
+                    static int time = 0;
 
-                        CSprite2d::DrawRect(CRect(0.0f, 0.0f, rect.left, SCREEN_HEIGHT), CRGBA(0, 0, 0, 255));
-                        CSprite2d::DrawRect(CRect(rect.right, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT), CRGBA(0, 0, 0, 255));
+                    rect.left = (SCREEN_WIDTH / 2) - SCREEN_COORD(960.0f);
+                    rect.right = (SCREEN_WIDTH / 2) + SCREEN_COORD(960.0f);
+                    rect.top = (SCREEN_HEIGHT / 2) - SCREEN_COORD(960.0f);
+                    rect.bottom = (SCREEN_HEIGHT / 2) + SCREEN_COORD(960.0f);
 
-                        CrosshairsSprites[CROSSHAIR_SNIPER]->Draw(rect, CRGBA(255, 255, 255, 255));
+                    CSprite2d::DrawRect(CRect(0.0f, 0.0f, rect.left, SCREEN_HEIGHT), CRGBA(0, 0, 0, 255));
+                    CSprite2d::DrawRect(CRect(rect.right, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT), CRGBA(0, 0, 0, 255));
 
-                        col = HudColourNew.GetRGB(HUD_COLOUR_GREEN, 255);
-                        rect.left = (SCREEN_WIDTH / 2) - SCREEN_COORD(96.0f);
-                        rect.right = (SCREEN_WIDTH / 2) + SCREEN_COORD(96.0f);
-                        rect.top = (SCREEN_HEIGHT / 2) - SCREEN_COORD(96.0f);
-                        rect.bottom = (SCREEN_HEIGHT / 2) + SCREEN_COORD(96.0f);
+                    CrosshairsSprites[CROSSHAIR_SNIPER]->Draw(rect, CRGBA(255, 255, 255, 255));
 
-                        if (playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTotalAmmo != shoot) {
-                            shoot = playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTotalAmmo;
-                            time = playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTimeForNextShot;
-                        }
+                    col = HudColourNew.GetRGB(HUD_COLOUR_GREEN, 255);
+                    rect.left = (SCREEN_WIDTH / 2) - SCREEN_COORD(96.0f);
+                    rect.right = (SCREEN_WIDTH / 2) + SCREEN_COORD(96.0f);
+                    rect.top = (SCREEN_HEIGHT / 2) - SCREEN_COORD(96.0f);
+                    rect.bottom = (SCREEN_HEIGHT / 2) + SCREEN_COORD(96.0f);
 
-                        if (time > CTimer::m_snTimeInMilliseconds)
-                            col = HudColourNew.GetRGB(HUD_COLOUR_RED, 255);
-
-                        CrosshairsSprites[CROSSHAIR_SNIPERTARGET]->Draw(rect, col);
+                    if (playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTotalAmmo != shoot) {
+                        shoot = playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTotalAmmo;
+                        time = playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nTimeForNextShot;
                     }
-                    else if (!faststrcmp(crosshairName, "rocket")) {
-                        rect.left = (SCREEN_WIDTH / 2) - SCREEN_COORD(96.0f);
-                        rect.right = (SCREEN_WIDTH / 2) + SCREEN_COORD(96.0f);
-                        rect.top = (SCREEN_HEIGHT / 2) - SCREEN_COORD(96.0f);
-                        rect.bottom = (SCREEN_HEIGHT / 2) + SCREEN_COORD(96.0f);
-                        CrosshairsSprites[CROSSHAIR_ROCKET]->Draw(rect, CRGBA(255, 255, 255, 255));
+
+                    if (time > CTimer::m_snTimeInMilliseconds)
+                        col = HudColourNew.GetRGB(HUD_COLOUR_RED, 255);
+
+                    CrosshairsSprites[CROSSHAIR_SNIPERTARGET]->Draw(rect, col);
+                }
+                else if (!faststrcmp(crosshairName, "rocket")) {
+                    rect.left = (SCREEN_WIDTH / 2) - SCREEN_COORD(96.0f);
+                    rect.right = (SCREEN_WIDTH / 2) + SCREEN_COORD(96.0f);
+                    rect.top = (SCREEN_HEIGHT / 2) - SCREEN_COORD(96.0f);
+                    rect.bottom = (SCREEN_HEIGHT / 2) + SCREEN_COORD(96.0f);
+                    CrosshairsSprites[CROSSHAIR_ROCKET]->Draw(rect, CRGBA(255, 255, 255, 255));
+                }
+                else if (faststrcmp(crosshairName, "none")) {
+                    int alpha = 255;
+                    static int dotAlpha;
+                    static int alphaTime = 0;
+
+                    if (playa->m_pPlayerTargettedPed && playa->m_pPlayerTargettedPed->m_fHealth <= 0.0f) {
+                        nTargettedEntityDeathTime = CTimer::m_snTimeInMilliseconds + 200;
+                        playa->m_pPlayerTargettedPed = NULL;
                     }
-                    else if (faststrcmp(crosshairName, "none")) {
-                        int alpha = 255;
-                        static int dotAlpha;
-                        static int alphaTime = 0;
 
-                        if (playa->m_pPlayerTargettedPed && playa->m_pPlayerTargettedPed->m_fHealth <= 0.0f) {
-                            nTargettedEntityDeathTime = CTimer::m_snTimeInMilliseconds + 200;
-                            playa->m_pPlayerTargettedPed = NULL;
-                        }
+                    if (playa->m_pPlayerTargettedPed)
+                        alphaTime = CTimer::m_snTimeInMilliseconds + 50;
 
-                        if (playa->m_pPlayerTargettedPed)
-                            alphaTime = CTimer::m_snTimeInMilliseconds + 50;
+                    if (alphaTime > CTimer::m_snTimeInMilliseconds) {
+                        alpha = 100;
+                        playa->m_pPlayerTargettedPed = NULL;
+                    }
 
-                        if (alphaTime > CTimer::m_snTimeInMilliseconds) {
-                            alpha = 100;
-                            playa->m_pPlayerTargettedPed = NULL;
-                        }
+                    dotAlpha = (int)interpF(dotAlpha, alpha, 0.2f * CTimer::ms_fTimeStep);
 
-                        dotAlpha = (int)interpF(dotAlpha, alpha, 0.2f * CTimer::ms_fTimeStep);
+                    float w = GET_SETTING(HUD_CROSSHAIR_DOT).w;
+                    float h = GET_SETTING(HUD_CROSSHAIR_DOT).w;
+                    CRGBA col = GET_SETTING(HUD_CROSSHAIR_DOT).col;
+                    col.a = dotAlpha;
+                    CrosshairsSprites[CROSSHAIR_DOT]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), col);
 
-                        float w = GET_SETTING(HUD_CROSSHAIR_DOT).w;
-                        float h = GET_SETTING(HUD_CROSSHAIR_DOT).w;
-                        CRGBA col = GET_SETTING(HUD_CROSSHAIR_DOT).col;
-                        col.a = dotAlpha;
-                        CrosshairsSprites[CROSSHAIR_DOT]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), col);
-
-                        if (nTargettedEntityDeathTime > CTimer::m_snTimeInMilliseconds) {
-                            w = GET_SETTING(HUD_CROSSHAIR_CROSS).w;
-                            h = GET_SETTING(HUD_CROSSHAIR_CROSS).w;
-                            CrosshairsSprites[CROSSHAIR_CROSS]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), GET_SETTING(HUD_CROSSHAIR_CROSS).col);
-                        }
+                    if (nTargettedEntityDeathTime > CTimer::m_snTimeInMilliseconds) {
+                        w = GET_SETTING(HUD_CROSSHAIR_CROSS).w;
+                        h = GET_SETTING(HUD_CROSSHAIR_CROSS).w;
+                        CrosshairsSprites[CROSSHAIR_CROSS]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), GET_SETTING(HUD_CROSSHAIR_CROSS).col);
                     }
                 }
             }
@@ -1707,4 +1717,26 @@ bool CHudNew::IsMoneyDifferenceDisplaying() {
 
 bool CHudNew::IsAmmoCounterDisplaying() {
     return bShowAmmo && nAmmoFadeAlpha > 0;
+}
+
+
+void CHudNew::TakePhotograph() {
+    char file[16];
+
+    const char* path = "VHud\\gallery";
+    for (int i = 0; i < 48; i++) {
+        sprintf(file, "gallery%d", i);
+
+        char filePath[512];
+        strcpy_s(filePath, path);
+        strcat_s(filePath, "\\");
+        strcat_s(filePath, file);
+        strcat_s(filePath, ".bmp");
+        puts(filePath);
+
+        if (!FileCheck(PLUGIN_PATH(filePath))) {
+            TakeScreenShot(PLUGIN_PATH((char*)path), file);
+            break;
+        }
+    }
 }

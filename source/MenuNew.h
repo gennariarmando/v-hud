@@ -4,8 +4,7 @@
 #define MENU_SCREEN_CHANGE_WAIT_TIME 250
 
 #include "PadNew.h"
-
-class CSprite2d;
+#include "CSprite2d.h"
 
 enum eMouseType : char {
     MOUSE_ARROW,
@@ -123,6 +122,7 @@ enum eMenuEntries {
     MENUENTRY_QUIT,
     MENUENTRY_MAP,
     MENUENTRY_STAT,
+    MENUENTRY_SHOWPICTURE,
 };
 
 enum eMenuMessages {
@@ -152,6 +152,7 @@ enum {
     MENUINPUT_TAB, 
     MENUINPUT_ENTRY,
     MENUINPUT_MESSAGE,
+    MENUINPUT_GALLERYPIC,
 };
 
 enum eSettingsIndex {
@@ -405,6 +406,11 @@ public:
 
     int nTimeForSafeZonesToShow;
 
+    bool bScanGallery;
+    int nGalleryCount;
+    CSprite2d* Gallery[48];
+    bool bShowPictureBigSize;
+
 public:
     CMenuNew();
     void Init();
@@ -474,6 +480,7 @@ public:
     void PrintStats();
     void DrawMap();
     void DrawPatternBackground(CRect rect, CRGBA col);
+    void DrawBorder(CRect rect, CRGBA col);
     void DrawGallery();
     bool CheckHover(int x1, int x2, int y1, int y2);
 

@@ -195,6 +195,13 @@ void CMenuNew::Shutdown() {
         delete FrontendSprites[i];
     }
 
+    for (int i = 0; i < 48; i++) {
+        if (Gallery[i]) {
+            Gallery[i]->Delete();
+            delete Gallery[i];
+        }
+    }
+
     delete[] VideoModeList;
 
     bInitialised = false;
@@ -280,6 +287,9 @@ void CMenuNew::Clear() {
     vMapBase.y = 0.0f;
 
     ResetMap();
+
+    bScanGallery = false;
+    nGalleryCount = 0;
 }
 
 void CMenuNew::BuildMenuBar() {
@@ -522,19 +532,29 @@ void CMenuNew::SetInputTypeAndClear(int input, int n = 0) {
         nCurrentInputType = input;
 
         if (n != -1) {
+            if (bCleanMapScreenNextFrame) {
+                ResetMap();
+                bShowMenu = true;
+                bDrawMenuMap = false;
+                bCleanMapScreenNextFrame = false;
+            }
+
+            if (bScanGallery && nCurrentScreen != MENUSCREEN_GALLERY) {
+                bScanGallery = false;
+                nGalleryCount = 0;
+                bInvertInput = false;
+            }
+
+            if (bShowPictureBigSize) {
+                bShowPictureBigSize = false;
+                bShowMenu = true;
+            }
             switch (input) {
             case MENUINPUT_BAR:
                 nPreviousBarItem = nCurrentBarItem;
                 nCurrentBarItem = n;
                 nCurrentBarItemHover = MENU_HOVER_NONE;
                 nPreviousBarItemHover = MENU_HOVER_NONE;
-
-                if (bCleanMapScreenNextFrame) {
-                    ResetMap();
-                    bShowMenu = true;
-                    bDrawMenuMap = false;
-                    bCleanMapScreenNextFrame = false;
-                }
                 break;
             case MENUINPUT_TAB:
                 nPreviousTabItem = nCurrentTabItem;
@@ -568,9 +588,14 @@ int CMenuNew::GetLastMenuBarItem() {
 
 int CMenuNew::GetLastMenuScreenTab() {
     int result = 0;
-    for (int i = 0; i < MAX_MENU_TABS; i++) {
-        if (MenuScreen[nCurrentScreen].Tab[i].tabName[0] != '\0')
-            result++;
+    if (nCurrentScreen == MENUSCREEN_GALLERY) {
+        result = 24;
+    }
+    else {
+        for (int i = 0; i < MAX_MENU_TABS; i++) {
+            if (MenuScreen[nCurrentScreen].Tab[i].tabName[0] != '\0')
+                result++;
+        }
     }
     return result;
 }
@@ -752,8 +777,14 @@ void CMenuNew::Process() {
     bool MiddleMouseJustDown = pad->GetMiddleMouseJustDown();
 
     if (bInvertInput) {
-        Up = Right;
-        Down = Left;
+        if (nCurrentScreen == MENUSCREEN_GALLERY) {
+            Up = Left;
+            Down = Right;
+        }
+        else {
+            Up = Right;
+            Down = Left;
+        }
     }
 
     if (bMenuActive) {
@@ -943,6 +974,12 @@ void CMenuNew::Process() {
                 ProcessMessagesStuff(Enter, Back, Space, Left ? -1 : Right ? 1 : 0);
             }
             break;
+        case MENUINPUT_GALLERYPIC:
+            if (Back) {
+                SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
+                SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
+            }
+            break;
         };
 
         switch (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[nCurrentEntryItem].type) {
@@ -978,6 +1015,31 @@ void CMenuNew::Process() {
         }
 
         FindOutUsedMemory();
+
+        if (nCurrentScreen == MENUSCREEN_GALLERY) {
+            MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type = MENUENTRY_SHOWPICTURE;
+
+            if (!bScanGallery) {
+                char name[16];
+                char buff[128];
+
+                for (int i = 0; i < 48; i++) {
+                    sprintf(name, "gallery%d", i);
+                    sprintf(buff, "VHud\\gallery\\gallery%d.bmp", i);
+
+                    if (FileCheck(PLUGIN_PATH(buff))) {
+                        if (!Gallery[i]) {
+                            Gallery[i] = new CSprite2d;
+                            Gallery[i]->m_pTexture = CTextureMgr::LoadBMPTextureCB(PLUGIN_PATH("VHud\\gallery"), name);
+                        }
+                        ++nGalleryCount;
+                    }
+                }
+
+                bScanGallery = true;
+                bInvertInput = true;
+            }
+        }
 
         if (bRequestScreenUpdate) {
             fScreenAlpha = 0;
@@ -1403,6 +1465,13 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
         TempSettings.landingPage = TempSettings.landingPage == false;
         ApplyChanges();
         break;
+    case MENUENTRY_SHOWPICTURE:
+        if (Gallery[nCurrentTabItem] && Gallery[nCurrentTabItem]->m_pTexture) {
+            SetInputTypeAndClear(MENUINPUT_GALLERYPIC);
+            bShowPictureBigSize = true;
+            bShowMenu = false;
+        }
+        break;
 
         // Sliders
     case MENUENTRY_DRAWDISTANCE:
@@ -1554,6 +1623,7 @@ void CMenuNew::Draw() {
     RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)(rwFILTERLINEARMIPLINEAR));
     RwRenderStateSet(rwRENDERSTATETEXTUREPERSPECTIVE, (void*)FALSE);
     RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
 
     // Set
     if (bNoTransparentBackg) {
@@ -2573,11 +2643,7 @@ float CMenuNew::GetMenuMapWholeSize() {
 }
 
 void CMenuNew::PrintBrief() {
-    CRect mask;
-    mask.left = MENU_X(311.0f);
-    mask.top = MENU_Y(181.0f + 39.0f + 20.0f);
-    mask.right = SCREEN_COORD((214.0f + 3.0f) * 6.0f);
-    mask.bottom = SCREEN_COORD(645.0f);
+    CRect mask = GetMenuScreenRect();
     DrawPatternBackground(CRect(mask.left, mask.top, mask.left + mask.right, mask.top + mask.bottom), HudColourNew.GetRGB(HUD_COLOUR_BLACK, FadeIn(150)));
 
     CFontNew::SetBackground(false);
@@ -2676,11 +2742,7 @@ void CMenuNew::PrintStats() {
 }
 
 void CMenuNew::DrawMap() {
-    CRect mask;
-    mask.left = MENU_X(311.0f);
-    mask.top = MENU_Y(181.0f + 39.0f + 20.0f);
-    mask.right = SCREEN_COORD((214.0f + 3.0f) * 6.0f);
-    mask.bottom = SCREEN_COORD(645.0f);
+    CRect mask = GetMenuScreenRect();
 
     if (nCurrentInputType == MENUINPUT_TAB) {
         bShowMenu = false;
@@ -2784,33 +2846,126 @@ void CMenuNew::DrawPatternBackground(CRect rect, CRGBA col) {
     }
 }
 
+void CMenuNew::DrawBorder(CRect rect, CRGBA col) {
+    float scale = SCREEN_COORD(5.0f);
+    CRect r;
+
+    r.left = rect.left;
+    r.top = rect.top;
+    r.right = rect.right;
+    r.bottom = scale;
+    CSprite2d::DrawRect(CRect(r.left, r.top, r.left + r.right, r.top + r.bottom), col);
+
+    r = rect;
+    r.right = scale;
+    CSprite2d::DrawRect(CRect(r.left, r.top, r.left + r.right, r.top + r.bottom), col);
+
+    r.left = rect.left + rect.right;
+    r.top = rect.top;
+    r.right = -scale;
+    r.bottom = rect.bottom;
+    CSprite2d::DrawRect(CRect(r.left, r.top, r.left + r.right, r.top + r.bottom), col);
+
+    r = rect;
+    r.top += rect.bottom;
+    r.bottom = -scale;
+    CSprite2d::DrawRect(CRect(r.left, r.top, r.left + r.right, r.top + r.bottom), col);
+}
+
 void CMenuNew::DrawGallery() {
-    CRect mask;
-    mask.left = MENU_X(311.0f);
-    mask.top = MENU_Y(181.0f + 39.0f + 20.0f);
-    mask.right = SCREEN_COORD(1302.0f);
-    mask.bottom = SCREEN_COORD(645.0f);
+    CRect mask = GetMenuScreenRect();
 
-    DrawPatternBackground(CRect(mask.left, mask.top, mask.left + mask.right, mask.top + mask.bottom), HudColourNew.GetRGB(HUD_COLOUR_BLACK, 150));
+    if (nGalleryCount > 0) {
+        float w = SCREEN_COORD(214.0f);
+        float h = SCREEN_COORD(158.0f);
 
-    CFontNew::SetBackground(false);
-    CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
-    CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
-    CFontNew::SetWrapX(SCREEN_COORD(640.0f));
-    CFontNew::SetFontStyle(CFontNew::FONT_1);
-    CFontNew::SetDropShadow(0.0f);
-    CFontNew::SetOutline(0.0f);
-    CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
-    CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
-    CFontNew::SetScale(SCREEN_MULTIPLIER(2.6f), SCREEN_MULTIPLIER(4.8f));
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 6; j++) {
+                int index = j + 6 * i;
 
-    char* str = CTextNew::GetText("FE_NOG").text;
-    CFontNew::PrintString(mask.left + SCREEN_COORD(32.0f), mask.top + SCREEN_COORD(19.0f), str);
+                mask.right = w;
+                mask.bottom = h;
 
-    char* str1 = CTextNew::GetText("FE_NOG1").text;
-    CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
-    CFontNew::PrintString(mask.left + SCREEN_COORD(32.0f), mask.top + SCREEN_COORD(148.0f), str1);
+                if (!bShowPictureBigSize)
+                    CSprite2d::DrawRect(CRect(mask.left, mask.top, mask.left + mask.right, mask.top + mask.bottom), CRGBA(0, 0, 0, FadeIn(150)));
 
+                if (Gallery[index] && Gallery[index]->m_pTexture) {
+                    float targetAR = w / h;
+                    float imageAR = Gallery[index]->m_pTexture->raster->width / Gallery[index]->m_pTexture->raster->height;
+                    float b = 0.0f;
+                    float r = 0.0f;
+                    float prevTop = mask.top;
+                    float prevLeft = mask.left;
+
+                    float targetW = w;
+                    float targetH = h;
+                    float sizeW = 0.0f;
+                    float sizeH = 0.0f;
+
+                    if (targetAR < imageAR) {
+                        sizeW = targetW;
+                        sizeH = roundf(targetH * targetAR / imageAR);
+                    }
+                    else {
+                        sizeW = roundf(targetH / imageAR * targetAR);
+                        sizeH = targetH;
+                    }
+
+                    mask.right = sizeW;
+                    mask.bottom = sizeH;                
+                    mask.top += roundf((targetH - sizeH) / 2);
+                    mask.left += roundf((targetW - sizeW) / 2);
+
+                    if (bShowPictureBigSize) {
+                        if (index == nCurrentTabItem) {
+                            mask.right *= 6;
+                            mask.bottom *= 6;
+                            mask.left = (SCREEN_WIDTH / 2) - (mask.right / 2);
+                            mask.top = (SCREEN_HEIGHT / 2) - (mask.bottom / 2);
+                        }
+                        else
+                            mask = { 0.0f, 0.0f, 0.0f, 0.0f };
+                    }
+
+                    Gallery[index]->Draw(CRect(mask.left, mask.top, mask.left + mask.right, mask.top + mask.bottom), CRGBA(255, 255, 255, FadeIn(255)));
+
+                    mask.top = prevTop;
+                    mask.left = prevLeft;
+                    mask.right = w;
+                    mask.bottom = h;
+                }
+
+                if (!bShowPictureBigSize && index == nCurrentTabItem && nCurrentInputType == MENUINPUT_TAB) {
+                    DrawBorder(CRect(mask.left, mask.top, w, h), CRGBA(255, 255, 255, FadeIn(255)));
+                }
+
+                mask.left += mask.right + SCREEN_COORD(3.0f);
+            }
+            mask.left = GetMenuScreenRect().left;
+            mask.top += mask.bottom + SCREEN_COORD(3.0f);
+        }
+    }
+    else {
+        DrawPatternBackground(CRect(mask.left, mask.top, mask.left + mask.right, mask.top + mask.bottom), HudColourNew.GetRGB(HUD_COLOUR_BLACK, 150));
+
+        CFontNew::SetBackground(false);
+        CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+        CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
+        CFontNew::SetWrapX(SCREEN_COORD(640.0f));
+        CFontNew::SetFontStyle(CFontNew::FONT_1);
+        CFontNew::SetDropShadow(0.0f);
+        CFontNew::SetOutline(0.0f);
+        CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+        CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
+        CFontNew::SetScale(SCREEN_MULTIPLIER(2.6f), SCREEN_MULTIPLIER(4.8f));
+
+        char* str = CTextNew::GetText("FE_NOG").text;
+        CFontNew::PrintString(mask.left + SCREEN_COORD(32.0f), mask.top + SCREEN_COORD(19.0f), str);
+
+        char* str1 = CTextNew::GetText("FE_NOG1").text;
+        CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
+        CFontNew::PrintString(mask.left + SCREEN_COORD(32.0f), mask.top + SCREEN_COORD(148.0f), str1);
+    }
 }
 
 bool CMenuNew::CheckHover(int x1, int x2, int y1, int y2) {

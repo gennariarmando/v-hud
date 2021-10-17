@@ -45,3 +45,4 @@ extern void DrawSpriteWithBorder(class CSprite2d* sprite, float x, float y, floa
 extern float ConstrainAngle(float x);
 extern void* CreatePixelShaderFromResource(int id);
 extern HMONITOR GetPrimaryMonitorHandle();
+extern void TakeScreenShot(const char* path, const char* name);
