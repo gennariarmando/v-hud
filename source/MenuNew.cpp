@@ -532,13 +532,6 @@ void CMenuNew::SetInputTypeAndClear(int input, int n = 0) {
         nCurrentInputType = input;
 
         if (n != -1) {
-            if (bCleanMapScreenNextFrame) {
-                ResetMap();
-                bShowMenu = true;
-                bDrawMenuMap = false;
-                bCleanMapScreenNextFrame = false;
-            }
-
             if (bScanGallery && nCurrentScreen != MENUSCREEN_GALLERY) {
                 bScanGallery = false;
                 nGalleryCount = 0;
@@ -555,6 +548,13 @@ void CMenuNew::SetInputTypeAndClear(int input, int n = 0) {
                 nCurrentBarItem = n;
                 nCurrentBarItemHover = MENU_HOVER_NONE;
                 nPreviousBarItemHover = MENU_HOVER_NONE;
+
+                if (bCleanMapScreenNextFrame) {
+                    ResetMap();
+                    bShowMenu = true;
+                    bDrawMenuMap = false;
+                    bCleanMapScreenNextFrame = false;
+                }
                 break;
             case MENUINPUT_TAB:
                 nPreviousTabItem = nCurrentTabItem;
