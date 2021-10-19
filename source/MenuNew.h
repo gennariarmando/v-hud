@@ -138,7 +138,7 @@ enum eMenuMessages {
 enum {
     MAX_MENU_BAR_ITEMS = 12,
     MAX_MENU_SCREENS = 12,
-    MAX_MENU_TABS = 32,
+    MAX_MENU_TABS = 128,
     MAX_MENU_ENTRIES = 32,
     MAX_HELP_TEXT = 8,
 };
@@ -174,6 +174,13 @@ enum eHelpTextType {
     HELP_TEXT_NONE,
     HELP_TEXT_SELECT,
     HELP_TEXT_BACK,
+};
+
+enum {
+    GALLERY_COLUMNS = 6,
+    GALLERY_ROWS = 4,
+    MAX_GALLERY_PAGES = 4,
+    MAX_GALLERY_PICTURES = ((GALLERY_COLUMNS * GALLERY_ROWS) * MAX_GALLERY_PAGES),
 };
 
 /*
@@ -408,8 +415,10 @@ public:
 
     bool bScanGallery;
     int nGalleryCount;
-    CSprite2d* Gallery[48];
+    CSprite2d* Gallery[MAX_GALLERY_PICTURES];
     bool bShowPictureBigSize;
+    int nPreviousGalleryPage;
+    int nCurrentGalleryPage;
 
 public:
     CMenuNew();
@@ -443,6 +452,7 @@ public:
     void CenterCursor();
     void DoMapZoomInOut(bool out);
     void Process();
+    void ScanGalleryPictures(bool force);
     unsigned int GetTimeInMillisecondsRight();
     unsigned char FadeIn(unsigned char alpha);
     void ProcessTabStuff();

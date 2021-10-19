@@ -83,7 +83,7 @@ char* SettingsFileName = "VHud\\ufiles\\settings.xml";
 inline CRect GetMenuBarRect() { return CRect(MENU_X(311.0f), MENU_Y(181.0f), SCREEN_COORD(214.0f), SCREEN_COORD(38.0f)); }
 inline CRect GetMenuTabRect() { return CRect(MENU_X(311.0f), MENU_Y(240.0f), SCREEN_COORD(432.0f), SCREEN_COORD(38.0f)); }
 inline CRect GetMenuEntryRect() { return CRect(MENU_X(746.0f), MENU_Y(240.0f), SCREEN_COORD(864.0f), SCREEN_COORD(38.0f)); }
-inline CRect GetMenuScreenRect() { return CRect(MENU_X(311.0f), MENU_Y(181.0f + 39.0f + 20.0f), SCREEN_COORD((214.0f + 3.0f) * 6.0f), SCREEN_COORD(645.0f)); }
+inline CRect GetMenuScreenRect() { return CRect(MENU_X(311.0f), MENU_Y(181.0f + 39.0f + 20.0f), SCREEN_COORD(((214.0f + 3.0f) * 6.0f) - 3.0f), SCREEN_COORD(645.0f)); }
 inline float GetMenuHorSpacing() { return SCREEN_COORD(3.0f); };
 
 bool bSaveScreenHasBeenOpened = false;
@@ -172,6 +172,8 @@ void CMenuNew::Init() {
         SetLandingPageBehaviour();
     else
         DoSettingsBeforeStartingAGame(true, Settings.saveSlot);
+
+    ScanGalleryPictures(true);
 
     bInitialised = true;
 }
@@ -540,7 +542,7 @@ void CMenuNew::SetInputTypeAndClear(int input, int n = 0) {
 
             if (bShowPictureBigSize) {
                 bShowPictureBigSize = false;
-                bShowMenu = true;
+                //bShowMenu = true;
             }
             switch (input) {
             case MENUINPUT_BAR:
@@ -796,6 +798,10 @@ void CMenuNew::Process() {
                 bSaveSlotsPopulated = true;
             }
         }
+        else if (nCurrentScreen == MENUSCREEN_GALLERY) {
+            MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type = MENUENTRY_SHOWPICTURE;
+            ScanGalleryPictures(false);
+        }
         else {
             nNumOfSaveGames = 0;
             for (int i = 0; i < 9; i++) {
@@ -848,8 +854,19 @@ void CMenuNew::Process() {
                     nPreviousTabItem = nCurrentTabItem;
                     nCurrentTabItem--;
 
-                    if (nCurrentTabItem < 0)
+                    if (nCurrentTabItem < 0) {
                         nCurrentTabItem = GetLastMenuScreenTab() - 1;
+
+                        if (nCurrentScreen == MENUSCREEN_GALLERY) {
+                            nPreviousGalleryPage = nCurrentGalleryPage;
+                            nCurrentGalleryPage--;
+
+                            if (nCurrentGalleryPage < 0)
+                                nCurrentGalleryPage = MAX_GALLERY_PAGES - 1;
+
+                            bRequestScreenUpdate = true;
+                        }
+                    }
 
                     SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
                     SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
@@ -858,8 +875,19 @@ void CMenuNew::Process() {
                     nPreviousTabItem = nCurrentTabItem;
                     nCurrentTabItem++;
 
-                    if (nCurrentTabItem > GetLastMenuScreenTab() - 1)
+                    if (nCurrentTabItem > GetLastMenuScreenTab() - 1) {
                         nCurrentTabItem = 0;
+
+                        if (nCurrentScreen == MENUSCREEN_GALLERY) {
+                            nPreviousGalleryPage = nCurrentGalleryPage;
+                            nCurrentGalleryPage++;
+
+                            if (nCurrentGalleryPage > MAX_GALLERY_PAGES - 1)
+                                nCurrentGalleryPage = 0;
+
+                            bRequestScreenUpdate = true;
+                        }
+                    }
 
                     SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
                     SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
@@ -1016,31 +1044,6 @@ void CMenuNew::Process() {
 
         FindOutUsedMemory();
 
-        if (nCurrentScreen == MENUSCREEN_GALLERY) {
-            MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type = MENUENTRY_SHOWPICTURE;
-
-            if (!bScanGallery) {
-                char name[16];
-                char buff[128];
-
-                for (int i = 0; i < 48; i++) {
-                    sprintf(name, "gallery%d", i);
-                    sprintf(buff, "VHud\\gallery\\gallery%d.bmp", i);
-
-                    if (FileCheck(PLUGIN_PATH(buff))) {
-                        if (!Gallery[i]) {
-                            Gallery[i] = new CSprite2d;
-                            Gallery[i]->m_pTexture = CTextureMgr::LoadBMPTextureCB(PLUGIN_PATH("VHud\\gallery"), name);
-                        }
-                        ++nGalleryCount;
-                    }
-                }
-
-                bScanGallery = true;
-                bInvertInput = true;
-            }
-        }
-
         if (bRequestScreenUpdate) {
             fScreenAlpha = 0;
             nLoadingTime = GetTimeInMillisecondsRight() + MENU_SCREEN_CHANGE_WAIT_TIME;
@@ -1058,7 +1061,9 @@ void CMenuNew::Process() {
                 fScreenAlpha += 0.02f * 255.0f;
                 fScreenAlpha = clamp(fScreenAlpha, 0, 255);
             }
-            else fScreenAlpha = 255.0f;
+            else 
+                fScreenAlpha = 255.0f;
+
             nLoadingTime = 0;
 
             if (bRequestMenuClose) {
@@ -1070,6 +1075,34 @@ void CMenuNew::Process() {
     else {
         if (pad->GetOpenCloseMenuJustDown()) {
             OpenCloseMenu(true, false);
+        }
+    }
+}
+
+void CMenuNew::ScanGalleryPictures(bool force) {
+    if (!bScanGallery) {
+        if (IsLoading() || force) {
+            char name[16];
+            char buff[128];
+
+            for (int i = 0; i < MAX_GALLERY_PICTURES; i++) {
+                sprintf(name, "gallery%d", i);
+                sprintf(buff, "VHud\\gallery\\gallery%d.bmp", i);
+
+                if (FileCheck(PLUGIN_PATH(buff))) {
+                    if (!Gallery[i]) {
+                        Gallery[i] = new CSprite2d;
+                        Gallery[i]->m_pTexture = CTextureMgr::LoadBMPTextureCB(PLUGIN_PATH("VHud\\gallery"), name);
+                    }
+                    ++nGalleryCount;
+                }
+            }
+
+            bScanGallery = true;
+            bInvertInput = true;
+        }
+        else {
+            bRequestScreenUpdate = true;
         }
     }
 }
@@ -1469,7 +1502,7 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
         if (Gallery[nCurrentTabItem] && Gallery[nCurrentTabItem]->m_pTexture) {
             SetInputTypeAndClear(MENUINPUT_GALLERYPIC);
             bShowPictureBigSize = true;
-            bShowMenu = false;
+            //bShowMenu = false;
         }
         break;
 
@@ -1653,6 +1686,8 @@ void CMenuNew::Draw() {
             menuBarSelected.right = menuBar.right;
             menuBarSelected.bottom = SCREEN_COORD(8.0f);
 
+            CPadNew* pad = CPadNew::GetPad(0);
+
             nCurrentBarItemHover = MENU_HOVER_NONE;
             for (int i = 0; i < MAX_MENU_BAR_ITEMS; i++) {
                 if (MenuBar[i].barName[0] == '\0')
@@ -1660,8 +1695,6 @@ void CMenuNew::Draw() {
 
                 if (bDrawMouse && CheckHover(menuBar.left, menuBar.left + menuBar.right, menuBar.top, menuBar.top + menuBar.bottom)) {
                     nCurrentBarItemHover = i;
-
-                    CPadNew* pad = CPadNew::GetPad(0);
 
                     if (pad->GetLeftMouseJustDown()) {
                         if (nCurrentBarItemHover != nCurrentBarItem)
@@ -2620,7 +2653,7 @@ void CMenuNew::SetWaypoint(float x, float y) {
 
         CRadar::TransformRadarPointToRealWorldSpace(out, in);
 
-        CVector pos = { out.x, out.y, CWorld::FindGroundZForCoord(out.x, out.y) };
+        CVector pos = { out.x, out.y, 0.0f };
         int i = CRadar::SetCoordBlip(BLIP_COORD, pos, 0, BLIP_DISPLAY_BOTH, 0);
         CRadar::SetBlipSprite(i, RADAR_SPRITE_WAYPOINT);
         FrontEndMenuManager.m_nTargetBlipIndex = i;
@@ -2874,20 +2907,41 @@ void CMenuNew::DrawBorder(CRect rect, CRGBA col) {
 
 void CMenuNew::DrawGallery() {
     CRect mask = GetMenuScreenRect();
+    CPadNew* pad = CPadNew::GetPad(0);
 
     if (nGalleryCount > 0) {
-        float w = SCREEN_COORD(214.0f);
-        float h = SCREEN_COORD(158.0f);
+        const float w = GetMenuBarRect().right;
+        const float h = SCREEN_COORD(158.0f);
 
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 6; j++) {
-                int index = j + 6 * i;
+        const int c = GALLERY_COLUMNS;
+        const int r = GALLERY_ROWS;
+
+        int tabItem = nCurrentTabItem + (nCurrentGalleryPage * (c * r));
+        int tabItemHover = nCurrentTabItem + (nCurrentGalleryPage * (c * r));
+
+        for (int i = 0; i < r; i++) {
+            for (int j = 0; j < c; j++) {
+                int index = j + c * i;
+
+                index += nCurrentGalleryPage * (c * r);
 
                 mask.right = w;
                 mask.bottom = h;
 
-                if (!bShowPictureBigSize)
+                if (!bShowPictureBigSize) {
                     CSprite2d::DrawRect(CRect(mask.left, mask.top, mask.left + mask.right, mask.top + mask.bottom), CRGBA(0, 0, 0, FadeIn(150)));
+
+                    if (bDrawMouse && CheckHover(mask.left, mask.left + mask.right, mask.top, mask.top + mask.bottom)) {
+                        tabItemHover = index;
+
+                        if (pad->GetLeftMouseJustDown()) {
+                            if (tabItemHover == tabItem)
+                                ProcessTabStuff();
+                            else
+                                SetInputTypeAndClear(MENUINPUT_TAB, tabItemHover);
+                        }
+                    }
+                }
 
                 if (Gallery[index] && Gallery[index]->m_pTexture) {
                     float targetAR = w / h;
@@ -2912,21 +2966,19 @@ void CMenuNew::DrawGallery() {
                     }
 
                     mask.right = sizeW;
-                    mask.bottom = sizeH;                
+                    mask.bottom = sizeH;
                     mask.top += roundf((targetH - sizeH) / 2);
                     mask.left += roundf((targetW - sizeW) / 2);
 
                     if (bShowPictureBigSize) {
-                        if (index == nCurrentTabItem) {
-                            mask.right *= 6;
-                            mask.bottom *= 6;
-                            mask.left = (SCREEN_WIDTH / 2) - (mask.right / 2);
-                            mask.top = (SCREEN_HEIGHT / 2) - (mask.bottom / 2);
+                        if (index == tabItem) {
+                            mask = GetMenuScreenRect();
                         }
                         else
                             mask = { 0.0f, 0.0f, 0.0f, 0.0f };
                     }
 
+                    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
                     Gallery[index]->Draw(CRect(mask.left, mask.top, mask.left + mask.right, mask.top + mask.bottom), CRGBA(255, 255, 255, FadeIn(255)));
 
                     mask.top = prevTop;
@@ -2935,14 +2987,74 @@ void CMenuNew::DrawGallery() {
                     mask.bottom = h;
                 }
 
-                if (!bShowPictureBigSize && index == nCurrentTabItem && nCurrentInputType == MENUINPUT_TAB) {
+                if (!bShowPictureBigSize && index == tabItem) {
                     DrawBorder(CRect(mask.left, mask.top, w, h), CRGBA(255, 255, 255, FadeIn(255)));
                 }
+
+                if (!bShowPictureBigSize && index == tabItemHover) {
+                    CSprite2d::DrawRect(CRect(mask.left, mask.top, mask.left + w, mask.top + h), CRGBA(255, 255, 255, FadeIn(50)));
+                }
+
 
                 mask.left += mask.right + SCREEN_COORD(3.0f);
             }
             mask.left = GetMenuScreenRect().left;
             mask.top += mask.bottom + SCREEN_COORD(3.0f);
+        }
+
+        if (!bShowPictureBigSize) {
+            CRect r = GetMenuScreenRect();
+            r.top += r.bottom + SCREEN_COORD(3.0f);
+            r.bottom = r.top + SCREEN_COORD(41.0f);
+            r.right += r.left;
+
+            CSprite2d::DrawRect(r, CRGBA(0, 0, 0, FadeIn(255)));
+
+            CFontNew::SetBackground(false);
+            CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+            CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
+            CFontNew::SetWrapX(SCREEN_COORD(640.0f));
+            CFontNew::SetFontStyle(CFontNew::FONT_1);
+            CFontNew::SetDropShadow(0.0f);
+            CFontNew::SetOutline(0.0f);
+            CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+            CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
+            CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
+
+            char str[16];
+            sprintf(str, "%d/%d", nCurrentGalleryPage + 1, MAX_GALLERY_PAGES);
+            CFontNew::PrintString(r.left + SCREEN_COORD(8.0f), r.top + SCREEN_COORD(8.0f), str);
+
+            float leftArrow[] = { r.right + SCREEN_COORD(-54.0f), r.top + SCREEN_COORD(4.0f), SCREEN_COORD(32.0f), SCREEN_COORD(32.0f) };
+            float rightArrow[] = { r.right + SCREEN_COORD(-34.0f), r.top + SCREEN_COORD(4.0f), SCREEN_COORD(32.0f), SCREEN_COORD(32.0f) };
+
+            MenuSprites[MENU_ARROW_LEFT]->Draw(leftArrow[0], leftArrow[1], leftArrow[2], leftArrow[3], CRGBA(255, 255, 255, 255));
+            MenuSprites[MENU_ARROW_RIGHT]->Draw(rightArrow[0], rightArrow[1], rightArrow[2], rightArrow[3], CRGBA(255, 255, 255, 255));
+
+            if (bDrawMouse) {
+                if (CheckHover(leftArrow[0], leftArrow[0] + leftArrow[2], leftArrow[1], leftArrow[1] + leftArrow[3])) {
+                    if (pad->GetLeftMouseJustDown()) {
+                        nPreviousGalleryPage = nCurrentGalleryPage;
+                        nCurrentGalleryPage--;
+
+                        if (nCurrentGalleryPage < 0)
+                            nCurrentGalleryPage = MAX_GALLERY_PAGES - 1;
+
+                        bRequestScreenUpdate = true;
+                    }
+                }
+                else if (CheckHover(rightArrow[0], rightArrow[0] + rightArrow[2], rightArrow[1], rightArrow[1] + rightArrow[3])) {
+                    if (pad->GetLeftMouseJustDown()) {
+                        nPreviousGalleryPage = nCurrentGalleryPage;
+                        nCurrentGalleryPage++;
+
+                        if (nCurrentGalleryPage > MAX_GALLERY_PAGES - 1)
+                            nCurrentGalleryPage = 0;
+
+                        bRequestScreenUpdate = true;
+                    }
+                }
+            }
         }
     }
     else {
