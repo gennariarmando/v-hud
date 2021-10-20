@@ -1,4 +1,5 @@
 #include "VHud.h"
+#include "CellPhone.h"
 #include "HudColoursNew.h"
 #include "PadNew.h"
 #include "FontNew.h"
@@ -47,6 +48,7 @@ VHud::VHud() {
     Events::initGameEvent += [] {
         CGPS::Init();
         CHudNew::Init();
+        CellPhone.Init();
         CRadarNew::Init();
         CWeaponSelector::Init();
         CMenuPanels::Init();
@@ -72,6 +74,7 @@ VHud::VHud() {
         CGPS::Shutdown();
         CRadarNew::Shutdown();
         CHudNew::Shutdown();
+        CellPhone.Shutdown();
         CRadioHud::Shutdown();
         COverlayLayer::Shutdown();
         CFontNew::Shutdown();

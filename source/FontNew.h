@@ -9,6 +9,7 @@ struct CFontDetailsNew {
 	int alignment;
 	float wrapX;
 	float clipX;
+	int clipXCount;
 	int style;
 	float shadow;
 	float outline;
@@ -164,7 +165,13 @@ public:
 	static void SetGradBackground(bool on) { Details.grad = on; }
 	static void SetBackgroundColor(CRGBA const& col) { Details.backgroundColor = col; }
 	static void SetBackgroundBorder(CRect const& rect) { Details.backgroundBorder = rect; }
-	static void SetClipX(float x) { Details.clipX = x; }
+
+	static void SetClipX(float x) { 
+		Details.clipX = x; 
+		Details.clipXCount = -1;
+	}
+
+	static void SetClipX(int count) { Details.clipXCount = count; }
 	static void SetWrapX(float x) { Details.wrapX = x; }
 	static void SetAlignment(int align) { Details.alignment = align; }
 	static void SetDropShadow(float shadow) { Details.shadow = shadow; }

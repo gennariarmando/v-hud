@@ -43,7 +43,7 @@ RwTexture* CTextureMgr::LoadBMPTextureCB(const char* path, const char* name) {
 		if (RwImage* img = RtBMPImageRead(file)) {
 			RwImageFindRasterFormat(img, rwRASTERTYPETEXTURE, &w, &h, &d, &f);
 
-			if (RwRaster* raster = RwRasterCreate(w / 2, h / 2, d, f)) {
+			if (RwRaster* raster = RwRasterCreate(w * 0.25f, h * 0.25f, d, f)) {
 				RwRasterSetFromImage(raster, img);
 
 				if (texture = RwTextureCreate(raster)) {

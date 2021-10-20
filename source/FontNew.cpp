@@ -136,14 +136,13 @@ void CFontNew::Init() {
     if (bInitialised)
         return;
 
-    Sprite[0] = new CSprite2d();
-    Sprite[1] = new CSprite2d();
-    Sprite[2] = new CSprite2d();
-    Sprite[3] = new CSprite2d();
-    Sprite[0]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\fonts"), "font1");
-    Sprite[1]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\fonts"), "font2");
-    Sprite[2]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\fonts"), "font3");
-    Sprite[3]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\fonts"), "font4");
+    for (int i = 0; i < NUM_FONTS; i++) {
+        char str[16];
+        sprintf(str, "font%d", i + 1);
+
+        Sprite[i] = new CSprite2d();
+        Sprite[i]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\fonts"), str);
+    }
 
     char* path = "VHud\\buttons\\xbox";
     for (int i = 0; i < NUM_BUTTONS; i++) {
@@ -216,6 +215,7 @@ void CFontNew::Clear() {
     SetBackgroundColor(CRGBA(0, 0, 0, 255));
     SetBackgroundBorder(CRect(0, 0, 0, 0));
     SetClipX(SCREEN_WIDTH);
+    SetClipX(-1);
     SetWrapX(SCREEN_WIDTH);
     SetAlignment(ALIGN_LEFT);
     SetFontStyle(FONT_1);
@@ -233,21 +233,18 @@ void CFontNew::Shutdown() {
     if (!bInitialised)
         return;
 
-    Sprite[0]->Delete();
-    delete Sprite[0];
-
-    Sprite[1]->Delete();
-    delete Sprite[1];
-
-    Sprite[2]->Delete();
-    delete Sprite[2];
-
-    Sprite[3]->Delete();
-    delete Sprite[3];
+    for (int i = 0; i < NUM_FONTS; i++) {
+        if (Sprite[i]) {
+            Sprite[i]->Delete();
+            delete Sprite[i];
+        }
+    }
 
     for (int i = 0; i < NUM_BUTTONS; i++) {
-        ButtonSprite[i]->Delete();
-        delete ButtonSprite[i];
+        if (ButtonSprite[i]) {
+            ButtonSprite[i]->Delete();
+            delete ButtonSprite[i];
+        }
     }
 
     bInitialised = false;
@@ -309,6 +306,7 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, char* s) {
     float x = xstart;
     float y = ystart;
     int n = 1;
+    int letterCount = 0;
 
     if (Details.alignment == ALIGN_CENTER) {
         bool first = true;
@@ -396,6 +394,12 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, char* s) {
         c = *s - ' ';
 
         float f = Details.alignment == ALIGN_CENTER ? Details.wrapX : xstart + Details.wrapX;
+
+        if ((Details.clipXCount == -1 && (x + GetCharacterSize(c) > xstart + Details.clipX)))
+            break;
+        else if (Details.clipXCount != -1 && letterCount >= Details.clipXCount)
+            break;
+
         if (x + GetStringWidth(s) > f || bNewLine) {
             x = xstart;
             y += 32.0f * Details.scale.y * 0.5f + 2.0f * Details.scale.y;
@@ -406,6 +410,7 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, char* s) {
         if (print)
             PrintChar(x, y, c);
 
+        letterCount++;
         x += GetCharacterSize(c);
     }
 
@@ -805,6 +810,7 @@ void PrintCharMap() {
     CFontNew::SetBackground(false);
     CFontNew::SetWrapX(SCREEN_WIDTH);
     CFontNew::SetClipX(SCREEN_WIDTH);
+    CFontNew::SetClipX(-1);
     CFontNew::SetFontStyle(CFontNew::FONT_1);
     CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
     CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));

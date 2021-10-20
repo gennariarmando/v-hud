@@ -13,7 +13,7 @@
 #define MENU_BOTTOM(y) ScaleMenuBottom(y)
 
 #define ABS(a)  (((a) < 0) ? (-(a)) : (a))
-#define isNearlyEqualF(a, b, t) fabs(a - b) <= ( (fabs(a) < fabs(b) ? fabs(b) : fabs(a)) * t)
+#define isNearlyEqualF(a, b, t) (fabs(a - b) <= t)
 #define interpF(a, b, f) a = a + (f) * (b - a)
 #define norm(value, min, max) (((value) < (min)) ? 0 : (((value) > (max)) ? 1 : (((value) - (min)) / ((max) - (min)))))
 #define lerp(no, mi, ma) ( (no) * ((ma) - (mi)) + (mi) )

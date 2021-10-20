@@ -14,6 +14,7 @@ public:
     static CPanel Panel[32];
     static CSprite2d ShopUiSprites[32];
     static int NumPanels;
+    static bool bActive;
 
 public:
     CMenuPanels();

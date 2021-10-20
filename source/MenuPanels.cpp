@@ -20,6 +20,7 @@ CMenuPanels MenuPanels;
 CPanel CMenuPanels::Panel[32];
 CSprite2d CMenuPanels::ShopUiSprites[32];
 int CMenuPanels::NumPanels;
+bool CMenuPanels::bActive;
 
 CMenuPanels::CMenuPanels() {
     patch::RedirectJump(0x580E00, Draw);
@@ -40,7 +41,10 @@ void CMenuPanels::Shutdown() {
 }
 
 void CMenuPanels::Process(unsigned char panelId) {
-    CMenuSystem::Process(panelId);
+    bActive = false;
+
+    if (CMenuSystem::num_menus_in_use)
+        CMenuSystem::Process(panelId);
 }
 
 void CMenuPanels::ReadValuesFromFile() {
@@ -81,6 +85,7 @@ void CMenuPanels::ReadValuesFromFile() {
 
 void CMenuPanels::Draw(unsigned char panelId) {
     bool active = CMenuSystem::MenuInUse[panelId];
+    bActive = active;
 
     CFontNew::SetBackground(false);
     CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));

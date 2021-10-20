@@ -62,6 +62,8 @@ char* MenuSpritesFileNames[] = {
     "menu_clothes_b",
     "menu_weapons",
     "menu_weapons_b",
+    "menu_map_crosshair_line_right",
+    "menu_map_crosshair_line_up",
 };
 
 char* MiscSpritesFileNames[] = {
@@ -183,21 +185,27 @@ void CMenuNew::Shutdown() {
         return;
 
     for (int i = 0; i < NUM_MENU_SPRITES; i++) {
-        MenuSprites[i]->Delete();
-        delete MenuSprites[i];
+        if (MenuSprites[i]) {
+            MenuSprites[i]->Delete();
+            delete MenuSprites[i];
+        }
     }
 
     for (int i = 0; i < NUM_MISC_SPRITES; i++) {
-        MiscSprites[i]->Delete();
-        delete MiscSprites[i];
+        if (MiscSprites[i]) {
+            MiscSprites[i]->Delete();
+            delete MiscSprites[i];
+        }
     }
 
     for (int i = 0; i < NUM_FRONTEND_SPRITES; i++) {
-        FrontendSprites[i]->Delete();
-        delete FrontendSprites[i];
+        if (FrontendSprites[i]) {
+            FrontendSprites[i]->Delete();
+            delete FrontendSprites[i];
+        }
     }
 
-    for (int i = 0; i < 48; i++) {
+    for (int i = 0; i < MAX_GALLERY_PICTURES; i++) {
         if (Gallery[i]) {
             Gallery[i]->Delete();
             delete Gallery[i];
@@ -544,6 +552,7 @@ void CMenuNew::SetInputTypeAndClear(int input, int n = 0) {
                 bShowPictureBigSize = false;
                 //bShowMenu = true;
             }
+
             switch (input) {
             case MENUINPUT_BAR:
                 nPreviousBarItem = nCurrentBarItem;
@@ -715,21 +724,14 @@ void CMenuNew::CenterCursor() {
 }
 
 void CMenuNew::DoMapZoomInOut(bool out) {
-    float value = out ? -0.1f : 0.1f;
-
-    float prevZ = fMapZoom;
+    const float previousMapHalfSize = GetMenuMapWholeSize();
+    const float value = out ? -0.2f : 0.2f;
     fMapZoom += value;
     fMapZoom = clamp(fMapZoom, 1.0f, 8.0f);
 
-    if (fMapZoom > 0.0f && fMapZoom < 8.0f) {
-        if (out && fMapZoom < 4.0f) {
-            vMapBase.x += (SCREEN_WIDTH / 2 - vMapBase.x) * (-value - value);
-            vMapBase.y += (SCREEN_COORD(28.0f) + SCREEN_HEIGHT / 2 - vMapBase.y) * (-value - value);
-        }
-        else {
-            vMapBase.x -= (vMousePos.x - SCREEN_WIDTH / 2) * (fMapZoom - prevZ);
-            vMapBase.y -= (vMousePos.y - (SCREEN_COORD(28.0f) + SCREEN_HEIGHT / 2)) * (fMapZoom - prevZ);
-        }
+    if (out && fMapZoom > 1.0f && fMapZoom < 4.0f) {
+        vMapBase.x += (SCREEN_WIDTH / 2 - vMapBase.x) * (-value - value);
+        vMapBase.y += (SCREEN_COORD(28.0f) + SCREEN_HEIGHT / 2 - vMapBase.y) * (-value - value);
     }
 }
 
@@ -921,11 +923,16 @@ void CMenuNew::Process() {
                 if (!bShowMenu) {
                     if (nCurrentScreen == MENUSCREEN_MAP) {
                         if (LeftMouseDown) {
-                            nMouseType = MOUSE_GRAB;
+                            nMouseType = MOUSE_HAND;
 
                             if (fMapZoom > 1.0f) {
+                                static CVector2D prevMapBase = vMapBase;
                                 vMapBase.x += (vMousePos.x - vOldMousePos.x);
                                 vMapBase.y += (vMousePos.y - vOldMousePos.y);
+
+                                if (prevMapBase.x != vMapBase.x || prevMapBase.y != vMapBase.y) {
+                                    nMouseType = MOUSE_GRAB;
+                                }
                             }
                         }
                         else {
@@ -2774,6 +2781,10 @@ void CMenuNew::PrintStats() {
     }
 }
 
+CVector2D CMenuNew::GetMapBaseDefault() {
+    return CVector2D(SCREEN_WIDTH / 2, SCREEN_COORD(28.0f) + (SCREEN_HEIGHT / 2));
+}
+
 void CMenuNew::DrawMap() {
     CRect mask = GetMenuScreenRect();
 
@@ -2800,8 +2811,7 @@ void CMenuNew::DrawMap() {
 
     if (vMapBase.x == 0 && vMapBase.y == 0) {
         fMapZoom = 1.0f;
-        vMapBase.x = (SCREEN_WIDTH / 2);
-        vMapBase.y = SCREEN_COORD(28.0f) + (SCREEN_HEIGHT / 2);
+        vMapBase = GetMapBaseDefault();
     }
 
     // Eh
@@ -2830,7 +2840,7 @@ void CMenuNew::DrawMap() {
         }
         rect.left = vMapBase.x;
         rect.right = rect.left + mapZoom;
-        
+
         rect.top += mapZoom;
         rect.bottom = rect.top + mapZoom;
     }
@@ -2838,6 +2848,31 @@ void CMenuNew::DrawMap() {
     CGPS::DrawPathLine();
 
     CRadarNew::DrawBlips();
+
+    if (!bShowMenu) {
+        DrawMapCrosshair(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+    }
+}
+
+void CMenuNew::DrawMapCrosshair(float x, float y) {
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)(rwFILTERLINEARMIPLINEAR));
+
+    float length = SCREEN_COORD(178.0f);
+    float width = SCREEN_COORD(3.0f);
+    float spacing = SCREEN_COORD(16.0f);
+
+    // Top
+    MenuSprites[MENU_MAP_CROSSHAIR_LINE_UP]->Draw(CRect(x - (width / 2), (y - length) - spacing, x + (width / 2), (y - spacing)), CRGBA(255, 255, 255, 255));
+
+    // Right
+    MenuSprites[MENU_MAP_CROSSHAIR_LINE_RIGHT]->Draw(CRect(x + spacing, y, x + spacing + length, y + width), CRGBA(255, 255, 255, 255));
+
+    // Bottom
+    MenuSprites[MENU_MAP_CROSSHAIR_LINE_UP]->Draw(CRect(x - (width / 2), (y + length) + spacing, x + (width / 2), (y + spacing)), CRGBA(255, 255, 255, 255));
+
+    // Left
+    MenuSprites[MENU_MAP_CROSSHAIR_LINE_RIGHT]->Draw(CRect((x - spacing), y, (x - spacing) - length, y + width), CRGBA(255, 255, 255, 255));
 }
 
 void CMenuNew::DrawPatternBackground(CRect rect, CRGBA col) {

@@ -65,6 +65,15 @@ public:
 
     bool GetMiddleMouseJustDown();
 
+    bool GetPhoneShowJustDown();
+    bool GetPhoneHideJustDown();
+
+    bool GetPhoneUpJustDown();
+
+    bool GetPhoneDownJustDown();
+
+    bool GetPhoneEnterJustDown();
+
     bool GetLeftMouseJustDown();
 
     bool GetRightMouseJustDown();

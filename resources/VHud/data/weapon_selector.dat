@@ -101,7 +101,7 @@ SLOT # melee
         id 43
         name WEAP43
         texture camera
-		crosshair none
+		crosshair cam
     END
     WEAPON
         id 44

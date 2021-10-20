@@ -5,7 +5,6 @@
 #include "PadNew.h"
 #include "Utility.h"
 
-
 using namespace plugin;
 
 CPadNew Pad;
@@ -119,7 +118,28 @@ bool CPadNew::GetMiddleMouseDown() {
 
 bool CPadNew::GetMiddleMouseJustDown() {
     return !!(NewMouseControllerState.mmb && !OldMouseControllerState.mmb);
+}
 
+bool CPadNew::GetPhoneShowJustDown() {
+    return (NewMouseControllerState.mmb && !OldMouseControllerState.mmb)
+        || (NewKeyState.up && !OldKeyState.up);
+}
+
+bool CPadNew::GetPhoneHideJustDown() {
+    return (NewMouseControllerState.mmb && !OldMouseControllerState.mmb)
+        || (NewKeyState.down && !OldKeyState.down);
+}
+
+bool CPadNew::GetPhoneUpJustDown() {
+    return (NewMouseControllerState.wheelUp && !OldMouseControllerState.wheelUp);
+}
+
+bool CPadNew::GetPhoneDownJustDown() {
+    return (NewMouseControllerState.wheelDown && !OldMouseControllerState.wheelDown);
+}
+
+bool CPadNew::GetPhoneEnterJustDown() {
+    return (NewMouseControllerState.lmb && !OldMouseControllerState.lmb);
 }
 
 bool CPadNew::GetLeftMouseJustDown() {

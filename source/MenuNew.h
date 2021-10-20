@@ -30,6 +30,8 @@ enum eMenuSprites {
     MENU_CLOTHES_B,
     MENU_WEAPONS,
     MENU_WEAPONS_B,
+    MENU_MAP_CROSSHAIR_LINE_RIGHT,
+    MENU_MAP_CROSSHAIR_LINE_UP,
     NUM_MENU_SPRITES,
 };
 
@@ -488,7 +490,9 @@ public:
     float GetMenuMapWholeSize();
     void PrintBrief();
     void PrintStats();
+    CVector2D GetMapBaseDefault();
     void DrawMap();
+    void DrawMapCrosshair(float x, float y);
     void DrawPatternBackground(CRect rect, CRGBA col);
     void DrawBorder(CRect rect, CRGBA col);
     void DrawGallery();

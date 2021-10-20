@@ -215,17 +215,19 @@ void CGPS::DrawPathLine() {
                 CRadarNew::m_nMissionBlipCount = 0;
             }
 
+            Dest.nPathDirection = DIR_NONE;
             if (Dest.bDestFound) {
                 ProcessPath(Dest);
 
-                Dest.fGPSDistance += DistanceBetweenPoints(FindPlayerCoors(-1), ThePaths.GetPathNode(Dest.resultNodes[0])->GetNodeCoors());
-                bShowGPS = true;
+                if (Dest.nNodesCount > 1) {
+                    CPathNode* node = ThePaths.GetPathNode(Dest.resultNodes[0]);
 
-                if (Dest.nNodesCount <= 2) {
-                    Dest.nPathDirection = DIR_NONE;
-                }
-                else {
-                    Dest.nPathDirection = GetPathDirection(ThePaths.GetPathNode(Dest.resultNodes[1])->GetNodeCoors(), FindPlayerCoors(-1), ThePaths.GetPathNode(Dest.resultNodes[2])->GetNodeCoors());
+                    if (!node)
+                        return;
+
+                    Dest.fGPSDistance += DistanceBetweenPoints(FindPlayerCoors(-1), node->GetNodeCoors());
+                    Dest.nPathDirection = GetPathDirection(ThePaths.GetPathNode(Dest.resultNodes[0])->GetNodeCoors(), FindPlayerCoors(-1), ThePaths.GetPathNode(Dest.resultNodes[1])->GetNodeCoors());
+                    bShowGPS = true;
                 }
             }
         }

@@ -9,6 +9,7 @@
 #include "OverlayLayer.h"
 #include "FontNew.h"
 #include "TextNew.h"
+#include "CellPhone.h"
 
 #include "CGeneral.h"
 #include "CWorld.h"
@@ -142,13 +143,17 @@ void CWeaponSelector::Shutdown() {
     Clear();
 
     for (int i = 0; i < NUM_WHEEL_SPRITES; i++) {
-        WheelSprite[i]->Delete();
-        delete WheelSprite[i];
+        if (WheelSprite[i]) {
+            WheelSprite[i]->Delete();
+            delete WheelSprite[i];
+        }
     }
 
     for (int i = 0; i < NUM_WEXTRA_SPRITES; i++) {
-        ExtraSprite[i]->Delete();
-        delete ExtraSprite[i];
+        if (ExtraSprite[i]) {
+            ExtraSprite[i]->Delete();
+            delete ExtraSprite[i];
+        }
     }
 
     for (int i = 0; i < 8; i++) {
@@ -160,10 +165,8 @@ void CWeaponSelector::Shutdown() {
         }
     }
 
-
-
     if (WeaponStat)
-        delete WeaponStat;
+        delete[] WeaponStat;
 
     bInitialised = false;
 }
@@ -282,7 +285,6 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
         && !playa->m_pTargetedObject
         && !playa->m_nPedFlags.bIsTalking
         && !playa->m_pPlayerData->m_bDontAllowWeaponChange
-        && !playa->m_nPedFlags.bIsAimingGun
         && !playa->m_nPedFlags.bFallenDown
         && !playa->m_pIntelligence->GetUsingParachute()
         && !playa->m_pIntelligence->IsInACarOrEnteringOne()
@@ -302,11 +304,13 @@ void CWeaponSelector::ProcessWeaponSelector() {
             }
             else {
                 if (!bSlowCycle) {
-                    if (CPad::GetPad(0)->CycleWeaponRightJustDown()) {
-                        OpenWeaponWheelQuickSwitch("RIGHT");
-                    }
-                    else if (CPad::GetPad(0)->CycleWeaponLeftJustDown()) {
-                        OpenWeaponWheelQuickSwitch("LEFT");
+                    if (!CellPhone.bActive) {
+                        if (CPad::GetPad(0)->CycleWeaponRightJustDown()) {
+                            OpenWeaponWheelQuickSwitch("RIGHT");
+                        }
+                        else if (CPad::GetPad(0)->CycleWeaponLeftJustDown()) {
+                            OpenWeaponWheelQuickSwitch("LEFT");
+                        }
                     }
                 }
             }

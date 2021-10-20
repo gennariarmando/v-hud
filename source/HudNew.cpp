@@ -24,6 +24,7 @@
 #include "CPickups.h"
 #include "CWeapon.h"
 
+#include "CellPhone.h"
 #include "PedNew.h"
 #include "TextNew.h"
 #include "FontNew.h"
@@ -197,18 +198,24 @@ void CHudNew::Shutdown() {
         return;
 
     for (int i = 0; i < NUM_WANTED_SPRITES; i++) {
-        WantedSprites[i]->Delete();
-        delete WantedSprites[i];
+        if (WantedSprites[i]) {
+            WantedSprites[i]->Delete();
+            delete WantedSprites[i];
+        }
     }
 
     for (int i = 0; i < NUM_CROSSHAIRS_SPRITES; i++) {
-        CrosshairsSprites[i]->Delete();
-        delete CrosshairsSprites[i];
+        if (CrosshairsSprites[i]) {
+            CrosshairsSprites[i]->Delete();
+            delete CrosshairsSprites[i];
+        }
     }
 
     for (int i = 0; i < NUM_PLRSTATS_SPRITES; i++) {
-        StatsSprites[i]->Delete();
-        delete StatsSprites[i];
+        if (StatsSprites[i]) {
+            StatsSprites[i]->Delete();
+            delete StatsSprites[i];
+        }
     }
 
     for (int i = 0; i < 4; i++) {
@@ -310,7 +317,7 @@ void CHudNew::Draw() {
                     CWeaponSelector::DrawWheel();
                 }
 
-                if (!CHud::bDrawingVitalStats) {
+                if (!CHud::bDrawingVitalStats && !CellPhone.bActive) {
                     if (!CHud::bScriptDontDisplayVehicleName)
                         DrawVehicleName();
 
@@ -351,8 +358,35 @@ void CHudNew::Draw() {
         if (CHud::m_bDraw3dMarkers && !TheCamera.m_bWideScreenOn)
             CRadar::Draw3dMarkers();
 
-        if (CMenuSystem::num_menus_in_use)
-            CMenuPanels::Process(-99);
+        CMenuPanels::Process(-99);
+
+        CPed* playa = CWorld::Players[0].m_pPed;
+        if (TheCamera.m_bWideScreenOn
+            || CHud::bDrawingVitalStats
+            || CWeaponSelector::bShowWeaponWheel
+            || m_bShowWastedBusted
+            || CMenuPanels::bActive
+            || MenuNew.bMenuActive
+            || playa->m_nPedFlags.bFallenDown
+            || playa->m_nPedFlags.bIsTalking
+            || playa->m_nPedFlags.bIsInTheAir
+            || (playa->m_pIntelligence && playa->m_pIntelligence->GetUsingParachute())
+            || playa->m_nPedState == PEDSTATE_ON_FIRE
+            || playa->m_nPedState == PEDSTATE_FALL
+            || playa->m_nPedState == PEDSTATE_GETUP
+            || playa->m_nPedState == PEDSTATE_ARREST_PLAYER
+            || playa->m_nPedState == PEDSTATE_DIE
+            || playa->m_nPedState == PEDSTATE_DEAD
+            || playa->m_nPedState == PEDSTATE_CARJACK
+            || playa->m_nPedState == PEDSTATE_DRAGGED_FROM_CAR
+            || playa->m_nPedState == PEDSTATE_ENTER_CAR
+            || playa->m_nPedState == PEDSTATE_EXIT_CAR
+            || playa->m_nPedState == PEDSTATE_STEAL_CAR) {
+            CellPhone.bRequestPhoneClose = true;
+        }
+
+        CellPhone.Process();
+        CellPhone.Draw();
 
         DrawScriptText(0);
     }
@@ -442,7 +476,7 @@ void CHudNew::DrawCrosshairs() {
                     static int alphaTime = 0;
 
                     if (playa->m_pPlayerTargettedPed && playa->m_pPlayerTargettedPed->m_fHealth <= 0.0f) {
-                        nTargettedEntityDeathTime = CTimer::m_snTimeInMilliseconds + 200;
+                        nTargettedEntityDeathTime = CTimer::m_snTimeInMilliseconds + 400;
                         playa->m_pPlayerTargettedPed = NULL;
                     }
 

@@ -19,7 +19,8 @@ enum eBlipsNewSprites {
     RADAR_SPRITE_VCONE,
     RADAR_SPRITE_LEVEL,
     RADAR_SPRITE_LOWER,
-    RADAR_SPRITE_HIGHER
+    RADAR_SPRITE_HIGHER,
+    NUM_BLIPS_SPRITES = 256,
 };
 
 class CBlip {
@@ -39,11 +40,11 @@ class CHudSetting;
 class CRadarNew {
 public:
     static CSprite2d* m_RadarSprites[NUM_RADAR_SPRITES];
-    static CSprite2d* m_BlipsSprites[256];
+    static CSprite2d* m_BlipsSprites[NUM_BLIPS_SPRITES];
     static CSprite2d* m_MiniMapSprites[12 * 12];
     static CRadarAnim Anim;
     static CVector2D m_vRadarMapQuality;
-    static CBlip m_BlipsList[256];
+    static CBlip m_BlipsList[NUM_BLIPS_SPRITES];
     static int m_BlipsCount;
     static bool m_bInitialised;
     static RwCamera* m_pCamera;

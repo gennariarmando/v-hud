@@ -36,12 +36,12 @@ using namespace plugin;
 CRadarNew RadarNew;
 
 CSprite2d* CRadarNew::m_RadarSprites[NUM_RADAR_SPRITES];
-CSprite2d* CRadarNew::m_BlipsSprites[256];
+CSprite2d* CRadarNew::m_BlipsSprites[NUM_BLIPS_SPRITES];
 CSprite2d* CRadarNew::m_MiniMapSprites[12 * 12];
 CRadarAnim CRadarNew::Anim;
 CVector2D CRadarNew::m_vRadarMapQuality;
 
-CBlip CRadarNew::m_BlipsList[256];
+CBlip CRadarNew::m_BlipsList[NUM_BLIPS_SPRITES];
 int CRadarNew::m_BlipsCount;
 bool CRadarNew::m_bInitialised;
 RwCamera* CRadarNew::m_pCamera;
