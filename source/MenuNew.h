@@ -433,7 +433,7 @@ public:
     void DrawBackground();
 
     void SetLandingPageBehaviour();
-    void SetSavePageBehaviour();
+    void SetSavePageBehaviour(bool background);
     void SetDefaultPageBehaviour();
 
     void AddNewBarItem(char* name, int screen);

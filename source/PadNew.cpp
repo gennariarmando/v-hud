@@ -126,8 +126,7 @@ bool CPadNew::GetPhoneShowJustDown() {
 }
 
 bool CPadNew::GetPhoneHideJustDown() {
-    return (NewMouseControllerState.mmb && !OldMouseControllerState.mmb)
-        || (NewKeyState.down && !OldKeyState.down);
+    return (NewMouseControllerState.rmb && !OldMouseControllerState.rmb);
 }
 
 bool CPadNew::GetPhoneUpJustDown() {

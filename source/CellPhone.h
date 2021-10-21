@@ -91,7 +91,7 @@ public:
 private:
     bool bInitialised;
     bool bResetAnimation;
-    bool bAnim;
+    bool bShowOrHideAnimation;
 
 public:
     bool bActive;

@@ -106,7 +106,7 @@ CMenuNew::CMenuNew() {
 
     auto openSavePage = [](int, int, int, int, int) {
         if (!bSaveScreenHasBeenOpened) {
-            MenuNew.SetSavePageBehaviour();
+            MenuNew.SetSavePageBehaviour(true);
             bSaveScreenHasBeenOpened = true;
         }
     };
@@ -464,7 +464,7 @@ void CMenuNew::SetLandingPageBehaviour() {
     SetInputTypeAndClear(MENUINPUT_TAB, 0);
 }
 
-void CMenuNew::SetSavePageBehaviour() {
+void CMenuNew::SetSavePageBehaviour(bool background) {
     if (nCurrentScreen == MENUSCREEN_SAVE)
         return;
 
@@ -473,7 +473,7 @@ void CMenuNew::SetSavePageBehaviour() {
     bShowMenuExtraText = true;
     bShowMenuBar = false;
     bInvertInput = false;
-    bNoTransparentBackg = true;
+    bNoTransparentBackg = background;
     bStylizedBackground = false;
     OpenMenuScreen(MENUSCREEN_SAVE);
     SetInputTypeAndClear(MENUINPUT_TAB, 0);

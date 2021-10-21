@@ -85,7 +85,7 @@ void CCellPhone::Init() {
     }
 
     bActive = false;
-    bAnim = false;
+    bShowOrHideAnimation = false;
     nCurrentItem = 0;
     nPreviousItem = 0;
     nTimeLastTimePhoneShown = false;
@@ -174,7 +174,7 @@ void CCellPhone::ShowHidePhone(bool on, bool force) {
         if (bActive)
             return;
 
-        bAnim = true;
+        bShowOrHideAnimation = true;
         bActive = true;
         nCurrentItem = 0;
         nPreviousItem = 0;
@@ -186,7 +186,7 @@ void CCellPhone::ShowHidePhone(bool on, bool force) {
             bResetAnimation = true;
         }
 
-        bAnim = false;
+        bShowOrHideAnimation = false;
     }
 
     nTimeLastTimePhoneShown = CTimer::m_snTimeInMillisecondsPauseMode + 500;
@@ -251,9 +251,16 @@ void CCellPhone::Process() {
 }
 
 void CCellPhone::ProcessPhoneApp() {
+    CPed* playa = FindPlayerPed(-1);
+
     switch (Apps[nCurrentItem].type) {
     case CELLPHONE_APP_QUICKSAVE:
-        MenuNew.SetSavePageBehaviour();
+        if (playa->m_nPedFlags.bInVehicle) {
+            CHud::SetHelpMessage(CTextNew::GetText("QSAV_ERR").text, true, false, true);
+        }
+        else {
+            MenuNew.SetSavePageBehaviour(false);
+        }
         ShowHidePhone(false, true);
         break;
     }
@@ -317,7 +324,6 @@ void CCellPhone::DrawPhone(float x, float y) {
     char* day;
     sprintf(daytmp, "DAY_%d", CClock::CurrentDay);
     day = CTextNew::GetText(daytmp).text;
-    CTextNew::UpperCase(day);
     CFontNew::PrintString(sx, dy, day);
     CFontNew::SetClipX(SCREEN_WIDTH);
     sx = dx + (dw / 2);
@@ -346,8 +352,8 @@ void CCellPhone::DrawPhone(float x, float y) {
     CFontNew::SetScale(SCREEN_MULTIPLIER(0.72f), SCREEN_MULTIPLIER(1.62f));
     CFontNew::PrintString(headerX, headerY, CTextNew::GetText(Apps[nCurrentItem].name).text);
 
-    const float spacing = SCREEN_COORD(18.0f);
-    const float iconSize = 25.0f;
+    const float iconSize = 24.0f;
+    const float spacing = SCREEN_COORD(iconSize / 2);
 
     tlx += SCREEN_COORD(iconSize * 2);
     tly += tlh + SCREEN_COORD(iconSize * 2);
@@ -385,7 +391,7 @@ void CCellPhone::DrawPhone(float x, float y) {
         }
 
         if (icon != -1) {
-            float is = iconSize;
+            float is = iconSize * 1.2f;
             float ix = tlx + ((SCREEN_COORD(is) * 2) + spacing) * (Apps[i].c);
             float iy = tly + ((SCREEN_COORD(is) * 2) + spacing) * (Apps[i].r);
 
@@ -488,7 +494,7 @@ void CCellPhone::Draw() {
         bResetAnimation = false;
     }
 
-    if (bAnim) {
+    if (bShowOrHideAnimation) {
         offset = interpF(offset, up, 0.4f * CTimer::ms_fTimeStep);
     }
     else {

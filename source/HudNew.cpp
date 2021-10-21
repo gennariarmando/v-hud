@@ -371,6 +371,7 @@ void CHudNew::Draw() {
             || playa->m_nPedFlags.bIsTalking
             || playa->m_nPedFlags.bIsInTheAir
             || (playa->m_pIntelligence && playa->m_pIntelligence->GetUsingParachute())
+            || (playa->m_pIntelligence && playa->m_pIntelligence->GetTaskUseGun())
             || playa->m_nPedState == PEDSTATE_ON_FIRE
             || playa->m_nPedState == PEDSTATE_FALL
             || playa->m_nPedState == PEDSTATE_GETUP
@@ -381,7 +382,12 @@ void CHudNew::Draw() {
             || playa->m_nPedState == PEDSTATE_DRAGGED_FROM_CAR
             || playa->m_nPedState == PEDSTATE_ENTER_CAR
             || playa->m_nPedState == PEDSTATE_EXIT_CAR
-            || playa->m_nPedState == PEDSTATE_STEAL_CAR) {
+            || playa->m_nPedState == PEDSTATE_STEAL_CAR
+            || playa->m_nPedState == PEDSTATE_AIMGUN
+            || playa->m_nPedState == PEDSTATE_FIGHT
+            || playa->m_nPedState == PEDSTATE_ROCKETLAUNCHER_MODE
+            || playa->m_nPedState == PEDSTATE_SNIPER_MODE
+            || IsAimingWeapon()) {
             CellPhone.bRequestPhoneClose = true;
         }
 
