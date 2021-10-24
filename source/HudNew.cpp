@@ -286,7 +286,7 @@ bool HelpTripSkipShown;
 bool ShowTripSkipMessage;
 
 void CHudNew::Draw() {
-    if (CTimer::m_UserPause || CTimer::m_CodePause)
+    if (CTimer::m_UserPause || CTimer::m_CodePause || MenuNew.bMenuActive)
         return;
 
     if (CReplay::Mode != 1 && !CWeapon::ms_bTakePhoto) {

@@ -1,5 +1,5 @@
 #pragma once
-#define MENUSETTINGS_VERSION 0.01
+#define MENUSETTINGS_VERSION 1.0
 #define MENU_OPEN_CLOSE_WAIT_TIME 500
 #define MENU_SCREEN_CHANGE_WAIT_TIME 250
 
@@ -176,6 +176,7 @@ enum eHelpTextType {
     HELP_TEXT_NONE,
     HELP_TEXT_SELECT,
     HELP_TEXT_BACK,
+    HELP_TEXT_APPLYCHANGES,
 };
 
 enum {
@@ -260,7 +261,7 @@ public:
 class CMenuSettings {
 public:
     // Keyboard & Mouse
-    float mouseSensitivity;
+    double mouseSensitivity;
     bool invertMouseY;
     bool mouseSteering;
     bool mouseFlying;
@@ -285,7 +286,7 @@ public:
 
     // Display
     int brightness;
-    float gamma;
+    double gamma;
     bool subtitles;
     int language;
     bool showHUD;
@@ -293,7 +294,7 @@ public:
     bool savePhotos;
     bool mapLegend;
     bool gpsRoute;
-    float safeZoneSize;
+    double safeZoneSize;
     int measurementSys;
 
     // Graphics
@@ -302,7 +303,7 @@ public:
     int aspectRatio;
     bool mipMapping;
     int antiAliasing;
-    float drawDist;
+    double drawDist;
     int visualQuality;
     bool widescreen;
     bool frameLimiter;
@@ -389,6 +390,7 @@ public:
     bool bStylizedBackground;
 
     bool bLandingPage;
+    bool bStartOrLoadGame;
     bool bInvertInput;
 
     int nNumOfSaveGames;

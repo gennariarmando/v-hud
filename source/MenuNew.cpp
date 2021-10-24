@@ -160,6 +160,7 @@ void CMenuNew::Init() {
         FrontendSprites[i] = new CSprite2d();
         FrontendSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\frontend"), FrontendSpritesFileNames[i]);    
     }
+
     BuildMenuBar();
     BuildMenuScreen();
 
@@ -169,11 +170,10 @@ void CMenuNew::Init() {
     TempSettings = Settings;
 
     bLandingPage = Settings.landingPage;
+    bStartOrLoadGame = !bLandingPage;
 
     if (bLandingPage)
         SetLandingPageBehaviour();
-    else
-        DoSettingsBeforeStartingAGame(true, Settings.saveSlot);
 
     ScanGalleryPictures(true);
 
@@ -295,6 +295,8 @@ void CMenuNew::Clear() {
     fMapZoom = 1.0f;
     vMapBase.x = 0.0f;
     vMapBase.y = 0.0f;
+
+    nTimeForSafeZonesToShow = 0;
 
     ResetMap();
 
@@ -724,7 +726,6 @@ void CMenuNew::CenterCursor() {
 }
 
 void CMenuNew::DoMapZoomInOut(bool out) {
-    const float previousMapHalfSize = GetMenuMapWholeSize();
     const float value = out ? -0.2f : 0.2f;
     fMapZoom += value;
     fMapZoom = clamp(fMapZoom, 1.0f, 8.0f);
@@ -923,16 +924,11 @@ void CMenuNew::Process() {
                 if (!bShowMenu) {
                     if (nCurrentScreen == MENUSCREEN_MAP) {
                         if (LeftMouseDown) {
-                            nMouseType = MOUSE_HAND;
+                            nMouseType = MOUSE_GRAB;
 
                             if (fMapZoom > 1.0f) {
-                                static CVector2D prevMapBase = vMapBase;
                                 vMapBase.x += (vMousePos.x - vOldMousePos.x);
                                 vMapBase.y += (vMousePos.y - vOldMousePos.y);
-
-                                if (prevMapBase.x != vMapBase.x || prevMapBase.y != vMapBase.y) {
-                                    nMouseType = MOUSE_GRAB;
-                                }
                             }
                         }
                         else {
@@ -1032,9 +1028,15 @@ void CMenuNew::Process() {
                 break;
             case MENUSCREEN_LANDING:
                 break;
+            case MENUSCREEN_SETTINGS:
+                if (nMenuAlert == MENUALERT_PENDINGCHANGES) {
+                    AppendHelpText(HELP_TEXT_APPLYCHANGES);
+
+                }
+                [[fallthrough]];
             default:
-                AppendHelpText(HELP_TEXT_SELECT);
                 AppendHelpText(HELP_TEXT_BACK);
+                AppendHelpText(HELP_TEXT_SELECT);
                 break;
             }
         }
@@ -1043,8 +1045,8 @@ void CMenuNew::Process() {
             case MENUMESSAGE_NONE:
                 break;
             default:
-                AppendHelpText(HELP_TEXT_SELECT);
                 AppendHelpText(HELP_TEXT_BACK);
+                AppendHelpText(HELP_TEXT_SELECT);
                 break;
             }
         }
@@ -1083,6 +1085,11 @@ void CMenuNew::Process() {
         if (pad->GetOpenCloseMenuJustDown()) {
             OpenCloseMenu(true, false);
         }
+    }
+
+    if (bStartOrLoadGame) {
+        DoSettingsBeforeStartingAGame(true, Settings.saveSlot);
+        bStartOrLoadGame = false;
     }
 }
 
@@ -1555,21 +1562,21 @@ void CMenuNew::CheckSliderMovement(double value) {
     value /= 10.0;
     switch (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[nCurrentEntryItem].type) {
     case MENUENTRY_DRAWDISTANCE:
-        ts.drawDist += float(value * 1.8f);
-        ts.drawDist = clamp(ts.drawDist, 0.8f, 1.8f);
+        ts.drawDist += double(value * 1.8);
+        ts.drawDist = clamp(ts.drawDist, 0.8, 1.8);
         break;
     case MENUENTRY_BRIGHTNESS:
         ts.brightness += int(value * 512);
         ts.brightness = clamp(ts.brightness, 0, 512);
         break;
     case MENUENTRY_GAMMA:
-        ts.gamma += float(value * 1.0f);
-        ts.gamma = clamp(ts.gamma, 0, 1.0f);
+        ts.gamma += double(value * 1.0);
+        ts.gamma = clamp(ts.gamma, 0, 1.0);
         gamma.SetGamma(ts.gamma, 1);
         break;
     case MENUENTRY_SAFEZONESIZE:
-        ts.safeZoneSize += float(value * 96.0f);
-        ts.safeZoneSize = clamp(ts.safeZoneSize, 0, 96.0f);
+        ts.safeZoneSize += double(value * 96.0);
+        ts.safeZoneSize = clamp(ts.safeZoneSize, 0, 96.0);
         break;
     case MENUENTRY_SFXVOLUME:
         ts.sfxVolume += char(value * 100);
@@ -1582,10 +1589,10 @@ void CMenuNew::CheckSliderMovement(double value) {
         AudioEngine.SetMusicMasterVolume(ts.radioVolume);
         break;
     case MENUENTRY_MOUSESENSITIVITY:
-        ts.mouseSensitivity += float(value * (1.0f / 200.0f));
-        ts.mouseSensitivity = clamp(ts.mouseSensitivity, 1.0f/3200.0f, 1.0f/200.0f);
-        TheCamera.m_fMouseAccelHorzntl = ts.mouseSensitivity;
-        TheCamera.m_fMouseAccelVertical = ts.mouseSensitivity;
+        ts.mouseSensitivity += double(value * (1 / 200));
+        ts.mouseSensitivity = clamp(ts.mouseSensitivity, 1 / 3200, 1 / 200);
+        TheCamera.m_fMouseAccelHorzntl = (float)ts.mouseSensitivity;
+        TheCamera.m_fMouseAccelVertical = (float)ts.mouseSensitivity;
         break;
     }
 }
@@ -1829,30 +1836,30 @@ void CMenuNew::Draw() {
             }
         }
 
-        static float previousSafeZone = TempSettings.safeZoneSize;
-        if (TempSettings.safeZoneSize != previousSafeZone) {
-            nTimeForSafeZonesToShow = 1500 + CTimer::m_snTimeInMillisecondsPauseMode;
-            previousSafeZone = TempSettings.safeZoneSize;
+        if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[nCurrentEntryItem].type == MENUENTRY_SAFEZONESIZE) {
+            static double previousSafeZone = TempSettings.safeZoneSize;
+            if (TempSettings.safeZoneSize != previousSafeZone) {
+                nTimeForSafeZonesToShow = 1500 + CTimer::m_snTimeInMillisecondsPauseMode;
+                previousSafeZone = TempSettings.safeZoneSize;
+            }
         }
 
-        if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[nCurrentEntryItem].type == MENUENTRY_SAFEZONESIZE) {
-            if (nTimeForSafeZonesToShow > CTimer::m_snTimeInMillisecondsPauseMode) {
-                DrawSafeZoneAngle(HUD_X(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), 1, 1);
-                CSprite2d::DrawRect(CRect(HUD_X(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), 0.0f, 0.0f), CRGBA(0, 0, 0, 100));
-                CSprite2d::DrawRect(CRect(0.0f, HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), HUD_X(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT)), CRGBA(0, 0, 0, 100));
+        if (nTimeForSafeZonesToShow > CTimer::m_snTimeInMillisecondsPauseMode) {
+            DrawSafeZoneAngle(HUD_X(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), 1, 1);
+            CSprite2d::DrawRect(CRect(HUD_X(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), 0.0f, 0.0f), CRGBA(0, 0, 0, 100));
+            CSprite2d::DrawRect(CRect(0.0f, HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), HUD_X(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT)), CRGBA(0, 0, 0, 100));
 
-                DrawSafeZoneAngle(HUD_RIGHT(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), -1, 1);
-                CSprite2d::DrawRect(CRect(HUD_RIGHT(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), SCREEN_WIDTH, 0.0f), CRGBA(0, 0, 0, 100));
-                CSprite2d::DrawRect(CRect(HUD_RIGHT(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), SCREEN_WIDTH, HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT)), CRGBA(0, 0, 0, 100));
+            DrawSafeZoneAngle(HUD_RIGHT(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), -1, 1);
+            CSprite2d::DrawRect(CRect(HUD_RIGHT(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), SCREEN_WIDTH, 0.0f), CRGBA(0, 0, 0, 100));
+            CSprite2d::DrawRect(CRect(HUD_RIGHT(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT), SCREEN_WIDTH, HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT)), CRGBA(0, 0, 0, 100));
 
-                DrawSafeZoneAngle(HUD_X(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT), 1, -1);
-                CSprite2d::DrawRect(CRect(HUD_X(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT), 0.0f, SCREEN_HEIGHT), CRGBA(0, 0, 0, 100));
-                CSprite2d::DrawRect(CRect(HUD_X(96.0f), 0.0f, HUD_RIGHT(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT)), CRGBA(0, 0, 0, 100));
+            DrawSafeZoneAngle(HUD_X(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT), 1, -1);
+            CSprite2d::DrawRect(CRect(HUD_X(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT), 0.0f, SCREEN_HEIGHT), CRGBA(0, 0, 0, 100));
+            CSprite2d::DrawRect(CRect(HUD_X(96.0f), 0.0f, HUD_RIGHT(96.0f), HUD_Y(96.0f * SAFE_ZONE_HEIGHT_MULT)), CRGBA(0, 0, 0, 100));
 
-                DrawSafeZoneAngle(HUD_RIGHT(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT), -1, -1);
-                CSprite2d::DrawRect(CRect(HUD_RIGHT(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT), SCREEN_WIDTH, SCREEN_HEIGHT), CRGBA(0, 0, 0, 100));
-                CSprite2d::DrawRect(CRect(HUD_X(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT), HUD_RIGHT(96.0f), SCREEN_HEIGHT), CRGBA(0, 0, 0, 100));
-            }
+            DrawSafeZoneAngle(HUD_RIGHT(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT), -1, -1);
+            CSprite2d::DrawRect(CRect(HUD_RIGHT(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT), SCREEN_WIDTH, SCREEN_HEIGHT), CRGBA(0, 0, 0, 100));
+            CSprite2d::DrawRect(CRect(HUD_X(96.0f), HUD_BOTTOM(96.0f * SAFE_ZONE_HEIGHT_MULT), HUD_RIGHT(96.0f), SCREEN_HEIGHT), CRGBA(0, 0, 0, 100));
         }
     }
     else {
@@ -1930,9 +1937,9 @@ void CMenuNew::Draw() {
         r.top = HUD_BOTTOM(90.0f);
         r.bottom = SCREEN_COORD(36.0f);
 
-        static float b = 0.0f;
-        CSprite2d::DrawRect(CRect(r.left - b, r.top, r.left, r.top + r.bottom), CRGBA(0, 0, 0, 150));
-        b = 0.0f;
+        static float x = 0.0f;
+        CSprite2d::DrawRect(CRect(x, r.top, r.left, r.top + r.bottom), CRGBA(0, 0, 0, 150));
+        x = r.left;
 
         CFontNew::SetBackground(false);
         CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
@@ -1945,25 +1952,33 @@ void CMenuNew::Draw() {
         CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
         CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
 
-        float x = r.left;
-        float spacing = SCREEN_COORD(48.0f);
+        float spacing = SCREEN_COORD(42.0f);
         float offset = SCREEN_COORD(32.0f);
-        float back = SCREEN_COORD(48.0f);
-        for (int i = 0; i < nHelpTextCount; i++) {
+        for (int i = nHelpTextCount; i >= 0; i--) {
             char* str = NULL;
 
             switch (nHelpTextType[i].type) {
             case HELP_TEXT_SELECT:
-                str = "Select ~x~";
+                str = "H_SEL";
                 break;
             case HELP_TEXT_BACK:
-                str = "Back ~t~";
+                str = "H_BAC";
                 break;
+            case HELP_TEXT_APPLYCHANGES:
+                str = "H_APCH";
+                break;
+            default:
+                continue;
             }
-            CFontNew::PrintString(x - offset, r.top + SCREEN_COORD(4.0f), str);
-            x -= CFontNew::GetStringWidth(str);
-            x -= spacing;
-            b += CFontNew::GetStringWidth(str) + back;
+
+            if (str) {
+                str = CTextNew::GetText(str).text;
+                CFontNew::PrintString(x - offset, r.top + SCREEN_COORD(4.0f), str);
+                x -= CFontNew::GetStringWidth(str, true);
+                x -= spacing;
+            }
+
+            nHelpTextType[i].type = HELP_TEXT_NONE;
         }
         nHelpTextCount = 0;
     }
@@ -2504,8 +2519,8 @@ void CMenuNew::DrawLandingPage() {
 
     CRect rect;
     rect = { HUD_RIGHT(96.0f + 1302.0f), HUD_Y(218.0f), SCREEN_COORD(1302.0f), SCREEN_COORD(644.0f) };
-    DrawPatternBackground(CRect(rect.left, rect.top, rect.left + rect.right, rect.top + rect.bottom), CRGBA(HudColourNew.GetRGB(HUD_COLOUR_BLACK, 150)));
-    FrontendSprites[FRONTEND_INFOBOX]->Draw(CRect(rect.left + SCREEN_COORD(870.0f), rect.top, rect.left + rect.right, rect.top + rect.bottom), CRGBA(255, 255, 255, 255));
+    DrawPatternBackground(CRect(rect.left, rect.top, rect.left + rect.right, rect.top + rect.bottom), CRGBA(HudColourNew.GetRGB(HUD_COLOUR_BLACK, FadeIn(150))));
+    FrontendSprites[FRONTEND_INFOBOX]->Draw(CRect(rect.left + SCREEN_COORD(870.0f), rect.top, rect.left + rect.right, rect.top + rect.bottom), CRGBA(255, 255, 255, FadeIn(255)));
 
     CFontNew::SetBackground(false);
     CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
@@ -2514,8 +2529,8 @@ void CMenuNew::DrawLandingPage() {
     CFontNew::SetFontStyle(CFontNew::FONT_1);
     CFontNew::SetDropShadow(0.0f);
     CFontNew::SetOutline(0.0f);
-    CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
-    CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
+    CFontNew::SetDropColor(CRGBA(0, 0, 0, FadeIn(0)));
+    CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(255)));
     CFontNew::SetScale(SCREEN_MULTIPLIER(2.6f), SCREEN_MULTIPLIER(4.8f));
 
     char* str = CTextNew::GetText("FE_GTACUT").text;
@@ -2530,7 +2545,7 @@ void CMenuNew::DrawLandingPage() {
 
     menuEntry = { HUD_X(532.0f), HUD_BOTTOM(128.0f), HUD_RIGHT(96.0f), SCREEN_COORD(74.0f) };
 
-    CHudNew::DrawSimpleRectGradInverted(CRect(menuEntry.left, menuEntry.top, menuEntry.right, menuEntry.top + menuEntry.bottom), CRGBA(0, 0, 0, 150));
+    CHudNew::DrawSimpleRectGradInverted(CRect(menuEntry.left, menuEntry.top, menuEntry.right, menuEntry.top + menuEntry.bottom), CRGBA(0, 0, 0, FadeIn(150)));
 
     float shift = SCREEN_COORD(24.0f);
     float spacing = SCREEN_COORD(64.0f);
@@ -2577,7 +2592,7 @@ void CMenuNew::DrawLandingPage() {
         CFontNew::SetFontStyle(CFontNew::FONT_1);
         CFontNew::SetDropShadow(0.0f);
         CFontNew::SetOutline(0.0f);
-        CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+        CFontNew::SetDropColor(CRGBA(0, 0, 0, FadeIn(0)));
         CFontNew::SetColor(menuEntryTextColor);
         CFontNew::SetScale(SCREEN_MULTIPLIER(0.92f), SCREEN_MULTIPLIER(1.8f));
 
@@ -2619,6 +2634,9 @@ void CMenuNew::DrawTabRadioIcons(float x, float y) {
 }
 
 void CMenuNew::DrawSpinningWheel(float x, float y, float w, float h) {
+    if (bLandingPage)
+        return;
+
     CVector posn[4];
     static float angle = 0.0f;
     angle -= 0.02f * (M_PI * 1.5f);
@@ -2686,6 +2704,16 @@ void CMenuNew::PrintBrief() {
     CRect mask = GetMenuScreenRect();
     DrawPatternBackground(CRect(mask.left, mask.top, mask.left + mask.right, mask.top + mask.bottom), HudColourNew.GetRGB(HUD_COLOUR_BLACK, FadeIn(150)));
 
+    if (nCurrentInputType == MENUINPUT_BAR) {
+        if (CheckHover(mask.left, mask.left + mask.right, mask.top, mask.top + mask.bottom)) {
+            CPadNew* pad = CPadNew::GetPad(0);
+
+            if (pad->GetLeftMouseJustDown()) {
+                SetInputTypeAndClear(MENUINPUT_TAB);
+            }
+        }
+    }
+
     CFontNew::SetBackground(false);
     CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
     CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
@@ -2729,8 +2757,19 @@ void CMenuNew::PrintBrief() {
 }
 
 void CMenuNew::PrintStats() {
-    int lines = CStats::ConstructStatLine(99999, 0);
+    CRect mask = GetMenuScreenRect();
 
+    if (nCurrentInputType == MENUINPUT_BAR) {
+        if (CheckHover(mask.left, mask.left + mask.right, mask.top, mask.top + mask.bottom)) {
+            CPadNew* pad = CPadNew::GetPad(0);
+
+            if (pad->GetLeftMouseJustDown()) {
+                SetInputTypeAndClear(MENUINPUT_TAB);
+            }
+        }
+    }
+
+    int lines = CStats::ConstructStatLine(99999, 0);
     CRect menuTab  = GetMenuEntryRect();
     CRGBA menuEntryColor;
     bool switchCol = false;
@@ -3315,7 +3354,7 @@ void CMenuNew::RestoreDefaults(int index) {
 
     switch (index) {
     case SETTINGS_KEYBOARD:
-        ts.mouseSensitivity = 1.0f / 400.0f;
+        ts.mouseSensitivity = 0.0025;
         ts.invertMouseY = false;
         ts.mouseSteering = false;
         ts.mouseFlying = false;
@@ -3333,14 +3372,14 @@ void CMenuNew::RestoreDefaults(int index) {
         ts.sfxVolume = 90;
         ts.radioVolume = 90;
         ts.radioStation = 1;
-        ts.radioAutoSelect = 0;
-        ts.radioEQ = 0;
+        ts.radioAutoSelect = false;
+        ts.radioEQ = false;
         ts.tracksAutoScan = false;
         ts.radioMode = 0;
         break;
     case SETTINGS_DISPLAY:
         ts.brightness = 256;
-        ts.gamma = 0.5f;
+        ts.gamma = 0.5;
         ts.subtitles = true;
         ts.language = 0;
         ts.showHUD = true;
@@ -3348,7 +3387,7 @@ void CMenuNew::RestoreDefaults(int index) {
         ts.savePhotos = true;
         ts.mapLegend = true;
         ts.gpsRoute = true;
-        ts.safeZoneSize = 0.0f;
+        ts.safeZoneSize = 32.0;
         ts.measurementSys = 0;
         break;
     case SETTINGS_GRAPHICS:
@@ -3358,7 +3397,7 @@ void CMenuNew::RestoreDefaults(int index) {
         ts.mipMapping = true;
         //s.antiAliasing = 1;
         //s.currentAntiAliasing = antiAliasing;
-        ts.drawDist = 1.2f;
+        ts.drawDist = 1.2;
         ts.visualQuality = 0;
         ts.widescreen = false;
         ts.frameLimiter = true;
@@ -3370,7 +3409,7 @@ void CMenuNew::RestoreDefaults(int index) {
 }
 
 void CMenuSettings::Clear() {
-    mouseSensitivity = 1.0f / 400.0f;
+    mouseSensitivity = 0.0025;
     invertMouseY = false;
     mouseSteering = false;
     mouseFlying = false;
@@ -3392,7 +3431,7 @@ void CMenuSettings::Clear() {
     radioMode = 0;
 
     brightness = 256;
-    gamma = 0.5f;
+    gamma = 0.5;
     subtitles = true;
     language = 0;
     showHUD = true;
@@ -3400,14 +3439,14 @@ void CMenuSettings::Clear() {
     savePhotos = true;
     mapLegend = true;
     gpsRoute = true;
-    safeZoneSize = 0.0f;
+    safeZoneSize = 32.0;
     measurementSys = 0;
 
     videoMode = 0;
     aspectRatio = 0;
     mipMapping = true;
     antiAliasing = 1;
-    drawDist = 1.2f;
+    drawDist = 1.2;
     visualQuality = 0;
     widescreen = false;
     frameLimiter = true;
@@ -3433,7 +3472,7 @@ void CMenuSettings::Load() {
         else {
             // Keyboard & Mouse
             if (auto keyboard = settings.child("keyboard")) {
-                mouseSensitivity = keyboard.child("MouseSensitivity").attribute("value").as_float();
+                mouseSensitivity = keyboard.child("MouseSensitivity").attribute("value").as_double();
                 invertMouseY = keyboard.child("InvertMouseY").attribute("value").as_bool();
                 mouseSteering = keyboard.child("MouseSteering").attribute("value").as_bool();
                 mouseFlying = keyboard.child("MouseFlying").attribute("value").as_bool();
@@ -3463,7 +3502,7 @@ void CMenuSettings::Load() {
             // Display
             if (auto display = settings.child("display")) {
                 brightness = display.child("Brightness").attribute("value").as_int();
-                gamma = display.child("Gamma").attribute("value").as_float();
+                gamma = display.child("Gamma").attribute("value").as_double();
                 subtitles = display.child("Subtitles").attribute("value").as_bool();
                 language = display.child("Language").attribute("value").as_int();
                 showHUD = display.child("ShowHUD").attribute("value").as_bool();
@@ -3471,7 +3510,7 @@ void CMenuSettings::Load() {
                 savePhotos = display.child("SavePhotos").attribute("value").as_bool();
                 mapLegend = display.child("MapLegend").attribute("value").as_bool();
                 gpsRoute = display.child("GpsRoute").attribute("value").as_bool();
-                safeZoneSize = display.child("SafeZoneSize").attribute("value").as_float();
+                safeZoneSize = display.child("SafeZoneSize").attribute("value").as_double();
                 measurementSys = display.child("MeasurementSys").attribute("value").as_int();
             }
 
@@ -3481,7 +3520,7 @@ void CMenuSettings::Load() {
                 //aspectRatio = graphics.child("AspectRatio").attribute("value").as_int();
                 mipMapping = graphics.child("MipMapping").attribute("value").as_bool();
                 antiAliasing = graphics.child("AntiAliasing").attribute("value").as_int();
-                drawDist = graphics.child("DrawDist").attribute("value").as_float();
+                drawDist = graphics.child("DrawDist").attribute("value").as_double();
                 visualQuality = graphics.child("VisualQuality").attribute("value").as_int();
                 widescreen = graphics.child("Widescreen").attribute("value").as_bool();
                 frameLimiter = graphics.child("FrameLimiter").attribute("value").as_bool();

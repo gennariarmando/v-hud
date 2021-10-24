@@ -176,8 +176,8 @@ void CCellPhone::ShowHidePhone(bool on, bool force) {
 
         bShowOrHideAnimation = true;
         bActive = true;
-        nCurrentItem = 0;
-        nPreviousItem = 0;
+        nCurrentItem = 4;
+        nPreviousItem = 4;
         bResetAnimation = true;
     }
     else {

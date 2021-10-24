@@ -126,11 +126,11 @@ void COverlayLayer::RenderEffects() {
 
     CRect rect = { SCREEN_COORD(-5.0f), SCREEN_COORD(-5.0f), SCREEN_COORD_RIGHT(-5.0f), SCREEN_COORD_BOTTOM(-5.0f) };
     CRGBA c = { 255, 255, 255, 255 };
-    CRGBA fc = HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 200);
+    CRGBA fc = HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255);
 
     switch (CurrentEffect) {
     case EFFECT_BLUR_COLOR:
-        CSprite2d::DrawRect(rect, CRGBA(fc.r / 2, fc.g / 2, fc.b / 2, fc.a / 2));
+        CSprite2d::DrawRect(rect, CRGBA(fc.r * 0.5f, fc.g * 0.5f, fc.b * 0.5f, fc.a * 0.25f));
         SetVerticesHelper(rect, blur_fxc, NULL);
         SetVerticesHelper(rect, vignette_fxc, NULL);
         break;
