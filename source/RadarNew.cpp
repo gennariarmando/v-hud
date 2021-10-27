@@ -416,7 +416,7 @@ void CRadarNew::DrawPickupBlips() {
                 RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
 
                 AddAnyBlipNoLegend(m_PickupsSprites[s], p.GetPosn(), SCREEN_COORD(32.0f * 0.8f), SCREEN_COORD(16.0f * 0.8f), M_PI, false,
-                    HudColourNew.GetRGB(HUD_COLOUR_GREYDARK, 255), false);
+                    HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255), false);
 
                 RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
             }
