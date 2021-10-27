@@ -23,6 +23,29 @@ enum eBlipsNewSprites {
     NUM_BLIPS_SPRITES = 256,
 };
 
+enum ePickupsBlipsSprites {
+    PICKUP_UNKNOWN,
+    PICKUP_WEAPON_ARMOUR,
+    PICKUP_WEAPON_ASSAULT_RIFLE,
+    PICKUP_WEAPON_BAT,
+    PICKUP_WEAPON_DOWN,
+    PICKUP_WEAPON_GRENADELAUNCHER,
+    PICKUP_WEAPON_GRENADES,
+    PICKUP_WEAPON_HEALTH,
+    PICKUP_WEAPON_KNIFE,
+    PICKUP_WEAPON_MOLOTOV,
+    PICKUP_WEAPON_PIPEBOMB,
+    PICKUP_WEAPON_PISTOL,
+    PICKUP_WEAPON_POOLCUE,
+    PICKUP_WEAPON_ROCKET,
+    PICKUP_WEAPON_SHOTGUN,
+    PICKUP_WEAPON_SMG,
+    PICKUP_WEAPON_SNIPER,
+    PICKUP_WEAPON_STICKYBOMB,
+    PICKUP_WEAPON_UP,
+    NUM_PICKUPS_BLIPS_SPRITES,
+};
+
 class CBlip {
 public:
     char texName[64];
@@ -42,6 +65,7 @@ public:
     static CSprite2d* m_RadarSprites[NUM_RADAR_SPRITES];
     static CSprite2d* m_BlipsSprites[NUM_BLIPS_SPRITES];
     static CSprite2d* m_MiniMapSprites[12 * 12];
+    static CSprite2d* m_PickupsSprites[NUM_PICKUPS_BLIPS_SPRITES];
     static CRadarAnim Anim;
     static CVector2D m_vRadarMapQuality;
     static CBlip m_BlipsList[NUM_BLIPS_SPRITES];
@@ -69,6 +93,7 @@ public:
     static int CalculateBlipAlpha(float dist);
     static void DrawRadarCop();
     static void DrawBlips();
+    static void DrawPickupBlips();
     static void TransformRadarPointToRealWorldSpace(CVector2D& out, CVector2D& in);
     static void TransformRealWorldPointToRadarSpace(CVector2D& out, CVector2D& in);
     static void TransformRadarPointToScreenSpace(CVector2D &out, CVector2D &in);
@@ -78,7 +103,9 @@ public:
     static float LimitRadarPoint(CVector2D& point);
     static void DrawRadarSprite(unsigned short id, float x, float y, unsigned char alpha);
     static void LimitToMap(float* x, float* y);
+    static void AddAnyBlipNoLegend(CSprite2d* sprite, CVector posn, float width, float height, float angle, bool vcone, CRGBA const& col, bool limit);
     static void AddAnyBlip(unsigned short id, CEntity e, float width, float height, float angle, bool vcone, CRGBA const& col, bool limit);
+    static void AddAnyBlip(unsigned short id, CVector posn, float width, float height, float angle, bool vcone, CRGBA const& col, bool limit);
     static void DrawRadarRectangle();
     static void ScanCopPursuit();
     static void DrawRotatingRadarSprite(CSprite2d* sprite, float x, float y, float angle, float width, float height, CRGBA color);

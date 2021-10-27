@@ -26,6 +26,8 @@
 #include "C3dMarker.h"
 #include "C3dMarkers.h"
 #include "CGeneral.h"
+#include "CPickups.h"
+#include "eModelID.h"
 
 #include <d3d9.h>
 #include <d3d9types.h>
@@ -38,6 +40,7 @@ CRadarNew RadarNew;
 CSprite2d* CRadarNew::m_RadarSprites[NUM_RADAR_SPRITES];
 CSprite2d* CRadarNew::m_BlipsSprites[NUM_BLIPS_SPRITES];
 CSprite2d* CRadarNew::m_MiniMapSprites[12 * 12];
+CSprite2d* CRadarNew::m_PickupsSprites[NUM_PICKUPS_BLIPS_SPRITES];
 CRadarAnim CRadarNew::Anim;
 CVector2D CRadarNew::m_vRadarMapQuality;
 
@@ -65,6 +68,28 @@ const char* RadarSpriteNames[] = {
      "radar_plane",
      "radar_damage",
      "radar_mask",
+};
+
+const char* PickupsBlipsFileNames[]{
+    "pickup_unknown",
+    "pickup_weapon_armour",
+    "pickup_weapon_assault_rifle",
+    "pickup_weapon_bat",
+    "pickup_weapon_down",
+    "pickup_weapon_grenadelauncher",
+    "pickup_weapon_grenades",
+    "pickup_weapon_health",
+    "pickup_weapon_knife",
+    "pickup_weapon_molotov",
+    "pickup_weapon_pipebomb",
+    "pickup_weapon_pistol",
+    "pickup_weapon_poolcue",
+    "pickup_weapon_rocket",
+    "pickup_weapon_shotgun",
+    "pickup_weapon_smg",
+    "pickup_weapon_sniper",
+    "pickup_weapon_stickybomb",
+    "pickup_weapon_up",
 };
 
 CRadarNew::CRadarNew() {
@@ -111,6 +136,11 @@ void CRadarNew::Init() {
         m_vRadarMapQuality.y = m_MiniMapSprites[0]->m_pTexture->raster->height;
     }
 
+    for (int i = 0; i < NUM_PICKUPS_BLIPS_SPRITES; i++) {
+        m_PickupsSprites[i] = new CSprite2d();
+        m_PickupsSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\pickups"), PickupsBlipsFileNames[i]);
+    }
+
     CreateCamera();
 
     radar_gps_alpha_mask_fxc = CreatePixelShaderFromResource(IDR_RADAR_GPS_ALPHA_MASK);
@@ -130,7 +160,7 @@ void CRadarNew::Shutdown() {
         }
     }
 
-    for (int i = 0; i < 256; i++) {
+    for (int i = 0; i < NUM_BLIPS_SPRITES; i++) {
         if (m_BlipsSprites[i]) {
             m_BlipsSprites[i]->Delete();
             delete m_BlipsSprites[i];
@@ -141,6 +171,13 @@ void CRadarNew::Shutdown() {
         if (m_MiniMapSprites[i]) {
             m_MiniMapSprites[i]->Delete();
             delete m_MiniMapSprites[i];
+        }
+    }
+
+    for (int i = 0; i < NUM_PICKUPS_BLIPS_SPRITES; i++) {
+        if (m_PickupsSprites[i]) {
+            m_PickupsSprites[i]->Delete();
+            delete m_PickupsSprites[i];
         }
     }
 
@@ -241,6 +278,8 @@ void CRadarNew::DrawBlips() {
         }
     }
 
+    DrawPickupBlips();
+
     if (MenuNew.bDrawMenuMap) {
         CVector2D in = FindPlayerCoors(0);
         CVector2D out;
@@ -271,6 +310,117 @@ void CRadarNew::DrawBlips() {
         
         float angle = FindPlayerHeading(0) - (CRadar::m_fRadarOrientation + M_PI);
         DrawRotatingRadarSprite(m_BlipsSprites[RADAR_SPRITE_CENTRE], out.x, out.y, angle, SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).w + 1.0f), SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).h + 1.0f), CRGBA(255, 255, 255, 255));
+    }
+}
+
+void CRadarNew::DrawPickupBlips() {
+    if (MenuNew.bDrawMenuMap && MenuNew.fMapZoom < 4.0f)
+        return;
+
+    for (int i = 0; i < MAX_NUM_PICKUPS; i++) {
+        CPickup p = CPickups::aPickUps[i];
+        int s = -1;
+
+        if (p.m_nReferenceIndex && p.m_nModelIndex && !p.m_nFlags.bDisabled) {
+            switch (p.m_nModelIndex) {
+            case MODEL_GUN_DILDO1:
+            case MODEL_GUN_DILDO2:
+            case MODEL_GUN_VIBE1:
+            case MODEL_GUN_VIBE2:
+                s = PICKUP_WEAPON_PIPEBOMB;
+                break;
+            case MODEL_FLOWERA:
+            case MODEL_GUN_CANE:
+            case MODEL_GUN_BOXWEE:
+            case MODEL_GUN_BOXBIG:
+            case MODEL_CELLPHONE:
+            case MODEL_BRASSKNUCKLE:
+            case MODEL_GOLFCLUB:
+            case MODEL_NITESTICK:
+            case MODEL_TEARGAS:
+            case MODEL_SHOVEL:
+            case MODEL_POOLCUE:
+            case MODEL_KATANA:
+            case MODEL_CHNSAW:
+            case MODEL_SATCHEL:
+                s = PICKUP_WEAPON_STICKYBOMB;
+                break;
+            case MODEL_BOMB:
+            case MODEL_SPRAYCAN:
+            case MODEL_FIRE_EX:
+            case MODEL_CAMERA:
+            case MODEL_NVGOGGLES:
+            case MODEL_IRGOGGLES:
+            case MODEL_JETPACK:
+            case MODEL_GUN_PARA:
+            case MODEL_ADRENALINE:
+            case MODEL_MINIGUN:
+                s = PICKUP_UNKNOWN;
+                break;
+            case MODEL_KNIFECUR:
+                s = PICKUP_WEAPON_KNIFE;
+                break;
+            case MODEL_BAT:
+                s = PICKUP_WEAPON_BAT;
+                break;
+            case MODEL_GRENADE:
+                s = PICKUP_WEAPON_GRENADES;
+                break;
+            case MODEL_MOLOTOV:
+                s = PICKUP_WEAPON_MOLOTOV;
+                break;
+            case MODEL_ROCKETLA:
+            case MODEL_HEATSEEK:
+                s = PICKUP_WEAPON_ROCKET;
+                break;
+            case MODEL_COLT45:
+            case MODEL_SILENCED:
+            case MODEL_DESERT_EAGLE:
+                s = PICKUP_WEAPON_PISTOL;
+                break;
+            case MODEL_CHROMEGUN:
+            case MODEL_SAWNOFF:
+            case MODEL_SHOTGSPA:
+            case MODEL_CUNTGUN:
+                s = PICKUP_WEAPON_SHOTGUN;
+                break;
+            case MODEL_MICRO_UZI:
+            case MODEL_MP5LNG:
+            case MODEL_TEC9:
+                s = PICKUP_WEAPON_SMG;
+                break;
+            case MODEL_FLARE:
+                break;
+            case MODEL_AK47:
+            case MODEL_M4:
+                s = PICKUP_WEAPON_ASSAULT_RIFLE;
+                break;
+            case MODEL_SNIPER:
+            case MODEL_FLAME:
+                s = PICKUP_WEAPON_SNIPER;
+                break;
+            case MODEL_ARMOUR:
+            case MODEL_BODYARMOUR:
+                s = PICKUP_WEAPON_ARMOUR;
+                break;
+            case MODEL_HEALTH:
+                s = PICKUP_WEAPON_HEALTH;
+                break;
+            default:
+                continue;
+            }
+
+            if (s != -1) {
+                unsigned int savedFilter;
+                RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
+                RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
+
+                AddAnyBlipNoLegend(m_PickupsSprites[s], p.GetPosn(), SCREEN_COORD(32.0f * 0.8f), SCREEN_COORD(16.0f * 0.8f), M_PI, false,
+                    HudColourNew.GetRGB(HUD_COLOUR_GREYDARK, 255), false);
+
+                RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
+            }
+        }
     }
 }
 
@@ -695,6 +845,62 @@ void CRadarNew::DrawRadarSprite(unsigned short id, float x, float y, unsigned ch
 void CRadarNew::LimitToMap(float* x, float* y) {
 
 }
+
+void CRadarNew::AddAnyBlipNoLegend(CSprite2d* sprite, CVector posn, float width, float height, float angle, bool vcone, CRGBA const& col, bool limit) {
+    float x = 0.0f;
+    float y = 0.0f;
+    float w = width;
+    float h = height;
+
+    static CVector2D in;
+    static CVector2D out;
+    in = CVector2D(0.0f, 0.0f);
+    out = CVector2D(0.0f, 0.0f);
+    TransformRealWorldPointToRadarSpace(in, CVector2D(posn.x, posn.y));
+    float dist = LimitRadarPoint(in);
+    TransformRadarPointToScreenSpace(out, in);
+
+    if (!MenuNew.bDrawMenuMap) {
+        if (!limit)
+            if (dist > 1.0f)
+                return;
+    }
+
+    x = out.x;
+    y = out.y;
+
+    DrawRotatingRadarSprite(sprite, x, y, angle, w, h, col);
+}
+
+void CRadarNew::AddAnyBlip(unsigned short id, CVector posn, float width, float height, float angle, bool vcone, CRGBA const& col, bool limit) {
+    float x = 0.0f;
+    float y = 0.0f;
+    float w = width;
+    float h = height;
+
+    static CVector2D in;
+    static CVector2D out;
+    in = CVector2D(0.0f, 0.0f);
+    out = CVector2D(0.0f, 0.0f);
+    TransformRealWorldPointToRadarSpace(in, CVector2D(posn.x, posn.y));
+    float dist = LimitRadarPoint(in);
+    TransformRadarPointToScreenSpace(out, in);
+
+    if (!MenuNew.bDrawMenuMap) {
+        if (!limit)
+            if (dist > 1.0f)
+                return;
+    }
+
+    x = out.x;
+    y = out.y;
+
+    if (CRadar::DisplayThisBlip(id, -99)) {
+        DrawRotatingRadarSprite(m_BlipsSprites[id], x, y, angle, w, h, col);
+        CRadar::AddBlipToLegendList(0, id);
+    }
+}
+
 
 void CRadarNew::AddAnyBlip(unsigned short id, CEntity e, float width, float height, float angle, bool vcone, CRGBA const& col, bool limit) {
     float x = 0.0f;

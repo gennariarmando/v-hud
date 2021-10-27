@@ -12,6 +12,9 @@
 #define MENU_RIGHT(x) ScaleMenuRight(x)
 #define MENU_BOTTOM(y) ScaleMenuBottom(y)
 
+#define SCREEN_HALF_WIDTH SCREEN_WIDTH * 0.5f
+#define SCREEN_HALF_HEIGHT SCREEN_HEIGHT * 0.5f
+
 #define ABS(a)  (((a) < 0) ? (-(a)) : (a))
 #define isNearlyEqualF(a, b, t) (fabs(a - b) <= t)
 #define interpF(a, b, f) a = a + (f) * (b - a)
