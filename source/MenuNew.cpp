@@ -301,6 +301,7 @@ void CMenuNew::Clear() {
     ResetMap();
 
     bScanGallery = false;
+    bPreviouslyInGallery = false;
     nGalleryCount = 0;
 }
 
@@ -544,10 +545,11 @@ void CMenuNew::SetInputTypeAndClear(int input, int n = 0) {
         nCurrentInputType = input;
 
         if (n != -1) {
-            if (bScanGallery && nCurrentScreen != MENUSCREEN_GALLERY) {
+            if (bPreviouslyInGallery && bScanGallery && nCurrentScreen != MENUSCREEN_GALLERY) {
                 bScanGallery = false;
                 nGalleryCount = 0;
                 bInvertInput = false;
+                bPreviouslyInGallery = false;
             }
 
             if (bShowPictureBigSize) {
@@ -804,6 +806,7 @@ void CMenuNew::Process() {
         else if (nCurrentScreen == MENUSCREEN_GALLERY) {
             MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type = MENUENTRY_SHOWPICTURE;
             ScanGalleryPictures(false);
+            bPreviouslyInGallery = true;
         }
         else {
             nNumOfSaveGames = 0;
@@ -3133,6 +3136,16 @@ void CMenuNew::DrawGallery() {
     }
     else {
         DrawPatternBackground(CRect(mask.left, mask.top, mask.left + mask.right, mask.top + mask.bottom), HudColourNew.GetRGB(HUD_COLOUR_BLACK, 150));
+
+        if (nCurrentInputType == MENUINPUT_BAR) {
+            if (CheckHover(mask.left, mask.left + mask.right, mask.top, mask.top + mask.bottom)) {
+                CPadNew* pad = CPadNew::GetPad(0);
+
+                if (pad->GetLeftMouseJustDown()) {
+                    SetInputTypeAndClear(MENUINPUT_TAB);
+                }
+            }
+        }
 
         CFontNew::SetBackground(false);
         CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));

@@ -80,6 +80,7 @@ enum eHudSettings {
     HUD_BUSTED_TEXT,
     HUD_BIG_MESSAGE,
     HUD_MISSION_TITLE,
+    HUD_MISSION_TIMERS,
 
     NUM_HUD_SETTINGS,
 };
@@ -132,6 +133,9 @@ public:
     static CSprite2d* PlayerPortrait[4][2];
     static int previousModelIndex[4];
 
+    static char* MissionTimersString[5][2];
+    static int nTimersCount;
+
 public:
     CHudNew();
     static void Init();
@@ -155,7 +159,7 @@ public:
     static void DrawMissionTimers();
     static void DrawRadar();
     static void DrawTripSkip();
-    static void DrawScriptText(bool priority);
+    static void DrawScriptText(char priority);
     static void DrawSubtitles();
     static void DrawHelpText();
     static void PrintSmallHelpText(int alpha);

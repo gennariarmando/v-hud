@@ -9,10 +9,10 @@ blank                       HUD_COLOUR_PURE_WHITE
 blank                       HUD_COLOUR_PURE_WHITE
 radar_player                HUD_COLOUR_PURE_WHITE
 blank                       HUD_COLOUR_PURE_WHITE
-radar_north					HUD_COLOUR_PURE_WHITE
-radar_airyard				HUD_COLOUR_PURE_WHITE
-radar_ammugun				HUD_COLOUR_PURE_WHITE
-radar_barbers				HUD_COLOUR_PURE_WHITE
+radar_north                 HUD_COLOUR_PURE_WHITE
+radar_airyard               HUD_COLOUR_PURE_WHITE
+radar_ammugun               HUD_COLOUR_PURE_WHITE
+radar_barbers               HUD_COLOUR_PURE_WHITE
 radar_bigsmoke              HUD_COLOUR_GREENLIGHT
 radar_boatyard              HUD_COLOUR_PURE_WHITE
 radar_burgershot            HUD_COLOUR_PURE_WHITE

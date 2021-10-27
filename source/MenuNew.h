@@ -417,6 +417,7 @@ public:
 
     int nTimeForSafeZonesToShow;
 
+    bool bPreviouslyInGallery;
     bool bScanGallery;
     int nGalleryCount;
     CSprite2d* Gallery[MAX_GALLERY_PICTURES];

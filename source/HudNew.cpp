@@ -79,6 +79,8 @@ CSprite2d* CHudNew::CrosshairsSprites[NUM_CROSSHAIRS_SPRITES];
 CSprite2d* CHudNew::StatsSprites[NUM_PLRSTATS_SPRITES];
 CSprite2d* CHudNew::PlayerPortrait[4][2];
 int CHudNew::previousModelIndex[4];
+char* CHudNew::MissionTimersString[5][2];
+int CHudNew::nTimersCount;
 
 void* simple_mask_fxc;
 
@@ -394,7 +396,7 @@ void CHudNew::Draw() {
         CellPhone.Process();
         CellPhone.Draw();
 
-        DrawScriptText(0);
+        DrawScriptText(1);
     }
 }
 
@@ -977,16 +979,18 @@ void CHudNew::DrawWanted() {
     float y = GET_SETTING(HUD_WANTED_STARS).y;
     float w = GET_SETTING(HUD_WANTED_STARS).w;
     float h = GET_SETTING(HUD_WANTED_STARS).h;
-    CRGBA c = GET_SETTING(HUD_WANTED_STARS).col;
-
     float spacing = 0.0f;
+
     for (int i = 0; i < FindPlayerWanted(-1)->MaximumWantedLevel; i++) {
-        if (FindPlayerWanted(-1)->m_nWantedLevel > i
-            && (CTimer::m_snTimeInMilliseconds > FindPlayerWanted(-1)->m_nLastTimeWantedLevelChanged + 2000
-                || CTimer::m_FrameCounter & 8) && (CRadarNew::m_bCopPursuit || CTimer::m_FrameCounter & 8))
+        WantedSprites[WANTED_STAR_1]->Draw(HUD_RIGHT(x + w + spacing), HUD_Y(y), SCREEN_COORD(w), SCREEN_COORD(h), CRGBA(255, 255, 255, 255));
+
+        CRGBA c = GET_SETTING(HUD_WANTED_STARS).col;
+        if (FindPlayerWanted(-1)->m_nWantedLevel > i) {
+            if ((FindPlayerWanted(-1)->m_nLastTimeWantedLevelChanged + 2000 > CTimer::m_snTimeInMilliseconds) || CRadarNew::m_bCopPursuit)
+                c = CTimer::m_snTimeInMilliseconds % (600) < 300 ? c : CRGBA(c.r * 0.5f, c.g * 0.5f, c.b * 0.5f, c.a * 0.5f);
+
             WantedSprites[WANTED_STAR_2]->Draw(HUD_RIGHT(x + w + spacing), HUD_Y(y), SCREEN_COORD(w), SCREEN_COORD(h), c);
-        else
-            WantedSprites[WANTED_STAR_1]->Draw(HUD_RIGHT(x + w + spacing), HUD_Y(y), SCREEN_COORD(w), SCREEN_COORD(h), CRGBA(0, 0, 0, 100));
+        }
         spacing += w - 2.0f;
     }
 }
@@ -1111,7 +1115,85 @@ void CHudNew::DrawVehicleName() {
 }
 
 void CHudNew::DrawMissionTimers() {
+    if ((!CHud::m_BigMessage[4][0] || CHud::bScriptForceDisplayWithCounters) && !CGarages::MessageIDString[0]) {
+        if (CUserDisplay::OnscnTimer.m_bDisplay) {
+            float x = HUD_RIGHT(GET_SETTING(HUD_MISSION_TIMERS).x);
+            float y = HUD_BOTTOM(GET_SETTING(HUD_MISSION_TIMERS).y);
+            float spacing = SCREEN_COORD(42.0f);
+            float w, h, p = 0.0f;
+            bool barChart[5] = {};
 
+            CFontNew::SetBackground(false);
+            CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+            CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
+            CFontNew::SetWrapX(SCREEN_COORD(940.0f));
+            CFontNew::SetFontStyle(CFontNew::FONT_1);
+            CFontNew::SetDropShadow(0.0f);
+            CFontNew::SetOutline(0.0f);
+            CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
+            CRGBA col = GET_SETTING(HUD_MISSION_TIMERS).col;
+            CFontNew::SetColor(CRGBA(col.r, col.g, col.b, 255));
+            CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
+
+            if (CUserDisplay::OnscnTimer.m_Clock.m_bEnabled) {
+                MissionTimersString[nTimersCount][0] = CUserDisplay::OnscnTimer.m_Clock.m_szDisplayedText;
+                MissionTimersString[nTimersCount][1] = TheText.Get(CUserDisplay::OnscnTimer.m_Clock.m_szDescriptionTextKey);
+                barChart[nTimersCount] = false;
+                nTimersCount++;
+            }
+
+            for (int i = 0; i < 4; i++) {
+                if (!CUserDisplay::OnscnTimer.m_aCounters[i].m_bEnabled)
+                    continue;
+                
+                if (CUserDisplay::OnscnTimer.m_aCounters[i].m_nType == 1)
+                    barChart[nTimersCount] = true;
+                else
+                    barChart[nTimersCount] = false;
+
+                MissionTimersString[nTimersCount][0] = CUserDisplay::OnscnTimer.m_aCounters[i].m_szDisplayedText;
+                MissionTimersString[nTimersCount][1] = TheText.Get(CUserDisplay::OnscnTimer.m_aCounters[i].m_szDescriptionTextKey);
+                CTextNew::UpperCase(MissionTimersString[nTimersCount][1]);
+                nTimersCount++;
+            }
+
+            for (int i = 0; i < nTimersCount; i++) {
+                if (!MissionTimersString[i][0] && !MissionTimersString[i][1])
+                    continue;
+
+                float rectHeight = SCREEN_COORD(GET_SETTING(HUD_MISSION_TIMERS).h);
+                float rectWidth = SCREEN_COORD(GET_SETTING(HUD_MISSION_TIMERS).w);
+
+                CHudNew::DrawSimpleRectGradInverted(CRect(x - rectWidth, y, x, y - rectHeight), CRGBA(0, 0, 0, GET_SETTING(HUD_MISSION_TIMERS).col.a));
+
+                if (MissionTimersString[i][0]) {
+                    if (barChart[i]) {
+                        w = SCREEN_COORD(156.0f);
+                        h = SCREEN_COORD(10.0f);
+                        p = ((float)(atoi(MissionTimersString[i][0]))) * 0.01f;
+                        DrawProgressBar((x + SCREEN_COORD(-10.0f)) - w, y - ((h * 0.5f) + (rectHeight * 0.52f)), w, h, p, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+                    }
+                    else {
+                        w = CFontNew::GetStringWidth(MissionTimersString[i][0], true);
+                        CFontNew::PrintString(x + SCREEN_COORD(-10.0f), y + SCREEN_COORD(-34.0f), MissionTimersString[i][0]);
+                    }
+
+                    w += SCREEN_COORD(24.0f);
+                }
+
+                if (MissionTimersString[i][1]) {
+                    CFontNew::PrintString((x + SCREEN_COORD(-10.0f)) - w, y + SCREEN_COORD(-34.0f), MissionTimersString[i][1]);
+                }
+
+                MissionTimersString[i][0] = NULL;
+                MissionTimersString[i][1] = NULL;
+                barChart[i] = false;
+                y -= spacing;
+            }
+
+            nTimersCount = 0;
+        }
+    }
 }
 
 void CHudNew::DrawRadar() {
@@ -1154,7 +1236,7 @@ void CHudNew::DrawTripSkip() {
     SetHelpMessage("FEC_TSK", false, false, false);
 }
 
-void CHudNew::DrawScriptText(bool priority) {
+void CHudNew::DrawScriptText(char priority) {
     CHud::DrawScriptText(priority);
 }
 
@@ -1634,7 +1716,13 @@ void CHudNew::DrawAfterFade() {
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
 
     if (!CTimer::m_UserPause && CReplay::Mode != 1 && !CWeapon::ms_bTakePhoto) {
+        DrawScriptText(0);
+
+        if (!CTheScripts::bDrawSubtitlesBeforeFade)
+            CHud::DrawSubtitles();
+
         DrawMissionTitle();
+        DrawOddJobMessage(0);
     }
 }
 

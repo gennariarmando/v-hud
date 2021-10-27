@@ -508,7 +508,7 @@ char* CFontNew::ParseToken(char* s) {
             break;
         case 'Q':
         case 'q':
-            PS2Symbol = ButtonSprite[BUTTON_SQUARE];
+            PS2Symbol = bHasPadInHands ? ButtonSprite[BUTTON_SQUARE] : ButtonSprite[BUTTON_PC_SPACEBAR];
             break;
         case 'R':
         case 'r':
