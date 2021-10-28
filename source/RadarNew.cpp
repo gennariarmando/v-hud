@@ -314,14 +314,14 @@ void CRadarNew::DrawBlips() {
 }
 
 void CRadarNew::DrawPickupBlips() {
-    if (MenuNew.bDrawMenuMap && MenuNew.fMapZoom < 4.0f)
+    if (MenuNew.bDrawMenuMap)
         return;
 
     for (int i = 0; i < MAX_NUM_PICKUPS; i++) {
         CPickup p = CPickups::aPickUps[i];
         int s = -1;
 
-        if (p.m_nReferenceIndex && p.m_nModelIndex && !p.m_nFlags.bDisabled) {
+        if (p.m_nReferenceIndex && p.m_nModelIndex && !p.m_nFlags.bDisabled && p.IsVisible()) {
             switch (p.m_nModelIndex) {
             case MODEL_GUN_DILDO1:
             case MODEL_GUN_DILDO2:
@@ -415,7 +415,7 @@ void CRadarNew::DrawPickupBlips() {
                 RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
                 RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
 
-                AddAnyBlipNoLegend(m_PickupsSprites[s], p.GetPosn(), SCREEN_COORD(32.0f * 0.8f), SCREEN_COORD(16.0f * 0.8f), M_PI, false,
+                AddAnyBlipNoLegend(m_PickupsSprites[s], p.GetPosn(), SCREEN_COORD(32.0f * 0.7f), SCREEN_COORD(16.0f * 0.7f), M_PI, false,
                     HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255), false);
 
                 RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);

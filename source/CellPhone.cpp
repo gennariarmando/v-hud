@@ -11,6 +11,7 @@
 
 #include "CTimer.h"
 #include "CClock.h"
+#include "CWorld.h"
 
 CCellPhone CellPhone;
 
@@ -170,6 +171,8 @@ int CCellPhone::GetLastAppOnScreen() {
 }
 
 void CCellPhone::ShowHidePhone(bool on, bool force) {
+    CPlayerPed* playa = CWorld::Players[0].m_pPed;
+
     if (on) {
         if (bActive)
             return;
@@ -179,6 +182,10 @@ void CCellPhone::ShowHidePhone(bool on, bool force) {
         nCurrentItem = 4;
         nPreviousItem = 4;
         bResetAnimation = true;
+
+        playa->m_nSavedWeapon = playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nType;
+        playa->RemoveWeaponAnims(playa->m_nActiveWeaponSlot, -1000.0f);
+        playa->MakeChangesForNewWeapon(WEAPON_UNARMED);
     }
     else {
         if (force) {
@@ -187,6 +194,9 @@ void CCellPhone::ShowHidePhone(bool on, bool force) {
         }
 
         bShowOrHideAnimation = false;
+
+        playa->RemoveWeaponAnims(playa->m_nActiveWeaponSlot, -1000.0f);
+        playa->MakeChangesForNewWeapon(playa->m_nSavedWeapon);
     }
 
     nTimeLastTimePhoneShown = CTimer::m_snTimeInMillisecondsPauseMode + 500;

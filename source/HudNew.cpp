@@ -320,12 +320,14 @@ void CHudNew::Draw() {
                 }
 
                 if (!CHud::bDrawingVitalStats && !CellPhone.bActive) {
-                    if (!CHud::bScriptDontDisplayVehicleName)
-                        DrawVehicleName();
+                    if (!CUserDisplay::OnscnTimer.m_bDisplay) {
+                        if (!CHud::bScriptDontDisplayVehicleName)
+                            DrawVehicleName();
 
-                    if (!CHud::bScriptDontDisplayAreaName) {
-                        DrawZoneName();
-                        DrawLevelName();
+                        if (!CHud::bScriptDontDisplayAreaName) {
+                            DrawZoneName();
+                            DrawLevelName();
+                        }
                     }
                 }
 
