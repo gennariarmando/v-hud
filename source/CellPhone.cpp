@@ -206,8 +206,9 @@ void CCellPhone::Process() {
     CPadNew* pad = CPadNew::GetPad(0);
     
     if (bRequestPhoneClose) {
-        ShowHidePhone(false);
         bRequestPhoneClose = false;
+        if (bActive)
+            ShowHidePhone(false);
         return;
     }
 
