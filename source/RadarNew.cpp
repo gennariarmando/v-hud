@@ -58,6 +58,8 @@ bool CRadarNew::m_bCopPursuit;
 bool CRadarNew::m_b3dRadar;
 int CRadarNew::m_nRadarRangeExtendTime;
 
+bool bShowWeaponPickupsOnRadar = false;
+
 void* radar_gps_alpha_mask_fxc;
 void* multi_alpha_mask_fxc;
 
@@ -278,7 +280,8 @@ void CRadarNew::DrawBlips() {
         }
     }
 
-    DrawPickupBlips();
+    if (bShowWeaponPickupsOnRadar)
+        DrawPickupBlips();
 
     if (MenuNew.bDrawMenuMap) {
         CVector2D in = FindPlayerCoors(0);
