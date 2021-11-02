@@ -1499,15 +1499,15 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
     case MENUENTRY_RESTOREDEFAULTS:
         if (enter) {
             if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_PAD"))
-                RestoreDefaults(SETTINGS_GAMEPAD);
+                RestoreDefaults(&TempSettings, SETTINGS_GAMEPAD);
             else if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_KEY"))
-                RestoreDefaults(SETTINGS_KEYBOARD);
+                RestoreDefaults(&TempSettings, SETTINGS_KEYBOARD);
             else if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_AUD"))
-                RestoreDefaults(SETTINGS_AUDIO);
+                RestoreDefaults(&TempSettings, SETTINGS_AUDIO);
             else if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_DIS"))
-                RestoreDefaults(SETTINGS_DISPLAY);
+                RestoreDefaults(&TempSettings, SETTINGS_DISPLAY);
             else if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_GFX"))
-                RestoreDefaults(SETTINGS_GRAPHICS);
+                RestoreDefaults(&TempSettings, SETTINGS_GRAPHICS);
             ApplyChanges();
         }
         break;
@@ -1582,13 +1582,13 @@ void CMenuNew::CheckSliderMovement(double value) {
         ts.safeZoneSize = clamp(ts.safeZoneSize, 0, 96.0);
         break;
     case MENUENTRY_SFXVOLUME:
-        ts.sfxVolume += char(value * 100);
-        ts.sfxVolume = clamp(ts.sfxVolume, 0, 100);
+        ts.sfxVolume += char(value * 64);
+        ts.sfxVolume = clamp(ts.sfxVolume, 0, 64);
         AudioEngine.SetEffectsMasterVolume(ts.sfxVolume);
         break;
     case MENUENTRY_RADIOVOLUME:
-        ts.radioVolume += char(value * 100);
-        ts.radioVolume = clamp(ts.radioVolume, 0, 100);
+        ts.radioVolume += char(value * 64);
+        ts.radioVolume = clamp(ts.radioVolume, 0, 64);
         AudioEngine.SetMusicMasterVolume(ts.radioVolume);
         break;
     case MENUENTRY_MOUSESENSITIVITY:
@@ -2305,28 +2305,28 @@ void CMenuNew::DrawDefault() {
                 };
                 break;
             case MENUENTRY_SHOWHUD:
-                rightText = CTextNew::GetText(Settings.showHUD ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.showHUD ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_SHOWRADAR:
-                rightText = CTextNew::GetText(Settings.showRadar ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.showRadar ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_GPSROUTE:
-                rightText = CTextNew::GetText(Settings.gpsRoute ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.gpsRoute ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_MEASUREMENTSYS:
-                rightText = CTextNew::GetText(Settings.measurementSys ? "FE_IMP" : "FE_MET").text;
+                rightText = CTextNew::GetText(TempSettings.measurementSys ? "FE_IMP" : "FE_MET").text;
                 break;
             case MENUENTRY_SUBTITLES:
-                rightText = CTextNew::GetText(Settings.subtitles ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.subtitles ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_INVERTMOUSEY:
-                rightText = CTextNew::GetText(Settings.invertMouseY ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.invertMouseY ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_MOUSESTEER:
-                rightText = CTextNew::GetText(Settings.mouseSteering ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.mouseSteering ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_MOUSEFLYING:
-                rightText = CTextNew::GetText(Settings.mouseFlying ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.mouseFlying ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_RADIOSTATION:
                 if (bool radioOff = (Settings.radioStation != RADIO_NONE)) {
@@ -2338,41 +2338,41 @@ void CMenuNew::DrawDefault() {
                 }
                 break;
             case MENUENTRY_RADIOAUTOSELECT:
-                rightText = CTextNew::GetText(Settings.radioAutoSelect ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.radioAutoSelect ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_RADIOEQ:
-                rightText = CTextNew::GetText(Settings.radioEQ ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.radioEQ ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_TRACKSAUTOSCAN:
-                rightText = CTextNew::GetText(Settings.tracksAutoScan ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.tracksAutoScan ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_RADIOMODE:
-                switch (Settings.radioMode) {
+                switch (TempSettings.radioMode) {
                 default:
                     rightText = CTextNew::GetText("FE_OFF").text;
                     break;
                 }
                 break;
             case MENUENTRY_INVERTPADX1:
-                rightText = CTextNew::GetText(Settings.invertPadX1 ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.invertPadX1 ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_INVERTPADY1:
-                rightText = CTextNew::GetText(Settings.invertPadY1 ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.invertPadY1 ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_INVERTPADX2:
-                rightText = CTextNew::GetText(Settings.invertPadX2 ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.invertPadX2 ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_INVERTPADY2:
-                rightText = CTextNew::GetText(Settings.invertPadY2 ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.invertPadY2 ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_SWAPPADAXIS1:
-                rightText = CTextNew::GetText(Settings.swapPadAxis1 ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.swapPadAxis1 ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_SWAPPADAXIS2:
-                rightText = CTextNew::GetText(Settings.swapPadAxis2 ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.swapPadAxis2 ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_LANDINGPAGE:
-                rightText = CTextNew::GetText(Settings.landingPage ? "FE_ON" : "FE_OFF").text;
+                rightText = CTextNew::GetText(TempSettings.landingPage ? "FE_ON" : "FE_OFF").text;
                 break;
 
                 // Sliders
@@ -2386,10 +2386,10 @@ void CMenuNew::DrawDefault() {
                 DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.safeZoneSize / 96.0f);
                 break;
             case MENUENTRY_RADIOVOLUME:
-                DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.radioVolume / 100.0f);
+                DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.radioVolume / 64.0f);
                 break;
             case MENUENTRY_SFXVOLUME:
-                DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.sfxVolume / 100.0f);
+                DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.sfxVolume / 64.0f);
                 break;
             case MENUENTRY_DRAWDISTANCE:
                 DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), (TempSettings.drawDist - 0.8f) * 1.0f);
@@ -3362,61 +3362,59 @@ void CMenuNew::RestorePreviousSettings() {
     nMenuAlert = MENUALERT_NONE;
 }
 
-void CMenuNew::RestoreDefaults(int index) {
-    CMenuSettings& ts = TempSettings;
-
+void CMenuNew::RestoreDefaults(CMenuSettings* ts, int index) {
     switch (index) {
     case SETTINGS_KEYBOARD:
-        ts.mouseSensitivity = 0.0025;
-        ts.invertMouseY = false;
-        ts.mouseSteering = false;
-        ts.mouseFlying = false;
+        ts->mouseSensitivity = 0.0025;
+        ts->invertMouseY = false;
+        ts->mouseSteering = false;
+        ts->mouseFlying = false;
         break;
     case SETTINGS_GAMEPAD:
-        ts.controller = 0;
-        ts.invertPadX1 = 0;
-        ts.invertPadY1 = 0;
-        ts.invertPadX2 = 0;
-        ts.invertPadY2 = 0;
-        ts.swapPadAxis1 = 0;
-        ts.swapPadAxis2 = 0;
+        ts->controller = 0;
+        ts->invertPadX1 = 0;
+        ts->invertPadY1 = 0;
+        ts->invertPadX2 = 0;
+        ts->invertPadY2 = 0;
+        ts->swapPadAxis1 = 0;
+        ts->swapPadAxis2 = 0;
         break;
     case SETTINGS_AUDIO:
-        ts.sfxVolume = 90;
-        ts.radioVolume = 90;
-        ts.radioStation = 1;
-        ts.radioAutoSelect = false;
-        ts.radioEQ = false;
-        ts.tracksAutoScan = false;
-        ts.radioMode = 0;
+        ts->sfxVolume = 52;
+        ts->radioVolume = 52;
+        ts->radioStation = 1;
+        ts->radioAutoSelect = true;
+        ts->radioEQ = true;
+        ts->tracksAutoScan = false;
+        ts->radioMode = 0;
         break;
     case SETTINGS_DISPLAY:
-        ts.brightness = 256;
-        ts.gamma = 0.5;
-        ts.subtitles = true;
-        ts.language = 0;
-        ts.showHUD = true;
-        ts.showRadar = true;
-        ts.savePhotos = true;
-        ts.mapLegend = true;
-        ts.gpsRoute = true;
-        ts.safeZoneSize = 32.0;
-        ts.measurementSys = 0;
+        ts->brightness = 256;
+        ts->gamma = 0.5;
+        ts->subtitles = true;
+        ts->language = 0;
+        ts->showHUD = true;
+        ts->showRadar = true;
+        ts->savePhotos = true;
+        ts->mapLegend = true;
+        ts->gpsRoute = true;
+        ts->safeZoneSize = 32.0;
+        ts->measurementSys = 0;
         break;
     case SETTINGS_GRAPHICS:
         //videoMode = 1;
         //currentVideoMode = videoMode;
-        ts.aspectRatio = 0;
-        ts.mipMapping = true;
-        //s.antiAliasing = 1;
-        //s.currentAntiAliasing = antiAliasing;
-        ts.drawDist = 1.2;
-        ts.visualQuality = 0;
-        ts.widescreen = false;
-        ts.frameLimiter = true;
+        ts->aspectRatio = 0;
+        ts->mipMapping = true;
+        //s->antiAliasing = 1;
+        //s->currentAntiAliasing = antiAliasing;
+        ts->drawDist = 1.2;
+        ts->visualQuality = 0;
+        ts->widescreen = false;
+        ts->frameLimiter = true;
         break;
     case SETTINGS_SAVINGANDSTARTUP:
-        ts.landingPage = true;
+        ts->landingPage = true;
         break;
     }
 }
@@ -3435,8 +3433,8 @@ void CMenuSettings::Clear() {
     swapPadAxis1 = 0;
     swapPadAxis2 = 0;
 
-    sfxVolume = 90;
-    radioVolume = 90;
+    sfxVolume = 0;
+    radioVolume = 0;
     radioStation = 1;
     radioAutoSelect = 0;
     radioEQ = 0;
@@ -3503,8 +3501,8 @@ void CMenuSettings::Load() {
 
             // Audio
             if (auto audio = settings.child("audio")) {
-                sfxVolume = audio.child("SfxVolume").attribute("value").as_int();
-                radioVolume = audio.child("RadioVolume").attribute("value").as_int();
+                sfxVolume = (char)audio.child("SfxVolume").attribute("value").as_int();
+                radioVolume = (char)audio.child("RadioVolume").attribute("value").as_int();
                 radioStation = audio.child("RadioStation").attribute("value").as_int();
                 radioAutoSelect = audio.child("RadioAutoSelect").attribute("value").as_bool();
                 radioEQ = audio.child("RadioEQ").attribute("value").as_bool();
@@ -3555,7 +3553,7 @@ void CMenuSettings::Load() {
     }
     else {
         for (int i = 0; i < NUM_SETTINGS; i++) {
-            MenuNew.RestoreDefaults(i);
+            MenuNew.RestoreDefaults(this, i);
         }
     }
 

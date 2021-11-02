@@ -508,7 +508,7 @@ public:
     void ApplyGraphicsChanges();
     void ApplyChanges();
     void RestorePreviousSettings();
-    void RestoreDefaults(int index);
+    void RestoreDefaults(CMenuSettings* ts, int index);
 };
 
 extern CMenuNew MenuNew;
