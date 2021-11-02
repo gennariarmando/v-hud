@@ -305,12 +305,12 @@ void CHudNew::Draw() {
         CWeaponSelector::ProcessWeaponSelector();
         CWeaponSelector::DrawWheel();
 
-        if (MenuNew.Settings.showRadar && !CHud::bScriptDontDisplayRadar && !TheCamera.m_bWideScreenOn) {
-            DrawRadar();
-        }
-
         if (!TheCamera.m_bWideScreenOn) {
             DrawCrosshairs();
+
+            if (MenuNew.Settings.showRadar && !CHud::bScriptDontDisplayRadar) {
+                DrawRadar();
+            }
 
             if (MenuNew.Settings.showHUD) {
                 if (CTheScripts::bDisplayHud) {
@@ -430,6 +430,9 @@ void CHudNew::DrawCrosshairs() {
     if (!crosshairName)
         return;
 
+    if (!IsAimingWeapon())
+        return;
+
     if (playa && playa->m_pIntelligence && playa->m_pIntelligence->GetTaskUseGun()) {
         bool ik = (playa->m_pIntelligence->GetTaskUseGun()->m_pWeaponInfo->m_nFlags.bAimWithArm && !playa->m_pIntelligence->GetTaskUseGun()->m_ArmIKInUse);
 
@@ -452,8 +455,8 @@ void CHudNew::DrawCrosshairs() {
                     rect.top = (SCREEN_HEIGHT / 2) - SCREEN_COORD(960.0f);
                     rect.bottom = (SCREEN_HEIGHT / 2) + SCREEN_COORD(960.0f);
 
-                    CSprite2d::DrawRect(CRect(0.0f, 0.0f, rect.left, SCREEN_HEIGHT), CRGBA(0, 0, 0, 255));
-                    CSprite2d::DrawRect(CRect(rect.right, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT), CRGBA(0, 0, 0, 255));
+                    CSprite2d::DrawRect(CRect(-5.0f, -5.0f, rect.left, SCREEN_HEIGHT + 5.0f), CRGBA(0, 0, 0, 255));
+                    CSprite2d::DrawRect(CRect(rect.right, -5.0f, SCREEN_WIDTH + 5.0f, SCREEN_HEIGHT + 5.0f), CRGBA(0, 0, 0, 255));
 
                     CrosshairsSprites[CROSSHAIR_SNIPER]->Draw(rect, CRGBA(255, 255, 255, 255));
 
@@ -482,19 +485,23 @@ void CHudNew::DrawCrosshairs() {
                 }
                 else if (faststrcmp(crosshairName, "none")) {
                     int alpha = 255;
+                    CRGBA col;
                     static int dotAlpha;
                     static int alphaTime = 0;
 
                     if (playa->m_pPlayerTargettedPed && playa->m_pPlayerTargettedPed->m_fHealth <= 0.0f) {
-                        nTargettedEntityDeathTime = CTimer::m_snTimeInMilliseconds + 400;
+                        nTargettedEntityDeathTime = CTimer::m_snTimeInMilliseconds + 500;
                         playa->m_pPlayerTargettedPed = NULL;
                     }
 
                     if (playa->m_pPlayerTargettedPed)
                         alphaTime = CTimer::m_snTimeInMilliseconds + 50;
 
+                    col = GET_SETTING(HUD_CROSSHAIR_DOT).col;
+
                     if (alphaTime > CTimer::m_snTimeInMilliseconds) {
-                        alpha = 100;
+                        col = HudColourNew.GetRGB(HUD_COLOUR_RED, 255);
+                        //alpha = 100;
                         playa->m_pPlayerTargettedPed = NULL;
                     }
 
@@ -502,14 +509,19 @@ void CHudNew::DrawCrosshairs() {
 
                     float w = GET_SETTING(HUD_CROSSHAIR_DOT).w;
                     float h = GET_SETTING(HUD_CROSSHAIR_DOT).w;
-                    CRGBA col = GET_SETTING(HUD_CROSSHAIR_DOT).col;
                     col.a = dotAlpha;
                     CrosshairsSprites[CROSSHAIR_DOT]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), col);
 
                     if (nTargettedEntityDeathTime > CTimer::m_snTimeInMilliseconds) {
                         w = GET_SETTING(HUD_CROSSHAIR_CROSS).w;
                         h = GET_SETTING(HUD_CROSSHAIR_CROSS).w;
-                        CrosshairsSprites[CROSSHAIR_CROSS]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), GET_SETTING(HUD_CROSSHAIR_CROSS).col);
+
+                        CRGBA crossCol = HudColourNew.GetRGB("HUD_COLOUR_WHITE", 255);
+
+                        if (nTargettedEntityDeathTime < CTimer::m_snTimeInMilliseconds + 400)
+                            crossCol = GET_SETTING(HUD_CROSSHAIR_CROSS).col;
+
+                        CrosshairsSprites[CROSSHAIR_CROSS]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), crossCol);
                     }
                 }
             }
@@ -988,8 +1000,8 @@ void CHudNew::DrawWanted() {
 
         CRGBA c = GET_SETTING(HUD_WANTED_STARS).col;
         if (FindPlayerWanted(-1)->m_nWantedLevel > i) {
-            if ((FindPlayerWanted(-1)->m_nLastTimeWantedLevelChanged + 2000 > CTimer::m_snTimeInMilliseconds) || CRadarNew::m_bCopPursuit)
-                c = CTimer::m_snTimeInMilliseconds % (600) < 300 ? c : CRGBA(c.r * 0.5f, c.g * 0.5f, c.b * 0.5f, c.a * 0.5f);
+            if (FindPlayerWanted(-1)->m_nLastTimeWantedLevelChanged + 2000 > CTimer::m_snTimeInMilliseconds || !CRadarNew::m_bCopPursuit)
+                c = CTimer::m_snTimeInMilliseconds % (600) < 300 ? c : CRGBA(c.r * 0.5f, c.g * 0.5f, c.b * 0.5f, c.a);
 
             WantedSprites[WANTED_STAR_2]->Draw(HUD_RIGHT(x + w + spacing), HUD_Y(y), SCREEN_COORD(w), SCREEN_COORD(h), c);
         }
