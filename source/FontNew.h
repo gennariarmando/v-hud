@@ -23,7 +23,7 @@ struct CFontDetailsNew {
 	CFontDetailsNew() {}
 };
 
-class CFontNew {
+class VHUD_API CFontNew {
 public:
 	enum {
 		ALIGN_LEFT,
