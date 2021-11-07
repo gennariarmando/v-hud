@@ -1486,25 +1486,17 @@ void CHudNew::DrawSuccessFailedMessage() {
     char* bottomText = NULL;
     static float offset = 0.0f;
     static int time = -1;
-    CRGBA col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 150);
+    bool slide = false;
+    CRGBA col;
 
     SetHUDSafeZone(false);
 
     m_bShowSuccessFailed = true;
-    if (CHud::m_BigMessage[0][0] && !strcmp(CHud::m_BigMessage[0], TheText.Get("M_PASS"))) {
+    if (CHud::m_BigMessage[0][0] && !strncmp(CHud::m_BigMessage[0], TheText.Get("M_PASS"), 5)) {
         mainText = CTextNew::GetText("M_PASS").text;
         bottomText = m_LastMissionName;
         col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 150);
-    }
-    else if (CHud::m_BigMessage[0][0] && !strcmp(CHud::m_BigMessage[0], TheText.Get("M_PASSR"))) {
-        mainText = CTextNew::GetText("M_PASS").text;
-        bottomText = m_LastMissionName;
-        col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 150);
-    }
-    else if (CHud::m_BigMessage[0][0] && !strcmp(CHud::m_BigMessage[0], TheText.Get("M_PASSS"))) {
-        mainText = CTextNew::GetText("M_PASS").text;
-        bottomText = m_LastMissionName;
-        col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 150);
+        slide = true;
     }
     else if (CHud::m_BigMessage[0][0] && !strcmp(CHud::m_BigMessage[0], TheText.Get("M_FAIL"))) {
         mainText = CTextNew::GetText("M_FAIL").text;
@@ -1530,13 +1522,15 @@ void CHudNew::DrawSuccessFailedMessage() {
     }
     
     if (m_bShowSuccessFailed) {
-        if (time == -1)
-            time = CTimer::m_snTimeInMilliseconds + 1500;
+        if (slide) {
+            if (time == -1)
+                time = CTimer::m_snTimeInMilliseconds + 1500;
 
-        if (time < CTimer::m_snTimeInMilliseconds) {
-            time = 0;
-            if (offset > -256.0f)
-                offset -= CTimer::ms_fTimeStep * 0.02f * 512.0f;
+            if (time < CTimer::m_snTimeInMilliseconds) {
+                time = 0;
+                if (offset > -256.0f)
+                    offset -= CTimer::ms_fTimeStep * 0.02f * 512.0f;
+            }
         }
 
         CFontNew::SetBackground(false);
