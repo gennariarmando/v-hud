@@ -24,6 +24,7 @@
 #define clamp(v, low, high) ((v)<(low) ? (low) : (v)>(high) ? (high) : (v))
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
+#define FLASH_ITEM(on, off) (CTimer::m_snTimeInMillisecondsPauseMode % on + off < on)
 
 extern bool hudSafeZones;
 extern void SetHUDSafeZone(bool on);

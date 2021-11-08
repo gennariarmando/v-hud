@@ -20,6 +20,7 @@
 #include "CRadar.h"
 #include "CMessages.h"
 #include "CStats.h"
+#include "CTimeCycle.h"
 
 #include "GPS.h"
 #include "PedNew.h"
@@ -295,6 +296,7 @@ void CMenuNew::Clear() {
     fMapZoom = 1.0f;
     vMapBase.x = 0.0f;
     vMapBase.y = 0.0f;
+    bShowLegend = true;
 
     nTimeForSafeZonesToShow = 0;
 
@@ -727,11 +729,12 @@ void CMenuNew::CenterCursor() {
     }
 }
 
-void CMenuNew::DoMapZoomInOut(bool out) {
-    const float value = out ? -0.2f : 0.2f;
+void CMenuNew::DoMapZoomInOut(bool out, float f) {
+    float value = out ? -f : f;
     fMapZoom += value;
     fMapZoom = clamp(fMapZoom, 1.0f, 8.0f);
 
+    value *= 2;
     if (out && fMapZoom > 1.0f && fMapZoom < 4.0f) {
         vMapBase.x += (SCREEN_WIDTH / 2 - vMapBase.x) * (-value - value);
         vMapBase.y += (SCREEN_COORD(28.0f) + SCREEN_HEIGHT / 2 - vMapBase.y) * (-value - value);
@@ -774,6 +777,12 @@ void CMenuNew::Process() {
     bool Down = pad->GetMenuDownJustDown();
     bool Left = pad->GetMenuLeftJustDown();
     bool Right = pad->GetMenuRightJustDown();
+
+    bool UpPressed = pad->GetMenuUp();
+    bool DownPressed = pad->GetMenuDown();
+    bool LeftPressed = pad->GetMenuLeft();
+    bool RightPressed = pad->GetMenuRight();
+
     bool Enter = pad->GetMenuEnterJustDown();
     bool Back = pad->GetMenuBackJustDown() || (pad->GetRightMouseJustDown() && nCurrentInputType != MENUINPUT_BAR);
     bool Space = pad->GetMenuSpaceJustDown();
@@ -782,6 +791,10 @@ void CMenuNew::Process() {
     bool LeftMouseDown = pad->GetLeftMouseDown();
     bool LeftMouseJustDown = pad->GetLeftMouseDown();
     bool MiddleMouseJustDown = pad->GetMiddleMouseJustDown();
+
+    bool MapZoomIn = pad->GetMenuMapZoomIn();
+    bool MapZoomOut = pad->GetMenuMapZoomOut();
+    bool ShowHideMapLegend = pad->GetMenuShowHideLegendJustDown();
 
     if (bInvertInput) {
         if (nCurrentScreen == MENUSCREEN_GALLERY) {
@@ -926,6 +939,7 @@ void CMenuNew::Process() {
 
                 if (!bShowMenu) {
                     if (nCurrentScreen == MENUSCREEN_MAP) {
+                        CVector2D prevMapBase = vMapBase;
                         if (LeftMouseDown) {
                             nMouseType = MOUSE_GRAB;
 
@@ -934,22 +948,44 @@ void CMenuNew::Process() {
                                 vMapBase.y += (vMousePos.y - vOldMousePos.y);
                             }
                         }
-                        else {
+                        else {     
+                            if (fMapZoom > 1.0f) {
+                                float value = 10.0f;
+
+                                vMapBase.x += (LeftPressed ? value : RightPressed ? -value : 0.0f);
+                                vMapBase.y += (UpPressed ? value : DownPressed ? -value : 0.0f);
+                            }
+
                             if (WheelDown)
-                                DoMapZoomInOut(true);
+                                DoMapZoomInOut(true, 0.2f);
                             if (WheelUp)
-                                DoMapZoomInOut(false);
+                                DoMapZoomInOut(false, 0.2f);
+
+                            if (MapZoomIn)
+                                DoMapZoomInOut(false, 0.02f);
+                            if (MapZoomOut)
+                                DoMapZoomInOut(true, 0.02f);
 
                             if (MiddleMouseJustDown) {
                                 SetWaypoint(vMousePos.x, vMousePos.y);
                                 LeftMouseDown = false;
                                 LeftMouseJustDown = false;
                             }
+                            if (Enter) {
+                                SetWaypoint(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+                            }
+
+                            if (ShowHideMapLegend) {
+                                bShowLegend = bShowLegend == false;
+                            }
                         }                     
 
-                        const float quarterMap = fMapZoom * (GetMenuMapWholeSize() / 4);
-                        vMapBase.x = clamp(vMapBase.x, MENU_X(-quarterMap), MENU_RIGHT(-quarterMap));
-                        vMapBase.y = clamp(vMapBase.y, MENU_Y(-quarterMap), MENU_BOTTOM(-quarterMap));
+                        const float mapHalfSize = (GetMenuMapWholeSize() / 2);
+                        if ((vMapBase.x + mapHalfSize) < MENU_X(32.0f)) vMapBase.x = prevMapBase.x;
+                        if ((vMapBase.x - mapHalfSize) > MENU_RIGHT(32.0f)) vMapBase.x = prevMapBase.x;
+                        
+                        if ((vMapBase.y + mapHalfSize) < MENU_Y(32.0f)) vMapBase.y = prevMapBase.y;
+                        if ((vMapBase.y - mapHalfSize) > MENU_BOTTOM(32.0f)) vMapBase.y = prevMapBase.y;
                     }
                 }
             }
@@ -1030,6 +1066,13 @@ void CMenuNew::Process() {
             case MENUSCREEN_NONE:
                 break;
             case MENUSCREEN_LANDING:
+                break;
+            case MENUSCREEN_MAP:
+                if (!bShowMenu) {
+                    AppendHelpText(HELP_TEXT_LEGEND);
+                    AppendHelpText(HELP_TEXT_BACK);
+                    AppendHelpText(HELP_TEXT_WAYPOINT);
+                }
                 break;
             case MENUSCREEN_SETTINGS:
                 if (nMenuAlert == MENUALERT_PENDINGCHANGES) {
@@ -1675,6 +1718,9 @@ void CMenuNew::Draw() {
     RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
 
+    CFontNew::SetClipX(SCREEN_WIDTH);
+    CFontNew::SetWrapX(SCREEN_WIDTH);
+
     // Set
     if (bNoTransparentBackg) {
         DrawBackground();
@@ -1969,6 +2015,12 @@ void CMenuNew::Draw() {
                 break;
             case HELP_TEXT_APPLYCHANGES:
                 str = "H_APCH";
+                break;
+            case HELP_TEXT_WAYPOINT:
+                str = "H_WAYP";
+                break;
+            case HELP_TEXT_LEGEND:
+                str = "H_LG";
                 break;
             default:
                 continue;
@@ -2662,6 +2714,7 @@ void CMenuNew::ResetMap() {
     bShowMenu = true;
     bDrawMenuMap = false;
     bCleanMapScreenNextFrame = false;
+    bShowLegend = true;
 }
 
 void CMenuNew::SetWaypoint(float x, float y) {
@@ -2827,6 +2880,114 @@ CVector2D CMenuNew::GetMapBaseDefault() {
     return CVector2D(SCREEN_WIDTH / 2, SCREEN_COORD(28.0f) + (SCREEN_HEIGHT / 2));
 }
 
+void CMenuNew::DrawLegend() {
+    if (!bShowLegend)
+        return;
+
+    CRect rect;
+    rect.left = HUD_RIGHT(96.0f);
+    rect.top = HUD_Y(54.0f);
+    rect.right = SCREEN_COORD(64.0f);
+    rect.bottom = SCREEN_COORD(38.0f);
+
+    CFontNew::SetBackground(false);
+    CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+    CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
+    CFontNew::SetWrapX(SCREEN_COORD(640.0f));
+    CFontNew::SetFontStyle(CFontNew::FONT_1);
+    CFontNew::SetDropShadow(0.0f);
+    CFontNew::SetOutline(0.0f);
+    CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+    CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
+    CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
+
+    float biggestWidth = 0.0f;
+    for (int i = 0; i < CRadarNew::m_nMapLegendBlipCount; i++) {
+        int id = CRadarNew::m_MapLegendBlipList[i].id;
+        unsigned int c = CRadarNew::m_MapLegendBlipList[i].col;
+        int f = CRadarNew::m_MapLegendBlipList[i].friendly;
+        char* str = NULL;
+        CRGBA col;
+
+        if (id > RADAR_SPRITE_CENTRE) {
+            char legendString[64];
+            sprintf(legendString, "LG_%02d", id);
+            str = CTextNew::GetText(legendString).text;
+            col = CRadarNew::m_BlipsList[id].color;
+        }
+
+        static int level;
+        static int time;
+        if (time < CTimer::m_snTimeInMillisecondsPauseMode) {
+            level++;
+            time = 800 + CTimer::m_snTimeInMillisecondsPauseMode;
+        }
+        
+        if (level < RADAR_SPRITE_LEVEL || level > RADAR_SPRITE_HIGHER)
+            level = RADAR_SPRITE_LEVEL;
+
+        switch (id) {
+        case RADAR_LEVEL_CAR:
+            str = CTextNew::GetText("LG_VEH").text;
+            col = CRadarNew::GetRadarTraceColour(c, false, f);
+            id = level;
+            break;
+        case RADAR_LEVEL_CHAR_FRIENDLY:
+            str = CTextNew::GetText("LG_CHARF").text;
+            col = CRadarNew::GetRadarTraceColour(c, false, f);
+            id = level;
+            break;
+        case RADAR_LEVEL_CHAR_ENEMY:
+            str = CTextNew::GetText("LG_CHARE").text;
+            col = CRadarNew::GetRadarTraceColour(c, false, f);
+            id = level;
+            break;
+        case RADAR_LEVEL_OBJECT:
+            str = CTextNew::GetText("LG_OBJ").text;
+            col = CRadarNew::GetRadarTraceColour(c, false, f);
+            id = level;
+            break;
+        case RADAR_LEVEL_DESTINATION:
+            str = CTextNew::GetText("LG_DEST").text;
+            col = CRadarNew::GetRadarTraceColour(c, false, f);
+            id = level;
+            break;
+        case RADAR_SPRITE_MAP_HERE:
+            col = HudColourNew.GetRGBA(MenuNew.Settings.uiMainColor);
+            id = RADAR_SPRITE_CENTRE;
+            break;
+        }
+
+        if (str) {
+            if (!faststrcmp(str, "NONE"))
+                continue;
+
+            float s = SCREEN_COORD(26.0f);
+            float x = SCREEN_COORD(9.0f);
+            float y = SCREEN_COORD(5.0f);
+
+            rect.right = CFontNew::GetStringWidth(str, true) + (s * 2);
+
+            if (biggestWidth < rect.right)
+                biggestWidth = rect.right;
+
+            CSprite2d::DrawRect(CRect(rect.left, rect.top, rect.left - rect.right, rect.top + rect.bottom), CRGBA(0, 0, 0, 150));
+
+            CFontNew::PrintString(rect.left - (s * 2) + x, rect.top + y, str);
+
+            col.a = 255;
+            CRadarNew::m_BlipsSprites[id]->Draw(CRect(rect.left - s - x, rect.top + y, (rect.left - s - x) + s, rect.top + y + s), col);
+
+            // :(
+            rect.top += SCREEN_COORD(41.0f);
+            if (rect.top > HUD_BOTTOM(128.0f)) {
+                rect.left -= biggestWidth + x;
+                rect.top = HUD_Y(54.0f);
+            }
+        }
+    }
+}
+
 void CMenuNew::DrawMap() {
     CRect mask = GetMenuScreenRect();
 
@@ -2893,6 +3054,7 @@ void CMenuNew::DrawMap() {
 
     if (!bShowMenu) {
         DrawMapCrosshair(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+        DrawLegend();
     }
 }
 
@@ -3168,6 +3330,9 @@ void CMenuNew::DrawGallery() {
 }
 
 bool CMenuNew::CheckHover(int x1, int x2, int y1, int y2) {
+    if (!MenuNew.bDrawMouse)
+        return false;
+
     return (vMousePos.x > x1 && vMousePos.x < x2) && (vMousePos.y > y1 && vMousePos.y < y2);
 }
 
@@ -3216,7 +3381,6 @@ void CMenuNew::PassSettingsToCurrentGame(const CMenuSettings* s) {
     m.m_bHudOn = s->showHUD;
     m.m_nRadarMode = !s->showRadar;
     m.m_bSavePhotos = s->savePhotos;
-    m.m_bMapLegend = s->mapLegend;
 
     {
         if (m.m_nLanguage == prevLang) {
@@ -3396,7 +3560,6 @@ void CMenuNew::RestoreDefaults(CMenuSettings* ts, int index) {
         ts->showHUD = true;
         ts->showRadar = true;
         ts->savePhotos = true;
-        ts->mapLegend = true;
         ts->gpsRoute = true;
         ts->safeZoneSize = 32.0;
         ts->measurementSys = 0;
@@ -3448,7 +3611,6 @@ void CMenuSettings::Clear() {
     showHUD = true;
     showRadar = true;
     savePhotos = true;
-    mapLegend = true;
     gpsRoute = true;
     safeZoneSize = 32.0;
     measurementSys = 0;
@@ -3519,7 +3681,6 @@ void CMenuSettings::Load() {
                 showHUD = display.child("ShowHUD").attribute("value").as_bool();
                 showRadar = display.child("ShowRadar").attribute("value").as_bool();
                 savePhotos = display.child("SavePhotos").attribute("value").as_bool();
-                mapLegend = display.child("MapLegend").attribute("value").as_bool();
                 gpsRoute = display.child("GpsRoute").attribute("value").as_bool();
                 safeZoneSize = display.child("SafeZoneSize").attribute("value").as_double();
                 measurementSys = display.child("MeasurementSys").attribute("value").as_int();
@@ -3607,7 +3768,6 @@ void CMenuSettings::Save() {
     display.append_child("ShowHUD").append_attribute("value").set_value(showHUD);
     display.append_child("ShowRadar").append_attribute("value").set_value(showRadar);
     display.append_child("SavePhotos").append_attribute("value").set_value(savePhotos);
-    display.append_child("MapLegend").append_attribute("value").set_value(mapLegend);
     display.append_child("GpsRoute").append_attribute("value").set_value(gpsRoute);
     display.append_child("SafeZoneSize").append_attribute("value").set_value(safeZoneSize);
     display.append_child("MeasurementSystem").append_attribute("value").set_value(measurementSys);

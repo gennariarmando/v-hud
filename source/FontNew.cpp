@@ -84,6 +84,7 @@ char* ButtonFileName[] = {
     "f12",
     "home",
     "ins",
+    "l",
     "lalt",
     "lctrl",
     "left",
@@ -615,6 +616,18 @@ char* CFontNew::ParseToken(char* s) {
                 }
                 c = nx;
             }
+            break;
+        case '#':
+            if (char* nx = c) {
+                switch (*(++nx)) {
+                case 'L':
+                    PS2Symbol = ButtonSprite[BUTTON_PC_L];
+                    break;
+                }
+
+                c = nx;
+            }
+            break;
         }
     }
 

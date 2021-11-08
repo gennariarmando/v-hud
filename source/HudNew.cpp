@@ -302,6 +302,9 @@ void CHudNew::Draw() {
         RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)(rwFILTERLINEARMIPLINEAR));
         RwRenderStateSet(rwRENDERSTATETEXTUREPERSPECTIVE, (void*)FALSE);
 
+        CFontNew::SetClipX(SCREEN_WIDTH);
+        CFontNew::SetWrapX(SCREEN_WIDTH);
+
         CWeaponSelector::ProcessWeaponSelector();
         CWeaponSelector::DrawWheel();
 

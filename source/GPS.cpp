@@ -201,18 +201,22 @@ void CGPS::DrawPathLine() {
                 Dest.bDestFound = true;
             }
             else {
-                for (int i = 0; i < CRadarNew::m_nMissionBlipCount; i++) {
-                    int j = CRadarNew::m_nMissionLegendList[i];
-                    tRadarTrace* trace = &CRadar::ms_RadarTrace[j];
+                for (int i = 0; i < 175; i++) {
+                    tRadarTrace trace = CRadar::ms_RadarTrace[i];
+                    if (!trace.m_bTrackingBlip)
+                        continue;
 
-                    if (trace) {
-                        Dest.pathColor = CRadar::GetRadarTraceColour(trace->m_dwColour, trace->m_bBright, trace->m_bFriendly);
-                        Dest.vecDest = trace->m_vPosition;
-                        Dest.bDestFound = true;
+                    switch (trace.m_nBlipType) {
+                    case BLIP_COORD:
+                    case BLIP_CONTACTPOINT:
+                        if (CRadar::DisplayThisBlip(HIBYTE(trace.m_nBlipSprite), i) || LOBYTE(trace.m_nBlipSprite) != RADAR_SPRITE_NONE) {
+                            Dest.pathColor = CRadar::GetRadarTraceColour(trace.m_dwColour, trace.m_bBright, trace.m_bFriendly);
+                            Dest.vecDest = trace.m_vPosition;
+                            Dest.bDestFound = true;
+                            break;
+                        }
                     }
                 }
-
-                CRadarNew::m_nMissionBlipCount = 0;
             }
 
             Dest.nPathDirection = DIR_NONE;

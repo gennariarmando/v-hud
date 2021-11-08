@@ -45,8 +45,16 @@ public:
 
     bool GetOpenCloseMenuJustDown();
 
+    bool GetMenuMapZoomIn();
+    bool GetMenuMapZoomOut();
+
     bool GetMenuMapZoomInJustDown();
     bool GetMenuMapZoomOutJustDown();
+
+    bool GetMenuUp();
+    bool GetMenuDown();
+    bool GetMenuLeft();
+    bool GetMenuRight();
 
     bool GetMenuUpJustDown();
     bool GetMenuDownJustDown();
@@ -64,6 +72,8 @@ public:
     bool GetMiddleMouseDown();
 
     bool GetMiddleMouseJustDown();
+
+    bool GetMenuShowHideLegendJustDown();
 
     bool GetPhoneShowJustDown();
     bool GetPhoneHideJustDown();

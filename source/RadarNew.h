@@ -1,3 +1,6 @@
+#define RADAR_MENU_BLIP_MULT (1.3f)
+#define RADAR_MENU_BLIP_HOVER_MULT (1.8f)
+
 #include "CSprite2d.h"
 
 extern void* radar_gps_alpha_mask_fxc;
@@ -23,6 +26,14 @@ enum eBlipsNewSprites {
     NUM_BLIPS_SPRITES = 256,
 };
 
+enum eRadarLevelExtra {
+    RADAR_LEVEL_CAR = -1,
+    RADAR_LEVEL_CHAR_FRIENDLY = -2,
+    RADAR_LEVEL_CHAR_ENEMY = -3,
+    RADAR_LEVEL_OBJECT = -4,
+    RADAR_LEVEL_DESTINATION = -5,
+};
+
 enum ePickupsBlipsSprites {
     PICKUP_UNKNOWN,
     PICKUP_WEAPON_ARMOUR,
@@ -46,6 +57,18 @@ enum ePickupsBlipsSprites {
     NUM_PICKUPS_BLIPS_SPRITES,
 };
 
+enum eRadarTraceColour {
+    TRACE_COLOUR_RED,
+    TRACE_COLOUR_GREEN,
+    TRACE_COLOUR_BLUE,
+    TRACE_COLOUR_WHITE,
+    TRACE_COLOUR_YELLOW,
+    TRACE_COLOUR_PURPLE,
+    TRACE_COLOUR_CYAN,
+    TRACE_COLOUR_THREAT,     
+    TRACE_COLOUR_DESTINATION
+};
+
 class CBlip {
 public:
     char texName[64];
@@ -59,6 +82,12 @@ public:
 };
 
 class CHudSetting;
+
+struct CRadarLegend {
+    int id;
+    unsigned int col;
+    bool friendly;
+};
 
 class CRadarNew {
 public:
@@ -77,8 +106,9 @@ public:
     static RwRaster* m_pFrameBuffer2;
     static RwRaster* m_pFrameBuffer3;
     static RwRaster* m_pFrameBuffer4;
-    static int m_nMissionBlipCount;
-    static int m_nMissionLegendList[175];
+    static int m_nMapLegendBlipCount;
+    static CRadarLegend m_MapLegendBlipList[175];
+    static unsigned int m_nActualTraceIdToPass;
     static bool m_bCopPursuit;
     static bool m_b3dRadar;
     static int m_nRadarRangeExtendTime;
@@ -93,6 +123,8 @@ public:
     static int CalculateBlipAlpha(float dist);
     static void DrawRadarCop();
     static void DrawBlips();
+    static void DrawEntityBlip(int id, bool sprite);
+    static void DrawCoordBlip(int id, bool sprite);
     static void DrawPickupBlips();
     static void TransformRadarPointToRealWorldSpace(CVector2D& out, CVector2D& in);
     static void TransformRealWorldPointToRadarSpace(CVector2D& out, CVector2D& in);
@@ -115,10 +147,11 @@ public:
     static void DrawRadarSection(int x, int y);
     static void DrawRadarMap(int x, int y);
     static void ShowRadarTraceWithHeight(float x, float y, unsigned int size, unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha, unsigned char type);
-    static void AddBlipToLegendList(unsigned char arg0, int blipArrId);
+    static void AddBlipToLegendList(bool trace, int id);
     static int ClipRadarPoly(CVector2D* out, CVector2D const* in);
     static void StreamRadarSection(int x, int y);
     static bool IsPlayerInVehicle();
     static bool Is3dRadar();
     static void SetBlipSprite(int i, unsigned short icon);
+    static unsigned int GetRadarTraceColour(unsigned int c, bool bright, bool friendly);
 };

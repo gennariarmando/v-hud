@@ -20,7 +20,7 @@ public:
         LANGUAGE_ITALIAN,
         LANGUAGE_SPANISH,
     };
-    static CTextRead TextList[256];
+    static CTextRead TextList[512];
 
 public:
     CTextNew();

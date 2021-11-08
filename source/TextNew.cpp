@@ -8,7 +8,7 @@ using namespace plugin;
 
 CTextNew TextNew;
 
-CTextRead CTextNew::TextList[256];
+CTextRead CTextNew::TextList[512];
 
 CTextNew::CTextNew() {
     CdeclEvent<AddressList<0x6A03E3, H_CALL>, PRIORITY_AFTER, ArgPickNone, void(const char*)> OnTextLoad;  
@@ -79,7 +79,7 @@ CTextRead CTextNew::GetText(char* str) {
     if (*str == '\0')
         return result;
 
-    for (int i = 0; i < 256; i++) {
+    for (int i = 0; i < 512; i++) {
         if (TextList[i].str[0] == str[0]
             && TextList[i].str[1] == str[1]
             && TextList[i].str[2] == str[2]

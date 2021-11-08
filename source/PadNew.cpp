@@ -62,12 +62,36 @@ bool CPadNew::GetOpenCloseMenuJustDown() {
         (NewKeyState.esc && !OldKeyState.esc);
 }
 
+bool CPadNew::GetMenuMapZoomIn() {
+    return (NewKeyState.pgup);
+}
+
+bool CPadNew::GetMenuMapZoomOut() {
+    return (NewKeyState.pgdn);
+}
+
 bool CPadNew::GetMenuMapZoomInJustDown() {
     return (NewMouseControllerState.wheelUp && !OldMouseControllerState.wheelUp);
 }
 
 bool CPadNew::GetMenuMapZoomOutJustDown() {
     return (NewMouseControllerState.wheelDown && !OldMouseControllerState.wheelDown);
+}
+
+bool CPadNew::GetMenuUp() {
+    return (NewKeyState.up);
+}
+
+bool CPadNew::GetMenuDown() {
+    return (NewKeyState.down);
+}
+
+bool CPadNew::GetMenuLeft() {
+    return (NewKeyState.left);
+}
+
+bool CPadNew::GetMenuRight() {
+    return (NewKeyState.right);
 }
 
 bool CPadNew::GetMenuUpJustDown() {
@@ -118,6 +142,10 @@ bool CPadNew::GetMiddleMouseDown() {
 
 bool CPadNew::GetMiddleMouseJustDown() {
     return !!(NewMouseControllerState.mmb && !OldMouseControllerState.mmb);
+}
+
+bool CPadNew::GetMenuShowHideLegendJustDown() {
+    return !!(NewKeyState.standardKeys[76] && !OldKeyState.standardKeys[76]);
 }
 
 bool CPadNew::GetPhoneShowJustDown() {

@@ -177,6 +177,8 @@ enum eHelpTextType {
     HELP_TEXT_SELECT,
     HELP_TEXT_BACK,
     HELP_TEXT_APPLYCHANGES,
+    HELP_TEXT_WAYPOINT,
+    HELP_TEXT_LEGEND,
 };
 
 enum {
@@ -292,7 +294,6 @@ public:
     bool showHUD;
     bool showRadar;
     bool savePhotos;
-    bool mapLegend;
     bool gpsRoute;
     double safeZoneSize;
     int measurementSys;
@@ -414,6 +415,7 @@ public:
     bool bDrawMenuMap;
     CVector2D vMapBase;
     float fMapZoom;
+    bool bShowLegend;
 
     int nTimeForSafeZonesToShow;
 
@@ -455,7 +457,7 @@ public:
     void OpenCloseMenu(bool on, bool force);
     void OpenMenuScreen(int screen);
     void CenterCursor();
-    void DoMapZoomInOut(bool out);
+    void DoMapZoomInOut(bool out, float f);
     void Process();
     void ScanGalleryPictures(bool force);
     unsigned int GetTimeInMillisecondsRight();
@@ -494,6 +496,7 @@ public:
     void PrintBrief();
     void PrintStats();
     CVector2D GetMapBaseDefault();
+    void DrawLegend();
     void DrawMap();
     void DrawMapCrosshair(float x, float y);
     void DrawPatternBackground(CRect rect, CRGBA col);
