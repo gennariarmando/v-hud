@@ -203,8 +203,9 @@ void CGPS::DrawPathLine() {
             else {
                 for (int i = 0; i < 175; i++) {
                     tRadarTrace trace = CRadar::ms_RadarTrace[i];
-                    if (!trace.m_bTrackingBlip)
+                    if (!trace.m_bTrackingBlip || trace.m_nBlipSprite != RADAR_SPRITE_NONE || trace.m_dwColour != BLIP_COLOUR_DESTINATION)
                         continue;
+
 
                     switch (trace.m_nBlipType) {
                     case BLIP_COORD:
