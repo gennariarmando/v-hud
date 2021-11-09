@@ -1074,6 +1074,11 @@ void CMenuNew::Process() {
                     AppendHelpText(HELP_TEXT_WAYPOINT);
                 }
                 break;
+            case MENUSCREEN_GAME:
+                if (nCurrentInputType == MENUINPUT_ENTRY && MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type == MENUENTRY_POPULATESAVESLOT) {
+                    AppendHelpText(HELP_TEXT_DELETE);
+                }
+                [[fallthrough]];
             case MENUSCREEN_SETTINGS:
                 if (nMenuAlert == MENUALERT_PENDINGCHANGES) {
                     AppendHelpText(HELP_TEXT_APPLYCHANGES);
@@ -1932,8 +1937,8 @@ void CMenuNew::Draw() {
             msg = "FE_EXITW1";
             break;
         case MENUMESSAGE_DELETE_GAME:
-            header = "FE_LGAM";
-            msg = "FE_LGAM1";
+            header = "FE_DGAM";
+            msg = "FE_DGAM1";
             break;
         case MENUMESSAGE_LOSE_CHANGES_ASK:
             header = "FE_ALERT";
@@ -2021,6 +2026,9 @@ void CMenuNew::Draw() {
                 break;
             case HELP_TEXT_LEGEND:
                 str = "H_LG";
+                break;
+            case HELP_TEXT_DELETE:
+                str = "H_DEL";
                 break;
             default:
                 continue;

@@ -179,6 +179,7 @@ enum eHelpTextType {
     HELP_TEXT_APPLYCHANGES,
     HELP_TEXT_WAYPOINT,
     HELP_TEXT_LEGEND,
+    HELP_TEXT_DELETE,
 };
 
 enum {
