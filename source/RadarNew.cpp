@@ -210,7 +210,11 @@ void CRadarNew::ReadBlipsFromFile() {
             sscanf(line.c_str(), "%s %s", &name, &col);
 
             strcpy(m_BlipsList[m_BlipsCount].texName, name);
-            m_BlipsList[m_BlipsCount].color = HudColourNew.GetRGBA(col);
+
+            if (!faststrcmp(col, "-"))
+                m_BlipsList[m_BlipsCount].color = HudColourNew.GetRGBA(MenuNew.Settings.uiMainColor);
+            else
+                m_BlipsList[m_BlipsCount].color = HudColourNew.GetRGBA(col);
             m_BlipsCount++;
         }
 

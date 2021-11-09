@@ -1,5 +1,7 @@
 # BLIPS.DAT 
 # this file contains radar blips ids associated with a texture
+# color must also be set:
+# use "pure white" as texture has colors, or "-" for the main player color.
 # up to 256 blips
 
 # ----------------------------------------------------------------- 	
@@ -13,46 +15,46 @@ radar_north                 HUD_COLOUR_PURE_WHITE
 radar_airyard               HUD_COLOUR_PURE_WHITE
 radar_ammugun               HUD_COLOUR_PURE_WHITE
 radar_barbers               HUD_COLOUR_PURE_WHITE
-radar_bigsmoke              HUD_COLOUR_GREENLIGHT
+radar_bigsmoke              -
 radar_boatyard              HUD_COLOUR_PURE_WHITE
 radar_burgershot            HUD_COLOUR_PURE_WHITE
 radar_bulldozer             HUD_COLOUR_PURE_WHITE
 radar_catalina              HUD_COLOUR_PINK
-radar_cesarvialpando        HUD_COLOUR_PURE_WHITE
-radar_chicken               HUD_COLOUR_YELLOWLIGHT
-radar_cj                    HUD_COLOUR_PURE_WHITE
+radar_cesarvialpando        -
+radar_chicken               HUD_COLOUR_PURE_WHITE
+radar_cj                    -
 radar_crash                 HUD_COLOUR_PURE_WHITE
 radar_diner                 HUD_COLOUR_PURE_WHITE
 radar_emmetgun              HUD_COLOUR_PURE_WHITE
 radar_enemyattack           HUD_COLOUR_PURE_WHITE
-radar_fire                  HUD_COLOUR_REDLIGHT
-radar_girlfriend            HUD_COLOUR_RED
+radar_fire                  HUD_COLOUR_PURE_WHITE
+radar_girlfriend            HUD_COLOUR_PURE_WHITE
 radar_hospital              HUD_COLOUR_PURE_WHITE
-radar_locosyndicate         HUD_COLOUR_BLUELIGHT
-radar_maddog                HUD_COLOUR_PURE_WHITE
+radar_locosyndicate         HUD_COLOUR_PURE_WHITE
+radar_maddog                -
 radar_mafiacasino           HUD_COLOUR_PURE_WHITE
-radar_mcstrap               HUD_COLOUR_PURE_WHITE
+radar_mcstrap               -
 radar_modgarage             HUD_COLOUR_PURE_WHITE
-radar_ogloc                 HUD_COLOUR_GREENLIGHT
+radar_ogloc                 -
 radar_pizza                 HUD_COLOUR_PURE_WHITE
 radar_police                HUD_COLOUR_PURE_WHITE
 radar_property              HUD_COLOUR_GREEN
 radar_property              HUD_COLOUR_RED
 radar_race                  HUD_COLOUR_PURE_WHITE
-radar_ryder                 HUD_COLOUR_GREENLIGHT
+radar_ryder                 -
 radar_savegame              HUD_COLOUR_PURE_WHITE
-radar_school                HUD_COLOUR_RED
+radar_school                HUD_COLOUR_PURE_WHITE
 radar_qmark                 HUD_COLOUR_PURE_WHITE
-radar_sweet                 HUD_COLOUR_GREENLIGHT
+radar_sweet                 -
 radar_tattoo                HUD_COLOUR_PURE_WHITE
-radar_thetruth              HUD_COLOUR_PURE_WHITE
+radar_thetruth              -
 radar_waypoint              HUD_COLOUR_WAYPOINT
-radar_torenoranch           HUD_COLOUR_ORANGEDARK
+radar_toreno           	    -
 radar_triads                HUD_COLOUR_RED
 radar_triads                HUD_COLOUR_YELLOW
 radar_tshirt                HUD_COLOUR_PURE_WHITE
-radar_woozie                HUD_COLOUR_PURE_WHITE
-radar_zero                  HUD_COLOUR_PURE_WHITE
+radar_woozie                -
+radar_zero                  -
 radar_datedisco             HUD_COLOUR_PURE_WHITE
 radar_datedrink             HUD_COLOUR_PURE_WHITE
 radar_datefood              HUD_COLOUR_PURE_WHITE
@@ -63,11 +65,11 @@ radar_gym                   HUD_COLOUR_PURE_WHITE
 radar_impound               HUD_COLOUR_PURE_WHITE
 radar_light                 HUD_COLOUR_YELLOW
 radar_runway                HUD_COLOUR_YELLOW
-radar_gangb                 HUD_COLOUR_BLUELIGHT
-radar_gangp                 HUD_COLOUR_PURPLE
-radar_gangy                 HUD_COLOUR_ORANGE
-radar_gangn                 HUD_COLOUR_BLUE
-radar_gangg                 HUD_COLOUR_GREEN
+radar_gang                  HUD_COLOUR_BLUELIGHT
+radar_gang                  HUD_COLOUR_PURPLE
+radar_gang                  HUD_COLOUR_ORANGE
+radar_gang                  HUD_COLOUR_BLUE
+radar_gang                  HUD_COLOUR_GREEN
 radar_spray                 HUD_COLOUR_PURE_WHITE
 radar_cop                   HUD_COLOUR_PURE_WHITE
 radar_cop_heli              HUD_COLOUR_PURE_WHITE
@@ -75,3 +77,5 @@ radar_vcone                 HUD_COLOUR_PURE_WHITE
 radar_level                 HUD_COLOUR_PURE_WHITE
 radar_lower                 HUD_COLOUR_PURE_WHITE
 radar_higher                HUD_COLOUR_PURE_WHITE
+
+# eof
