@@ -863,7 +863,8 @@ void CHudNew::DrawStats() {
 
     static int prevTimeScale = CTimer::ms_fTimeScale;
     static bool bJustClosed = false;
-    if (CPadNew::GetPad(0)->GetShowPlayerInfo(500) && !IsAimingWeapon()) {
+    if (CPadNew::GetPad(0)->GetShowPlayerInfo(500) && !IsAimingWeapon() &&
+        playa->m_vecMoveSpeed.Magnitude() < 0.01f) {
         CHud::bDrawingVitalStats = true;
     }
     else {
