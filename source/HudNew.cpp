@@ -319,7 +319,6 @@ void CHudNew::Draw() {
                 if (CTheScripts::bDisplayHud) {
                     DrawWanted();
                     DrawPlayerInfo();
-                    CWeaponSelector::DrawWheel();
                 }
 
                 if (!CHud::bDrawingVitalStats && !CellPhone.bActive) {
@@ -332,9 +331,9 @@ void CHudNew::Draw() {
                             DrawLevelName();
                         }
                     }
-                }
 
-                DrawMissionTimers();
+                    DrawMissionTimers();
+                }
                 DrawHelpText();
 
                 CRadioHud::Draw();
@@ -394,7 +393,8 @@ void CHudNew::Draw() {
             || playa->m_nPedState == PEDSTATE_FIGHT
             || playa->m_nPedState == PEDSTATE_ROCKETLAUNCHER_MODE
             || playa->m_nPedState == PEDSTATE_SNIPER_MODE
-            || IsAimingWeapon()) {
+            || IsAimingWeapon()
+            || CEntryExitManager::ms_exitEnterState > 0) {
             CellPhone.bRequestPhoneClose = true;
         }
 
