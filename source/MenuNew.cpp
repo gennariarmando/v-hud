@@ -1103,8 +1103,9 @@ void CMenuNew::Process() {
                     AppendHelpText(HELP_TEXT_LEGEND);
                     AppendHelpText(HELP_TEXT_BACK);
                     AppendHelpText(HELP_TEXT_WAYPOINT);
+                    break;
                 }
-                break;
+                [[fallthrough]];
             case MENUSCREEN_GAME:
                 if (nCurrentInputType == MENUINPUT_ENTRY && MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type == MENUENTRY_POPULATESAVESLOT) {
                     AppendHelpText(HELP_TEXT_DELETE);
