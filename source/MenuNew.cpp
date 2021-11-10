@@ -293,9 +293,11 @@ void CMenuNew::Clear() {
     bSaveScreenHasBeenOpened = false;
     bCleanMapScreenNextFrame = false;
     bDrawMenuMap = false;
-    fMapZoom = 1.0f;
+    fMapZoom = MENU_MAP_ZOOM_MIN;
     vMapBase.x = 0.0f;
     vMapBase.y = 0.0f;
+    vTempMapBase = vMapBase;
+    nMapZoomTime = 0;
     bShowLegend = true;
 
     nTimeForSafeZonesToShow = 0;
@@ -729,15 +731,31 @@ void CMenuNew::CenterCursor() {
     }
 }
 
-void CMenuNew::DoMapZoomInOut(bool out, float f) {
-    float value = out ? -f : f;
-    fMapZoom += value;
-    fMapZoom = clamp(fMapZoom, 1.0f, 8.0f);
+void CMenuNew::DoMapZoomInOut(bool out) {
+    if (nMapZoomTime > CTimer::m_snTimeInMillisecondsPauseMode)
+        return;
 
-    value *= 2;
-    if (out && fMapZoom > 1.0f && fMapZoom < 4.0f) {
-        vMapBase.x += (SCREEN_WIDTH / 2 - vMapBase.x) * (-value - value);
-        vMapBase.y += (SCREEN_COORD(28.0f) + SCREEN_HEIGHT / 2 - vMapBase.y) * (-value - value);
+    const float value = (!out ? 1.1f : 1.0f / 1.1f);
+    const float previousZoom = fMapZoom;
+
+    if (out && fMapZoom > MENU_MAP_ZOOM_MIN || !out && fMapZoom < MENU_MAP_ZOOM_MAX) {
+        fMapZoom *= value;
+
+
+        const float halfMapSize = GetMenuMapWholeSize() / 2;
+        if ((vTempMapBase.x + halfMapSize < MENU_X(0.0f))
+            || (vTempMapBase.x - halfMapSize > MENU_RIGHT(0.0f))
+            || (vTempMapBase.y + halfMapSize < MENU_Y(0.0f))
+            || (vTempMapBase.y - halfMapSize > MENU_BOTTOM(0.0f))) {
+
+        }
+        else {
+            vMapBase.x += (SCREEN_HALF_WIDTH - vMapBase.x) * (1.0f - value);
+            vMapBase.y += (SCREEN_HALF_HEIGHT - vMapBase.y) * (1.0f - value);
+            vTempMapBase = vMapBase;
+        }
+
+        nMapZoomTime = CTimer::m_snTimeInMillisecondsPauseMode + 25;
     }
 }
 
@@ -939,32 +957,28 @@ void CMenuNew::Process() {
 
                 if (!bShowMenu) {
                     if (nCurrentScreen == MENUSCREEN_MAP) {
-                        CVector2D prevMapBase = vMapBase;
+                        CVector2D prevMapBase = vTempMapBase;
                         if (LeftMouseDown) {
                             nMouseType = MOUSE_GRAB;
 
-                            if (fMapZoom > 1.0f) {
-                                vMapBase.x += (vMousePos.x - vOldMousePos.x);
-                                vMapBase.y += (vMousePos.y - vOldMousePos.y);
-                            }
+                            vTempMapBase.x += (vMousePos.x - vOldMousePos.x);
+                            vTempMapBase.y += (vMousePos.y - vOldMousePos.y);
                         }
-                        else {     
-                            if (fMapZoom > 1.0f) {
-                                float value = 10.0f;
+                        else {
+                            float value = SCREEN_COORD(10.0f);
 
-                                vMapBase.x += (LeftPressed ? value : RightPressed ? -value : 0.0f);
-                                vMapBase.y += (UpPressed ? value : DownPressed ? -value : 0.0f);
-                            }
+                            vTempMapBase.x += (LeftPressed ? value : RightPressed ? -value : 0.0f);
+                            vTempMapBase.y += (UpPressed ? value : DownPressed ? -value : 0.0f);
 
                             if (WheelDown)
-                                DoMapZoomInOut(true, 0.2f);
+                                DoMapZoomInOut(true);
                             if (WheelUp)
-                                DoMapZoomInOut(false, 0.2f);
+                                DoMapZoomInOut(false);
 
                             if (MapZoomIn)
-                                DoMapZoomInOut(false, 0.02f);
+                                DoMapZoomInOut(false);
                             if (MapZoomOut)
-                                DoMapZoomInOut(true, 0.02f);
+                                DoMapZoomInOut(true);
 
                             if (MiddleMouseJustDown) {
                                 SetWaypoint(vMousePos.x, vMousePos.y);
@@ -978,14 +992,31 @@ void CMenuNew::Process() {
                             if (ShowHideMapLegend) {
                                 bShowLegend = bShowLegend == false;
                             }
-                        }                     
+                        }
 
-                        const float mapHalfSize = (GetMenuMapWholeSize() / 2);
-                        if ((vMapBase.x + mapHalfSize) < MENU_X(32.0f)) vMapBase.x = prevMapBase.x;
-                        if ((vMapBase.x - mapHalfSize) > MENU_RIGHT(32.0f)) vMapBase.x = prevMapBase.x;
-                        
-                        if ((vMapBase.y + mapHalfSize) < MENU_Y(32.0f)) vMapBase.y = prevMapBase.y;
-                        if ((vMapBase.y - mapHalfSize) > MENU_BOTTOM(32.0f)) vMapBase.y = prevMapBase.y;
+                        vMapBase.x = interpF(vMapBase.x, vTempMapBase.x, 0.2f);
+                        vMapBase.y = interpF(vMapBase.y, vTempMapBase.y, 0.2f);
+
+                        const float halfMapSize = GetMenuMapWholeSize() / 2;
+                        if (vTempMapBase.x + halfMapSize < MENU_X(16.0f)
+                            || vMapBase.x + halfMapSize < MENU_X(16.0f)) {
+                            vTempMapBase.x = vMapBase.x = prevMapBase.x;
+                        }
+
+                        if (vTempMapBase.x - halfMapSize > MENU_RIGHT(16.0f)
+                            || vMapBase.x - halfMapSize > MENU_RIGHT(16.0f)) {
+                            vTempMapBase.x = vMapBase.x = prevMapBase.x;
+                        }
+
+                        if (vTempMapBase.y + halfMapSize < MENU_Y(16.0f)
+                            || vMapBase.y + halfMapSize < MENU_Y(16.0f)) {
+                            vTempMapBase.y = vMapBase.y = prevMapBase.y;
+                        }
+
+                        if (vTempMapBase.y - halfMapSize > MENU_BOTTOM(16.0f)
+                            || vMapBase.y - halfMapSize > MENU_BOTTOM(16.0f)) {
+                            vTempMapBase.y = vMapBase.y = prevMapBase.y;
+                        }
                     }
                 }
             }
@@ -1121,7 +1152,7 @@ void CMenuNew::Process() {
                 fScreenAlpha += 0.02f * 255.0f;
                 fScreenAlpha = clamp(fScreenAlpha, 0, 255);
             }
-            else 
+            else
                 fScreenAlpha = 255.0f;
 
             nLoadingTime = 0;
@@ -1888,6 +1919,18 @@ void CMenuNew::Draw() {
                 DrawDefault();
                 break;
             }
+        }
+
+        // Eh
+        const CVector2D currScreen = { SCREEN_WIDTH, SCREEN_HEIGHT };
+        static CVector2D prevScreen = currScreen;
+        if (currScreen.x != prevScreen.x || currScreen.y != prevScreen.y) {
+            vMapBase.x = vMapBase.x * currScreen.x / prevScreen.x;
+            vMapBase.y = vMapBase.y * currScreen.y / prevScreen.y;
+            vTempMapBase = vMapBase;
+
+            prevScreen.x = currScreen.x;
+            prevScreen.y = currScreen.y;
         }
 
         if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[nCurrentEntryItem].type == MENUENTRY_SAFEZONESIZE) {
@@ -2716,9 +2759,9 @@ void CMenuNew::DrawSpinningWheel(float x, float y, float w, float h) {
 }
 
 void CMenuNew::ResetMap() {
-    fMapZoom = 1.0f;
-    vMapBase.x = 0.0f;
-    vMapBase.y = 0.0f;
+    fMapZoom = MENU_MAP_ZOOM_MIN;
+    vMapBase = GetMapBaseDefault();
+    vTempMapBase = vMapBase;
     bShowMenu = true;
     bDrawMenuMap = false;
     bCleanMapScreenNextFrame = false;
@@ -2743,6 +2786,19 @@ void CMenuNew::SetWaypoint(float x, float y) {
         CRadar::TransformRadarPointToRealWorldSpace(out, in);
 
         CVector pos = { out.x, out.y, 0.0f };
+
+        if (pos.x < -3000.0f)
+            pos.x = -3000.0f;
+
+        if (pos.x > 3000.0f)
+            pos.x = 3000.0f;
+
+        if (pos.y < -3000.0f)
+            pos.y = -3000.0f;
+
+        if (pos.y > 3000.0f)
+            pos.y = 3000.0f;
+
         int i = CRadar::SetCoordBlip(BLIP_COORD, pos, 0, BLIP_DISPLAY_BOTH, 0);
         CRadar::SetBlipSprite(i, RADAR_SPRITE_WAYPOINT);
         FrontEndMenuManager.m_nTargetBlipIndex = i;
@@ -3000,6 +3056,22 @@ void CMenuNew::DrawMap() {
     CRect mask = GetMenuScreenRect();
 
     if (nCurrentInputType == MENUINPUT_TAB) {
+        if (bShowMenu) {
+            CVector2D in = FindPlayerCoors(0);
+            CVector2D out;
+            CRadarNew::TransformRealWorldPointToRadarSpace(out, in);
+            in = out;
+            CRadarNew::TransformRadarPointToScreenSpace(out, in);
+
+            vMapBase.x -= out.x - SCREEN_HALF_WIDTH;
+            vMapBase.y -= out.y - SCREEN_HALF_HEIGHT;
+            vTempMapBase = vMapBase;
+
+            for (int i = 0; i < 16; i++) {
+                DoMapZoomInOut(false);
+                nMapZoomTime = 0;
+            }
+        }
         bShowMenu = false;
     }
     else {
@@ -3019,22 +3091,6 @@ void CMenuNew::DrawMap() {
 
     bDrawMenuMap = true;
     bCleanMapScreenNextFrame = true;
-
-    if (vMapBase.x == 0 && vMapBase.y == 0) {
-        fMapZoom = 1.0f;
-        vMapBase = GetMapBaseDefault();
-    }
-
-    // Eh
-    const CVector2D currScreen = { SCREEN_WIDTH, SCREEN_HEIGHT };
-    static CVector2D prevScreen = currScreen;
-    if (currScreen.x != prevScreen.x || currScreen.y != prevScreen.y) {
-        vMapBase.x = vMapBase.x * currScreen.x / prevScreen.x;
-        vMapBase.y = vMapBase.y * currScreen.y / prevScreen.y;
-
-        prevScreen.x = currScreen.x;
-        prevScreen.y = currScreen.y;
-    }
 
     float mapZoom = GetMenuMapTileSize() * fMapZoom;
     rect.left = vMapBase.x;

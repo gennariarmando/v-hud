@@ -113,11 +113,11 @@ void CGPS::DrawLine(CVector2D const&a, CVector2D const&b, float width, CRGBA col
     dir.y = b.y - a.y;
     float angle = atan2f(dir.y, dir.x);
     if (MenuNew.bDrawMenuMap) {
-        float mp = MenuNew.fMapZoom / 2;
-        shift[0].x = cosf(angle - 1.5707963f) * 3.0f * mp;
-        shift[0].y = sinf(angle - 1.5707963f) * 3.0f * mp;
-        shift[1].x = cosf(angle + 1.5707963f) * 3.0f * mp;
-        shift[1].y = sinf(angle + 1.5707963f) * 3.0f * mp;
+        float mp = MenuNew.fMapZoom * 0.5f;
+        shift[0].x = cosf(angle - 1.5707963f) * SCREEN_COORD(1.25f * mp);
+        shift[0].y = sinf(angle - 1.5707963f) * SCREEN_COORD(1.25f * mp);
+        shift[1].x = cosf(angle + 1.5707963f) * SCREEN_COORD(1.25f * mp);
+        shift[1].y = sinf(angle + 1.5707963f) * SCREEN_COORD(1.25f * mp);
     }
     else {
         shift[0].x = cosf(angle - 1.5707963f) * width * (CRadarNew::m_vRadarMapQuality.x * 0.00390625f);

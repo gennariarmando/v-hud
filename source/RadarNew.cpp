@@ -338,14 +338,16 @@ void CRadarNew::DrawBlips() {
         DrawPickupBlips();
 
     if (MenuNew.bDrawMenuMap) {
-        CVector2D in = FindPlayerCoors(0);
+        CVector2D in = FindPlayerCentreOfWorld_NoInteriorShift(0);
         CVector2D out;
         TransformRealWorldPointToRadarSpace(out, in);
         in = out;
         TransformRadarPointToScreenSpace(out, in);
 
         float angle = FindPlayerHeading(0) - M_PI;
-        DrawRotatingRadarSprite(m_BlipsSprites[RADAR_SPRITE_CENTRE], out.x, out.y, angle, SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).w + 1.0f), SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).h + 1.0f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+
+        if (FLASH_ITEM(1200, 200))
+            DrawRotatingRadarSprite(m_BlipsSprites[RADAR_SPRITE_CENTRE], out.x, out.y, angle, SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).w + 1.0f), SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_SIZE).h + 1.0f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
     }
     else {
         CVector2D in, out;

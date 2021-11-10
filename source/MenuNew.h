@@ -3,6 +3,10 @@
 #define MENU_OPEN_CLOSE_WAIT_TIME 500
 #define MENU_SCREEN_CHANGE_WAIT_TIME 250
 
+#define MENU_MAP_ZOOM_MIN (1.1f)
+#define MENU_MAP_ZOOM_MAX (10.0f)
+
+
 #include "PadNew.h"
 #include "CSprite2d.h"
 
@@ -415,7 +419,10 @@ public:
     bool bCleanMapScreenNextFrame;
     bool bDrawMenuMap;
     CVector2D vMapBase;
+    CVector2D vTempMapBase;
     float fMapZoom;
+
+    int nMapZoomTime;
     bool bShowLegend;
 
     int nTimeForSafeZonesToShow;
@@ -458,7 +465,7 @@ public:
     void OpenCloseMenu(bool on, bool force);
     void OpenMenuScreen(int screen);
     void CenterCursor();
-    void DoMapZoomInOut(bool out, float f);
+    void DoMapZoomInOut(bool out);
     void Process();
     void ScanGalleryPictures(bool force);
     unsigned int GetTimeInMillisecondsRight();
