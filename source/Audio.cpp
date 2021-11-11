@@ -15,6 +15,7 @@ const char* ChunksFileNames[] = {
     "MENU_BACK",
     "MENU_SCROLL",
     "MENU_SELECT",
+    "MENU_MAP_MOVE",
 };
 
 CAudio::CAudio() {
@@ -27,7 +28,9 @@ void CAudio::Init() {
 
     if (!BASS_Init(-1, 44100, 0, RsGlobal.ps->window, NULL)) {
         printf("[BASS] Can't initialize device. \n");
-        return;
+
+        if (BASS_ErrorGetCode() != BASS_ERROR_ALREADY)
+            return;
     }
 
     for (int i = 0; i < NUM_CHUNKS; i++) {
@@ -63,7 +66,7 @@ void CAudio::SetChunksMasterVolume(char vol) {
 }
 
 unsigned long CAudio::LoadChunkFile(const char* path, const char* name) {
-    char file[128];
+    char file[512];
 
     strcpy_s(file, path);
     strcat_s(file, "\\");
@@ -81,7 +84,7 @@ void CAudio::PlayChunk(int chunk, float volume) {
     if (GetFocus() != RsGlobal.ps->window)
         return;
 
-    chunk = clamp(chunk, 0, NUM_CHUNKS);
+    chunk = clamp(chunk, 0, NUM_CHUNKS - 1);
 
     auto c = BASS_SampleGetChannel(Chunks[chunk], FALSE);
 

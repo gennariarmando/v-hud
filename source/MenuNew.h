@@ -510,7 +510,8 @@ public:
     void DrawPatternBackground(CRect rect, CRGBA col);
     void DrawBorder(CRect rect, CRGBA col);
     void DrawGallery();
-    bool CheckHover(int x1, int x2, int y1, int y2);
+    bool CheckHover(float x1, float x2, float y1, float y2);
+    bool MapCrosshairCheckHover(float x1, float x2, float y1, float y2);
 
 public:
     static void PassSettingsToCurrentGame(const CMenuSettings* s);

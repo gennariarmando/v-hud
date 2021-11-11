@@ -906,7 +906,7 @@ void CRadarNew::DrawRadarSprite(unsigned short id, float x, float y, unsigned ch
     float h = GET_SETTING(HUD_RADAR_BLIPS_SIZE).h;
 
     if (MenuNew.bDrawMenuMap) {
-        if (MenuNew.CheckHover(x - SCREEN_COORD(w), x + SCREEN_COORD(w), y - SCREEN_COORD(h), y + SCREEN_COORD(h)) && MenuNew.nCurrentInputType == MENUINPUT_TAB) {
+        if (MenuNew.MapCrosshairCheckHover(x - SCREEN_COORD(w), x + SCREEN_COORD(w), y - SCREEN_COORD(h), y + SCREEN_COORD(h)) && MenuNew.nCurrentInputType == MENUINPUT_TAB) {
             w *= RADAR_MENU_BLIP_HOVER_MULT;
             h *= RADAR_MENU_BLIP_HOVER_MULT;
         }
@@ -989,7 +989,7 @@ void CRadarNew::AddAnyBlip(unsigned short id, CEntity e, float width, float heig
     float h = height;
 
     if (MenuNew.bDrawMenuMap) {
-        if (MenuNew.CheckHover(x - SCREEN_COORD(w), x + SCREEN_COORD(w), y - SCREEN_COORD(h), y + SCREEN_COORD(h)) && MenuNew.nCurrentInputType == MENUINPUT_TAB) {
+        if (MenuNew.MapCrosshairCheckHover(x - SCREEN_COORD(w), x + SCREEN_COORD(w), y - SCREEN_COORD(h), y + SCREEN_COORD(h)) && MenuNew.nCurrentInputType == MENUINPUT_TAB) {
             w *= RADAR_MENU_BLIP_HOVER_MULT;
             h *= RADAR_MENU_BLIP_HOVER_MULT;
         }
@@ -1149,7 +1149,7 @@ void CRadarNew::DrawRotatingRadarSprite(CSprite2d* sprite, float x, float y, flo
     CVector posn[4];
 
     if (MenuNew.bDrawMenuMap) {
-        if (MenuNew.CheckHover(x - SCREEN_COORD(width), x + SCREEN_COORD(width), y - SCREEN_COORD(height), y + SCREEN_COORD(height)) && MenuNew.nCurrentInputType == MENUINPUT_TAB) {
+        if (MenuNew.MapCrosshairCheckHover(x - SCREEN_COORD(width), x + SCREEN_COORD(width), y - SCREEN_COORD(height), y + SCREEN_COORD(height)) && MenuNew.nCurrentInputType == MENUINPUT_TAB) {
             width *= RADAR_MENU_BLIP_HOVER_MULT;
             height *= RADAR_MENU_BLIP_HOVER_MULT;
         }
@@ -1593,7 +1593,7 @@ void CRadarNew::ShowRadarTraceWithHeight(float x, float y, unsigned int size, un
     float h = ((float)size * 0.5f) + (GET_SETTING(HUD_RADAR_BLIPS_LEVEL_SIZE).h);
 
     if (MenuNew.bDrawMenuMap) {
-        if (MenuNew.CheckHover(x - SCREEN_COORD(w), x + SCREEN_COORD(w), y - SCREEN_COORD(h), y + SCREEN_COORD(h)) && MenuNew.nCurrentInputType == MENUINPUT_TAB) {
+        if (MenuNew.MapCrosshairCheckHover(x - SCREEN_COORD(w), x + SCREEN_COORD(w), y - SCREEN_COORD(h), y + SCREEN_COORD(h)) && MenuNew.nCurrentInputType == MENUINPUT_TAB) {
             w *= RADAR_MENU_BLIP_HOVER_MULT;
             h *= RADAR_MENU_BLIP_HOVER_MULT;
         }

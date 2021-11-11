@@ -13,7 +13,6 @@ bool bHasPadInHands = false;
 
 void CPadNew::Init() {
 
-
 }
 
 void CPadNew::Update () {
@@ -136,6 +135,28 @@ bool CPadNew::GetLeftMouseDown() {
     return !!(NewMouseControllerState.lmb);
 }
 
+int leftMouseCount = 0;
+int leftMouseCountTime = 0;
+bool CPadNew::GetLeftMouseDoubleClickJustDown() {
+    if (leftMouseCountTime < CTimer::m_snTimeInMillisecondsPauseMode) {
+        leftMouseCountTime = 0;
+        leftMouseCount = 0;
+    }
+
+    if (GetLeftMouseJustDown()) {
+        leftMouseCount++;
+        leftMouseCountTime = CTimer::m_snTimeInMillisecondsPauseMode + 250;
+    }
+
+    if (leftMouseCount >= 2) {
+        leftMouseCount = 0;
+        leftMouseCountTime = 0;
+        return true;
+    }
+
+    return false;
+}
+
 bool CPadNew::GetMiddleMouseDown() {
     return !!(NewMouseControllerState.mmb);
 }
@@ -171,6 +192,10 @@ bool CPadNew::GetPhoneEnterJustDown() {
 
 bool CPadNew::GetLeftMouseJustDown() {
     return !!(NewMouseControllerState.lmb && !OldMouseControllerState.lmb);
+}
+
+bool CPadNew::GetLeftMouseJustUp() {
+    return !!(!NewMouseControllerState.lmb && OldMouseControllerState.lmb);
 }
 
 bool CPadNew::GetRightMouseJustDown() {

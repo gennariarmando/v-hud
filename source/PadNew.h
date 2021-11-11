@@ -68,6 +68,7 @@ public:
     bool GetMenuSpaceJustDown();
 
     bool GetLeftMouseDown();
+    bool GetLeftMouseDoubleClickJustDown();
 
     bool GetMiddleMouseDown();
 
@@ -85,6 +86,8 @@ public:
     bool GetPhoneEnterJustDown();
 
     bool GetLeftMouseJustDown();
+
+    bool GetLeftMouseJustUp();
 
     bool GetRightMouseJustDown();
 

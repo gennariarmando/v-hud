@@ -4,6 +4,7 @@ enum eChunks {
     CHUNK_MENU_BACK,
     CHUNK_MENU_SCROLL,
     CHUNK_MENU_SELECT,
+    CHUNK_MENU_MAP_MOVE,
     NUM_CHUNKS
 };
 

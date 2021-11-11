@@ -737,11 +737,9 @@ void CMenuNew::DoMapZoomInOut(bool out) {
         return;
 
     const float value = (!out ? 1.1f : 1.0f / 1.1f);
-    const float previousZoom = fMapZoom;
 
     if (out && fMapZoom > MENU_MAP_ZOOM_MIN || !out && fMapZoom < MENU_MAP_ZOOM_MAX) {
         fMapZoom *= value;
-
 
         const float halfMapSize = GetMenuMapWholeSize() / 2;
         if ((vTempMapBase.x + halfMapSize < MENU_X(0.0f))
@@ -808,8 +806,10 @@ void CMenuNew::Process() {
     bool WheelUp = pad->GetMenuMapZoomInJustDown();
     bool WheelDown = pad->GetMenuMapZoomOutJustDown();
     bool LeftMouseDown = pad->GetLeftMouseDown();
-    bool LeftMouseJustDown = pad->GetLeftMouseDown();
+    bool LeftMouseJustDown = pad->GetLeftMouseJustDown();
+    bool LeftMouseJustUp = pad->GetLeftMouseJustUp();
     bool MiddleMouseJustDown = pad->GetMiddleMouseJustDown();
+    bool LeftMouseDoubleClickJustDown = pad->GetLeftMouseDoubleClickJustDown();
 
     bool MapZoomIn = pad->GetMenuMapZoomIn();
     bool MapZoomOut = pad->GetMenuMapZoomOut();
@@ -853,7 +853,8 @@ void CMenuNew::Process() {
         case MENUINPUT_BAR:
             if (bShowMenuBar) {
                 if (Left) {
-                    Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+                    if (GetLastMenuBarItem() > 0)
+                        Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
 
                     nPreviousBarItem = nCurrentBarItem;
                     nCurrentBarItem--;
@@ -868,7 +869,8 @@ void CMenuNew::Process() {
                     bRequestScreenUpdate = true;
                 }
                 else if (Right) {
-                    Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+                    if (GetLastMenuBarItem() > 0)
+                        Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
 
                     nPreviousBarItem = nCurrentBarItem;
                     nCurrentBarItem++;
@@ -897,7 +899,9 @@ void CMenuNew::Process() {
         case MENUINPUT_TAB:
             if (!IsLoading()) {
                 if (Up) {
-                    Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+                    if (GetLastMenuScreenTab() > 0)
+                        Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+
                     nPreviousTabItem = nCurrentTabItem;
                     nCurrentTabItem--;
 
@@ -919,7 +923,8 @@ void CMenuNew::Process() {
                     SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
                 }
                 else if (Down) {
-                    Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+                    if (GetLastMenuScreenTab() > 0)
+                        Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
 
                     nPreviousTabItem = nCurrentTabItem;
                     nCurrentTabItem++;
@@ -946,7 +951,9 @@ void CMenuNew::Process() {
                     ProcessTabStuff();
                 }
                 else if (Back) {
-                    Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
+                    if (nCurrentScreen != MENUSCREEN_LANDING) {
+                        Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
+                    }
 
                     if (bLandingPage) {
                         if (nCurrentScreen != MENUSCREEN_LANDING) {
@@ -973,15 +980,25 @@ void CMenuNew::Process() {
                 if (!bShowMenu) {
                     if (nCurrentScreen == MENUSCREEN_MAP) {
                         CVector2D prevMapBase = vTempMapBase;
+
+                        static int timeLeftMousePressed = 0;
+
                         if (LeftMouseDown) {
+                            if (vMousePos.x != vOldMousePos.x || vMousePos.y != vOldMousePos.y)
+                                timeLeftMousePressed = CTimer::m_snTimeInMillisecondsPauseMode + 200;
+                        }
+
+                        if (LeftMouseJustUp)
+                            timeLeftMousePressed = 0;
+
+                        if (timeLeftMousePressed > CTimer::m_snTimeInMillisecondsPauseMode) {
                             nMouseType = MOUSE_GRAB;
 
                             vTempMapBase.x += (vMousePos.x - vOldMousePos.x);
                             vTempMapBase.y += (vMousePos.y - vOldMousePos.y);
                         }
                         else {
-                            float value = SCREEN_COORD(10.0f);
-
+                            float value = SCREEN_COORD(8.0f);
                             vTempMapBase.x += (LeftPressed ? value : RightPressed ? -value : 0.0f);
                             vTempMapBase.y += (UpPressed ? value : DownPressed ? -value : 0.0f);
 
@@ -995,22 +1012,38 @@ void CMenuNew::Process() {
                             if (MapZoomOut)
                                 DoMapZoomInOut(true);
 
-                            if (MiddleMouseJustDown) {
+                            if (LeftMouseDoubleClickJustDown) {
+                                Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                                 SetWaypoint(vMousePos.x, vMousePos.y);
-                                LeftMouseDown = false;
-                                LeftMouseJustDown = false;
                             }
+
                             if (Enter) {
                                 SetWaypoint(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
                             }
 
                             if (ShowHideMapLegend) {
                                 bShowLegend = bShowLegend == false;
+                                Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
                             }
                         }
 
                         vMapBase.x = interpF(vMapBase.x, vTempMapBase.x, 0.2f);
                         vMapBase.y = interpF(vMapBase.y, vTempMapBase.y, 0.2f);
+
+                        static int mapMoveTime = 0;
+                        static bool mapPlayShot = false;
+                        if (vTempMapBase.x != prevMapBase.x || vTempMapBase.y != prevMapBase.y) {
+                            if (!mapPlayShot && mapMoveTime < CTimer::m_snTimeInMillisecondsPauseMode) {
+                                mapMoveTime = CTimer::m_snTimeInMillisecondsPauseMode + 100;
+                                mapPlayShot = true;
+                            }
+
+                            if (mapPlayShot) {
+                                Audio.PlayChunk(CHUNK_MENU_MAP_MOVE, 0.5f);
+                                mapPlayShot = false;
+                            }
+                        }
 
                         const float halfMapSize = GetMenuMapWholeSize() / 2;
                         if (vTempMapBase.x + halfMapSize < MENU_X(16.0f)
@@ -1098,6 +1131,11 @@ void CMenuNew::Process() {
             break;
         case MENUINPUT_MESSAGE:
             if (!IsLoading()) {
+                if (Back)
+                    Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
+                else if (Enter)
+                    Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                 ProcessMessagesStuff(Enter, Back, Space, Left ? -1 : Right ? 1 : 0);
             }
             break;
@@ -1825,7 +1863,9 @@ void CMenuNew::Draw() {
                 if (bDrawMouse && CheckHover(menuBar.left, menuBar.left + menuBar.right, menuBar.top, menuBar.top + menuBar.bottom)) {
                     nCurrentBarItemHover = i;
 
-                    if (pad->GetLeftMouseJustDown()) {
+                    if (pad->GetLeftMouseJustUp()) {
+                        Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                         if (nCurrentBarItemHover != nCurrentBarItem)
                             bRequestScreenUpdate = true;
 
@@ -2226,7 +2266,9 @@ void CMenuNew::DrawDefault() {
             if (bDrawMouse && CheckHover(menuTab.left, menuTab.left + menuTab.right, menuTab.top, menuTab.top + menuTab.bottom)) {
                 nCurrentTabItemHover = i;
 
-                if (pad->GetLeftMouseJustDown()) {
+                if (pad->GetLeftMouseJustUp()) {
+                    Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                     if (nCurrentTabItemHover == nCurrentTabItem)
                         ProcessTabStuff();
                     else
@@ -2341,7 +2383,9 @@ void CMenuNew::DrawDefault() {
             if (bDrawMouse && CheckHover(menuEntry.left, menuEntry.left + menuEntry.right, menuEntry.top, menuEntry.top + menuEntry.bottom)) {
                 nCurrentEntryItemHover = i;
 
-                if (pad->GetLeftMouseJustDown()) {
+                if (pad->GetLeftMouseJustUp()) {
+                    Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                     if (nCurrentEntryItemHover == nCurrentEntryItem)
                         ProcessEntryStuff(1, 0);
                     else
@@ -2549,7 +2593,9 @@ void CMenuNew::DrawDefault() {
                     MenuSprites[MENU_ARROW_LEFT]->Draw(arrowX, arrowY, arrowScale, arrowScale, CRGBA(0, 0, 0, 255));
 
                     if (CheckHover(arrowX - arrowScale, arrowX + arrowScale, arrowY, arrowY + arrowScale)) {
-                        if (pad->GetLeftMouseJustDown()) {
+                        if (pad->GetLeftMouseJustUp()) {
+                            Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                             ProcessEntryStuff(0, -1);
                         }
                     }
@@ -2558,7 +2604,9 @@ void CMenuNew::DrawDefault() {
                     MenuSprites[MENU_ARROW_RIGHT]->Draw(arrowX, arrowY, arrowScale, arrowScale, CRGBA(0, 0, 0, 255));
 
                     if (CheckHover(arrowX - arrowScale, arrowX + arrowScale, arrowY, arrowY + arrowScale)) {
-                        if (pad->GetLeftMouseJustDown()) {
+                        if (pad->GetLeftMouseJustUp()) {
+                            Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                             ProcessEntryStuff(0, 1);
                         }
                     }
@@ -2706,7 +2754,9 @@ void CMenuNew::DrawLandingPage() {
             nCurrentTabItemHover = i;
             SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItemHover);
 
-            if (pad->GetLeftMouseJustDown()) {
+            if (pad->GetLeftMouseJustUp()) {
+                Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                 ProcessTabStuff();
             }
         }
@@ -2760,6 +2810,8 @@ void CMenuNew::DrawSliderRightAlign(float x, float y, float progress) {
     }
 
     if (point) {
+        Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
         CheckSliderMovement(value);
         ApplyChanges();
     }
@@ -2858,7 +2910,9 @@ void CMenuNew::PrintBrief() {
         if (CheckHover(mask.left, mask.left + mask.right, mask.top, mask.top + mask.bottom)) {
             CPadNew* pad = CPadNew::GetPad(0);
 
-            if (pad->GetLeftMouseJustDown()) {
+            if (pad->GetLeftMouseJustUp()) {
+                Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                 SetInputTypeAndClear(MENUINPUT_TAB);
             }
         }
@@ -2913,7 +2967,9 @@ void CMenuNew::PrintStats() {
         if (CheckHover(mask.left, mask.left + mask.right, mask.top, mask.top + mask.bottom)) {
             CPadNew* pad = CPadNew::GetPad(0);
 
-            if (pad->GetLeftMouseJustDown()) {
+            if (pad->GetLeftMouseJustUp()) {
+                Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                 SetInputTypeAndClear(MENUINPUT_TAB);
             }
         }
@@ -3097,7 +3153,7 @@ void CMenuNew::DrawMap() {
             vMapBase.y -= out.y - SCREEN_HALF_HEIGHT;
             vTempMapBase = vMapBase;
 
-            for (int i = 0; i < 16; i++) {
+            for (int i = 0; i < 24; i++) {
                 DoMapZoomInOut(false);
                 nMapZoomTime = 0;
             }
@@ -3109,7 +3165,9 @@ void CMenuNew::DrawMap() {
         if (CheckHover(mask.left, mask.left + mask.right, mask.top, mask.top + mask.bottom)) {
             CPadNew* pad = CPadNew::GetPad(0);
 
-            if (pad->GetLeftMouseJustDown()) {
+            if (pad->GetLeftMouseJustUp()) {
+                Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                 SetInputTypeAndClear(MENUINPUT_TAB);
             }
         }
@@ -3267,7 +3325,9 @@ void CMenuNew::DrawGallery() {
                     if (bDrawMouse && CheckHover(mask.left, mask.left + mask.right, mask.top, mask.top + mask.bottom)) {
                         tabItemHover = index;
 
-                        if (pad->GetLeftMouseJustDown()) {
+                        if (pad->GetLeftMouseJustUp()) {
+                            Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                             if (tabItemHover == tabItem)
                                 ProcessTabStuff();
                             else
@@ -3366,7 +3426,9 @@ void CMenuNew::DrawGallery() {
 
             if (bDrawMouse) {
                 if (CheckHover(leftArrow[0], leftArrow[0] + leftArrow[2], leftArrow[1], leftArrow[1] + leftArrow[3])) {
-                    if (pad->GetLeftMouseJustDown()) {
+                    if (pad->GetLeftMouseJustUp()) {
+                        Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                         nPreviousGalleryPage = nCurrentGalleryPage;
                         nCurrentGalleryPage--;
 
@@ -3377,7 +3439,9 @@ void CMenuNew::DrawGallery() {
                     }
                 }
                 else if (CheckHover(rightArrow[0], rightArrow[0] + rightArrow[2], rightArrow[1], rightArrow[1] + rightArrow[3])) {
-                    if (pad->GetLeftMouseJustDown()) {
+                    if (pad->GetLeftMouseJustUp()) {
+                        Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                         nPreviousGalleryPage = nCurrentGalleryPage;
                         nCurrentGalleryPage++;
 
@@ -3397,7 +3461,9 @@ void CMenuNew::DrawGallery() {
             if (CheckHover(mask.left, mask.left + mask.right, mask.top, mask.top + mask.bottom)) {
                 CPadNew* pad = CPadNew::GetPad(0);
 
-                if (pad->GetLeftMouseJustDown()) {
+                if (pad->GetLeftMouseJustUp()) {
+                    Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                     SetInputTypeAndClear(MENUINPUT_TAB);
                 }
             }
@@ -3423,11 +3489,20 @@ void CMenuNew::DrawGallery() {
     }
 }
 
-bool CMenuNew::CheckHover(int x1, int x2, int y1, int y2) {
-    if (!MenuNew.bDrawMouse)
+bool CMenuNew::CheckHover(float x1, float x2, float y1, float y2) {
+    if (!bDrawMouse)
         return false;
 
     return (vMousePos.x > x1 && vMousePos.x < x2) && (vMousePos.y > y1 && vMousePos.y < y2);
+}
+
+bool CMenuNew::MapCrosshairCheckHover(float x1, float x2, float y1, float y2) {
+    if (!bDrawMenuMap && bShowMenu)
+        return false;
+
+    float x = SCREEN_HALF_WIDTH;
+    float y = SCREEN_HALF_HEIGHT;
+    return (x > x1 && x < x2) && (y > y1 && y < y2) || CheckHover(x1, x2, y1, y2);
 }
 
 void CMenuNew::PassSettingsToCurrentGame(const CMenuSettings* s) {
