@@ -3106,6 +3106,10 @@ void CMenuNew::DrawLegend() {
             col = HudColourNew.GetRGBA(MenuNew.Settings.uiMainColor);
             id = RADAR_SPRITE_CENTRE;
             break;
+        case RADAR_SPRITE_COP:
+        case RADAR_SPRITE_COP_HELI:
+            col = CTimer::m_snTimeInMillisecondsPauseMode % 800 < 400 ? HudColourNew.GetRGB("HUD_COLOUR_REDDARK", 255) : HudColourNew.GetRGB("HUD_COLOUR_BLUEDARK", 255);
+            break;
         }
 
         if (str) {

@@ -531,10 +531,6 @@ void CRadarNew::DrawRadarCop() {
             CRGBA color = CTimer::m_snTimeInMillisecondsPauseMode % 800 < 400 ? HudColourNew.GetRGB("HUD_COLOUR_REDDARK", 255) : HudColourNew.GetRGB("HUD_COLOUR_BLUEDARK", 255);
             AddAnyBlip(RADAR_SPRITE_COP, *(CEntity*)ped, SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_COP_SIZE).w), SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_COP_SIZE).h), 0.0f, !m_bCopPursuit, color, false);
         }
-        else {
-            if (FindPlayerPed(0)->m_pIntelligence->IsThreatenedBy(*(CPed*)ped))
-                AddAnyBlip(RADAR_SPRITE_COP, *(CEntity*)ped, SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_COP_SIZE).w), SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_COP_SIZE).h), 0.0f, !m_bCopPursuit, HudColourNew.GetRGB("HUD_COLOUR_RED", 255), false);
-        }
     }
 
     for (int i = CPools::ms_pVehiclePool->m_nSize; i; i--) {
