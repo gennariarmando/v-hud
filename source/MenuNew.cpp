@@ -22,6 +22,7 @@
 #include "CStats.h"
 #include "CTimeCycle.h"
 
+#include "Audio.h"
 #include "GPS.h"
 #include "PedNew.h"
 #include "MenuNew.h"
@@ -852,6 +853,8 @@ void CMenuNew::Process() {
         case MENUINPUT_BAR:
             if (bShowMenuBar) {
                 if (Left) {
+                    Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+
                     nPreviousBarItem = nCurrentBarItem;
                     nCurrentBarItem--;
 
@@ -865,6 +868,8 @@ void CMenuNew::Process() {
                     bRequestScreenUpdate = true;
                 }
                 else if (Right) {
+                    Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+
                     nPreviousBarItem = nCurrentBarItem;
                     nCurrentBarItem++;
 
@@ -878,9 +883,13 @@ void CMenuNew::Process() {
                     bRequestScreenUpdate = true;
                 }
                 else if (Enter) {
+                    Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                     SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
                 }
                 else if (Back) {
+                    Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
+
                     OpenCloseMenu(false, false);
                 }
             }
@@ -888,6 +897,7 @@ void CMenuNew::Process() {
         case MENUINPUT_TAB:
             if (!IsLoading()) {
                 if (Up) {
+                    Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
                     nPreviousTabItem = nCurrentTabItem;
                     nCurrentTabItem--;
 
@@ -909,6 +919,8 @@ void CMenuNew::Process() {
                     SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
                 }
                 else if (Down) {
+                    Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+
                     nPreviousTabItem = nCurrentTabItem;
                     nCurrentTabItem++;
 
@@ -930,9 +942,12 @@ void CMenuNew::Process() {
                     SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
                 }
                 else if (Enter) {
+                    Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
                     ProcessTabStuff();
                 }
                 else if (Back) {
+                    Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
+
                     if (bLandingPage) {
                         if (nCurrentScreen != MENUSCREEN_LANDING) {
                             bShowMenu = false;
@@ -1024,6 +1039,8 @@ void CMenuNew::Process() {
         case MENUINPUT_ENTRY:
             if (!IsLoading()) {
                 if (Up) {
+                    Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+
                     while (true) {
                         nPreviousEntryItem = nCurrentEntryItem;
                         nCurrentEntryItem--;
@@ -1036,6 +1053,8 @@ void CMenuNew::Process() {
                     }
                 }
                 else if (Down) {
+                    Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+
                     while (true) {
                         nPreviousEntryItem = nCurrentEntryItem;
                         nCurrentEntryItem++;
@@ -1048,6 +1067,8 @@ void CMenuNew::Process() {
                     }
                 }
                 else if (Back) {
+                    Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
+
                     if (nMenuAlert == MENUALERT_NONE) {
                         SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
                         SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
@@ -1057,9 +1078,14 @@ void CMenuNew::Process() {
                     }
                 }
 
-                ProcessEntryStuff(Enter, Left ? -1 : Right ? 1 : 0);
+                if (Enter || Left || Right) {
+                    ProcessEntryStuff(Enter, Left ? -1 : Right ? 1 : 0);
+                    Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+                }
 
                 if (Space) {
+                    Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                     if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_GFX")) {
                         if (nMenuAlert == MENUALERT_PENDINGCHANGES)
                             ApplyGraphicsChanges();
@@ -1077,6 +1103,8 @@ void CMenuNew::Process() {
             break;
         case MENUINPUT_GALLERYPIC:
             if (Back) {
+                Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
+
                 SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
                 SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
             }
@@ -1665,6 +1693,7 @@ void CMenuNew::CheckSliderMovement(double value) {
         ts.sfxVolume += char(value * 64);
         ts.sfxVolume = clamp(ts.sfxVolume, 0, 64);
         AudioEngine.SetEffectsMasterVolume(ts.sfxVolume);
+        Audio.SetChunksMasterVolume(ts.sfxVolume);
         break;
     case MENUENTRY_RADIOVOLUME:
         ts.radioVolume += char(value * 64);
@@ -3434,6 +3463,7 @@ void CMenuNew::PassSettingsToCurrentGame(const CMenuSettings* s) {
     {
         AudioEngine.SetMusicMasterVolume(s->radioVolume);
         AudioEngine.SetEffectsMasterVolume(s->sfxVolume);
+        Audio.SetChunksMasterVolume(s->sfxVolume);
         AudioEngine.SetBassEnhanceOnOff(s->radioEQ);
         AudioEngine.SetRadioAutoRetuneOnOff(s->radioAutoSelect);
     }

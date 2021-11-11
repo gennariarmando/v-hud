@@ -1,4 +1,5 @@
 #include "VHud.h"
+#include "Audio.h"
 #include "CellPhone.h"
 #include "HudColoursNew.h"
 #include "PadNew.h"
@@ -13,6 +14,8 @@
 #include "TextureMgr.h"
 #include "Utility.h"
 #include "WeaponSelector.h"
+
+#include "VHudAPI.h"
 
 using namespace plugin;
 
@@ -38,6 +41,7 @@ VHud::VHud() {
         Error("This version of GTA: San Andreas is not supported by this plugin.");
 
     Events::initRwEvent += [] {
+        Audio.Init();
         HudColourNew.ReadColorsFromFile();
         CFontNew::Init();
         MenuNew.Init();
@@ -80,5 +84,6 @@ VHud::VHud() {
         CFontNew::Shutdown();
         CWeaponSelector::Shutdown();
         CMenuPanels::Shutdown();
+        Audio.Shutdown();
     };
 }

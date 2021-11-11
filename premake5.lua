@@ -20,12 +20,14 @@ project "v-hud"
 		"$(PLUGIN_SDK_DIR)/plugin_sa/game_sa/",
 		"vendor/pugixml/src",
 		"$(DXSDK_DIR)/Include/",
-		"vendor/ModuleList"
+		"vendor/ModuleList",
+		"vendor/bass"
 	}
 	
 	libdirs { 
 		"$(PLUGIN_SDK_DIR)/output/lib/",
-		"$(DXSDK_DIR)/Lib/x86"
+		"$(DXSDK_DIR)/Lib/x86",
+		"vendor/bass"
 	}
 	
 	kind "SharedLib"
@@ -41,7 +43,7 @@ project "v-hud"
 	defines { "GTASA", "PLUGIN_SGV_10US", "_DX9_SDK_INSTALLED" }
 
 	filter "configurations:Debug"		
-		links { "plugin_d", "d3d9" }
+		links { "plugin_d", "d3d9", "bass" }
 		targetname "VHud"
 		defines { "DEBUG" }
 		symbols "on"
@@ -51,7 +53,7 @@ project "v-hud"
 		postbuildcommands "copy /y \"$(TargetPath)\" \"$(GTA_SA_DIR)\\scripts\\VHud.asi\""
 
 	filter "configurations:Release"
-		links { "plugin", "d3d9" }
+		links { "plugin", "d3d9", "bass" }
 		targetname "VHud"
 		defines { "NDEBUG" }
 		symbols "off"
