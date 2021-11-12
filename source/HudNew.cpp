@@ -406,7 +406,6 @@ void CHudNew::Draw() {
 }
 
 bool CHudNew::IsAimingWeapon() {
-    CPlayerPed* playa = FindPlayerPed(0);
     eCamMode mode = TheCamera.m_aCams[TheCamera.m_nActiveCam].m_nMode;
 
     return mode == MODE_AIMWEAPON
@@ -417,7 +416,14 @@ bool CHudNew::IsAimingWeapon() {
         || mode == MODE_SNIPER
         || mode == MODE_SNIPER_RUNABOUT
         || mode == MODE_CAMERA
-        || mode == MODE_SYPHON;
+        || mode == MODE_SYPHON
+        || mode == MODE_1STPERSON
+        || mode == MODE_M16_1STPERSON
+        || mode == MODE_M16_1STPERSON_RUNABOUT
+        || mode == MODE_1STPERSON_RUNABOUT
+        || mode == MODE_AIMWEAPON_FROMCAR
+        || mode == MODE_AIMWEAPON_ATTACHED
+        || mode == MODE_TWOPLAYER_IN_CAR_AND_SHOOTING;
 }
 
 void CHudNew::DrawCrosshairs() {
@@ -436,10 +442,10 @@ void CHudNew::DrawCrosshairs() {
     if (!IsAimingWeapon())
         return;
 
-    if (playa && playa->m_pIntelligence && playa->m_pIntelligence->GetTaskUseGun()) {
-        bool ik = (playa->m_pIntelligence->GetTaskUseGun()->m_pWeaponInfo->m_nFlags.bAimWithArm && !playa->m_pIntelligence->GetTaskUseGun()->m_ArmIKInUse);
+    if (playa) {
+        bool ik = playa->m_pIntelligence && playa->m_pIntelligence->GetTaskUseGun() && playa->m_pIntelligence->GetTaskUseGun()->m_pWeaponInfo->m_nFlags.bAimWithArm && !playa->m_pIntelligence->GetTaskUseGun()->m_ArmIKInUse;
 
-        if (ik && !playa->m_nPedFlags.bIsDucking)
+        if (ik && !playa->m_nPedFlags.bIsDucking && !playa->m_nPedFlags.bInVehicle)
             return;
 
         if (!playa->m_pPlayerData->m_bHaveTargetSelected) {

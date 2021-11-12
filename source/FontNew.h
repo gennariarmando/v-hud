@@ -135,7 +135,6 @@ public:
 	static CFontDetailsNew Details;
 	static char Size[NUM_FONTS][160];
 	static bool bNewLine;
-	static int NumLines;
 	static CSprite2d* PS2Symbol;
 	static CVector PS2SymbolScale;
 	static CSprite2d* ButtonSprite[NUM_BUTTONS];

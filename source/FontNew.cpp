@@ -18,7 +18,6 @@ CSprite2d* CFontNew::Sprite[NUM_FONTS];
 CFontDetailsNew CFontNew::Details;
 char CFontNew::Size[NUM_FONTS][160];
 bool CFontNew::bNewLine;
-int CFontNew::NumLines;
 CSprite2d* CFontNew::PS2Symbol;
 CVector CFontNew::PS2SymbolScale;
 
@@ -224,7 +223,6 @@ void CFontNew::Clear() {
     SetDropShadow(0.0f);
     SetDropColor(CRGBA(0, 0, 0, 255));
     SetScale(1.0f, 1.0f);
-    NumLines = 0;
     bNewLine = false;
     PS2Symbol = NULL;
     SetTokenToIgnore(NULL, NULL);
@@ -316,26 +314,20 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, char* s) {
         float length = 0.0f;
         int space = 0;
 
-        if (Details.alignment == ALIGN_CENTER || Details.alignment == ALIGN_RIGHT)
-            x = 0.0f;
+        x = 0.0f;
 
         while (s) {
             while (s) {
                 if (*s == '\0')
                     return n;
 
-                float w = Details.alignment == ALIGN_CENTER ? Details.wrapX : Details.alignment == ALIGN_RIGHT ? xstart - Details.wrapX : xstart + Details.wrapX;
+                float w = Details.wrapX;
 
-                if (x + GetStringWidth(s) > w && !first && !bNewLine) {
-                    float sw = Details.alignment == ALIGN_LEFT || Details.alignment == ALIGN_CENTER ? 0.0f : (Details.wrapX - length) / space;
-                    float cx = Details.alignment == ALIGN_CENTER ? xstart - x / 2 : Details.alignment == ALIGN_RIGHT ? xstart - x : xstart;
-                    PrintString(print, cx, y, start, s, sw);
+                if (x + GetStringWidth(s) > w && !first) {
+                    float cx = xstart - x / 2;
+                    PrintString(print, cx, y, start, s, 0.0f);
 
-                    if (Details.alignment == ALIGN_CENTER || Details.alignment == ALIGN_RIGHT)
-                        x = 0.0f;
-                    else
-                        x = xstart;
-
+                    x = 0.0f;
                     y += GetHeightScale(Details.scale.y);
                     start = s;
 
@@ -343,16 +335,6 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, char* s) {
                     space = 0;
                     first = true;
                     n++;
-                }
-
-                if (bNewLine && !first) {
-                    y += GetHeightScale(Details.scale.y);
-                    start = s;
-
-                    length = 0.0f;
-                    space = 0;
-                    first = true;
-                    bNewLine = false;
                 }
 
                 t = GetNextSpace(s);
@@ -376,7 +358,7 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, char* s) {
 
             x += GetStringWidth(s);
             s = t;
-            float cx = Details.alignment == ALIGN_CENTER ? xstart - x / 2 : Details.alignment == ALIGN_RIGHT ? xstart - x : xstart;
+            float cx = xstart - x / 2;
             PrintString(print, cx, y, start, s, 0.0f);
         }
 
@@ -394,7 +376,7 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, char* s) {
         char c;
         c = *s - ' ';
 
-        float f = Details.alignment == ALIGN_CENTER ? Details.wrapX : xstart + Details.wrapX;
+        float f = xstart + Details.wrapX;
 
         if ((Details.clipXCount == -1 && (x + GetCharacterSize(c) > xstart + Details.clipX)))
             break;
@@ -423,15 +405,8 @@ void CFontNew::PrintString(bool print, float x, float y, char* start, char* end,
 
     float xstart = x;
     for (s = start; s < end; s++) {
-        int n = NumLines;
-
         if (*s == '~')
             s = ParseToken(s);
-
-        if (n != NumLines) {
-            x = xstart;
-            y += GetHeightScale(Details.scale.y);
-        }
 
         c = *s - ' ';
         float sp = GetCharacterSize(c);
@@ -497,7 +472,6 @@ char* CFontNew::ParseToken(char* s) {
         case 'N':
         case 'n':
             bNewLine = true;
-            NumLines++;
             break;
         case 'O':
         case 'o':
@@ -630,13 +604,8 @@ char* CFontNew::ParseToken(char* s) {
             break;
         }
     }
-
-    while (*c != '~') ++c;
-
-    if (*c)
-        return c + 1;
-
-    return c + 2;
+    c += 2;
+    return c;
 }
 
 bool CFontNew::ParseGInputActions(char* s) {

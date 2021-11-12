@@ -980,7 +980,6 @@ void CMenuNew::Process() {
                 if (!bShowMenu) {
                     if (nCurrentScreen == MENUSCREEN_MAP) {
                         CVector2D prevMapBase = vTempMapBase;
-
                         static int timeLeftMousePressed = 0;
 
                         if (LeftMouseDown) {
@@ -1028,6 +1027,15 @@ void CMenuNew::Process() {
                             }
                         }
 
+                        const float halfMapSize = GetMenuMapWholeSize() / 2;
+                        if (vTempMapBase.x + halfMapSize < SCREEN_HALF_WIDTH ||
+                            vTempMapBase.x - halfMapSize > SCREEN_HALF_WIDTH)
+                            vTempMapBase.x = prevMapBase.x;
+
+                        if (vTempMapBase.y + halfMapSize < SCREEN_HALF_HEIGHT || 
+                            vTempMapBase.y - halfMapSize > SCREEN_HALF_HEIGHT)
+                            vTempMapBase.y = prevMapBase.y;
+
                         vMapBase.x = interpF(vMapBase.x, vTempMapBase.x, 0.2f);
                         vMapBase.y = interpF(vMapBase.y, vTempMapBase.y, 0.2f);
 
@@ -1043,28 +1051,7 @@ void CMenuNew::Process() {
                                 Audio.PlayChunk(CHUNK_MENU_MAP_MOVE, 0.5f);
                                 mapPlayShot = false;
                             }
-                        }
-
-                        const float halfMapSize = GetMenuMapWholeSize() / 2;
-                        if (vTempMapBase.x + halfMapSize < MENU_X(16.0f)
-                            || vMapBase.x + halfMapSize < MENU_X(16.0f)) {
-                            vTempMapBase.x = vMapBase.x = prevMapBase.x;
-                        }
-
-                        if (vTempMapBase.x - halfMapSize > MENU_RIGHT(16.0f)
-                            || vMapBase.x - halfMapSize > MENU_RIGHT(16.0f)) {
-                            vTempMapBase.x = vMapBase.x = prevMapBase.x;
-                        }
-
-                        if (vTempMapBase.y + halfMapSize < MENU_Y(16.0f)
-                            || vMapBase.y + halfMapSize < MENU_Y(16.0f)) {
-                            vTempMapBase.y = vMapBase.y = prevMapBase.y;
-                        }
-
-                        if (vTempMapBase.y - halfMapSize > MENU_BOTTOM(16.0f)
-                            || vMapBase.y - halfMapSize > MENU_BOTTOM(16.0f)) {
-                            vTempMapBase.y = vMapBase.y = prevMapBase.y;
-                        }
+                        }                      
                     }
                 }
             }
@@ -1684,7 +1671,7 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
 }
 
 void CMenuNew::StartRadio() {
-    if (bRadioEnabled || AudioEngine.IsRadioRetuneInProgress())
+    if (bRadioEnabled || AudioEngine.IsRadioRetuneInProgress() || nCurrentInputType != MENUINPUT_ENTRY)
         return;
 
     if (!AECutsceneTrackManager.GetCutsceneTrackStatus()) {
