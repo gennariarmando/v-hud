@@ -10,6 +10,7 @@
 #include "FontNew.h"
 #include "TextNew.h"
 #include "CellPhone.h"
+#include "Audio.h"
 
 #include "CGeneral.h"
 #include "CWorld.h"
@@ -357,6 +358,8 @@ void CWeaponSelector::ProcessWeaponSelector() {
                 float dist = (vMousePos - centre).Magnitude();
                 float radius = 45.0f;
 
+                int previousSlot = nSelectedSlot;
+
                 if (dist > radius) {
                     if ((a > 340.0f && a < 360.0f) || (a > 0.0f && a < 25.0f)) {
                         nSelectedSlot = 6;
@@ -386,6 +389,10 @@ void CWeaponSelector::ProcessWeaponSelector() {
 
                 // Debug line                 
                 CSprite2d::Draw2DPolygon(vMousePos.x, vMousePos.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + vMousePos.x, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + vMousePos.y, centre.x, centre.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + centre.x, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + centre.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").col);
+            
+                if (previousSlot != nSelectedSlot) {
+                    Audio.PlayChunk(CHUNK_WEAPON_WHEEL_MOVE, 1.0f);
+                }
             }
         }
     }
@@ -460,9 +467,11 @@ void CWeaponSelector::SwitchWeaponFromSlot(const char* dir) {
     if (bShowWeaponWheel) {
         if (!strcmp(dir, "LEFT")) {
             nSelectedWeapon[nSelectedSlot] = GetPreviousWeaponInSlot(nSelectedSlot);
+            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_MOVE, 1.0f);
         }
         else if (!strcmp(dir, "RIGHT")) {
             nSelectedWeapon[nSelectedSlot] = GetNextWeaponInSlot(nSelectedSlot);
+            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_MOVE, 1.0f);
         }
     }
 }
@@ -569,6 +578,7 @@ void CWeaponSelector::OpenWeaponWheelQuickSwitch(const char* dir) {
                 if (nNumWeaponsAvailableInSlot[nSelectedSlot] != 0)
                     break;
             };
+            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_MOVE, 1.0f);
         }
         else if (!strcmp(dir, "RIGHT")) {
             while (1) {
@@ -580,6 +590,8 @@ void CWeaponSelector::OpenWeaponWheelQuickSwitch(const char* dir) {
                 if (nNumWeaponsAvailableInSlot[nSelectedSlot] != 0)
                     break;
             };
+
+            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_MOVE, 1.0f);
         }
     }
 
@@ -607,6 +619,12 @@ void CWeaponSelector::OpenWeaponWheel(bool slow) {
             DisableCameraMovement();
 
             CTimer::ms_fTimeScale = 0.25f;
+
+            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_OPEN_CLOSE, 1.0f);
+
+            Audio.SetLoop(true);
+            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_BACKGROUND, 1.0f);
+            Audio.SetLoop(false);
         }
     }
 
@@ -643,8 +661,11 @@ void CWeaponSelector::CloseWeaponWheel(bool switchon) {
 
     //ClearWheel();
 
-    if (bSlowCycle)
+    if (bSlowCycle) {
         ResetCameraMovement();
+        Audio.PlayChunk(CHUNK_WEAPON_WHEEL_OPEN_CLOSE, 1.0f);
+        Audio.StopChunk(CHUNK_WEAPON_WHEEL_BACKGROUND);
+    }
 
     nTimeSinceClosed = 250 + CTimer::m_snTimeInMilliseconds;
     nWeaponWheelOpenTime = 0;
@@ -728,7 +749,7 @@ void CWeaponSelector::DrawWheel() {
     CPed* playa = FindPlayerPed(0);
 
     if (bShowWeaponWheel) {
-        if (bSlowCycle)
+        if (bSlowCycle) 
             COverlayLayer::SetEffect(EFFECT_BLUR_COLOR);
 
         static int previousWeaponSelectedShit;

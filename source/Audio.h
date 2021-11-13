@@ -5,6 +5,11 @@ enum eChunks {
     CHUNK_MENU_SCROLL,
     CHUNK_MENU_SELECT,
     CHUNK_MENU_MAP_MOVE,
+    CHUNK_WEAPON_WHEEL_BACKGROUND,
+    CHUNK_WEAPON_WHEEL_OPEN_CLOSE,
+    CHUNK_WEAPON_WHEEL_MOVE,
+    CHUNK_TD_LOADING_MUSIC,
+    CHUNK_STATS_BACKGROUND,
     NUM_CHUNKS
 };
 
@@ -13,6 +18,7 @@ public:
     bool bInitialised;   
     unsigned long Chunks[NUM_CHUNKS];
     float fChunksVolume;
+    bool loop;
 
 public:
     CAudio();
@@ -22,7 +28,9 @@ public:
 
     unsigned long LoadChunkFile(const char* path, const char* name);
     void PlayChunk(int chunk, float volume);
-    void CAudio::SetChunksMasterVolume(char vol);
+    void StopChunk(int chunk);
+    void SetChunksMasterVolume(char vol);
+    void SetLoop(bool on);
 };
 
 extern CAudio Audio;

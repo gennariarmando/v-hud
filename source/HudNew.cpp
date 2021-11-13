@@ -24,6 +24,7 @@
 #include "CPickups.h"
 #include "CWeapon.h"
 
+#include "Audio.h"
 #include "CellPhone.h"
 #include "PedNew.h"
 #include "TextNew.h"
@@ -871,11 +872,22 @@ void CHudNew::DrawStats() {
     static bool bJustClosed = false;
     if (CPadNew::GetPad(0)->GetShowPlayerInfo(500) && !IsAimingWeapon() &&
         playa->m_vecMoveSpeed.Magnitude() < 0.01f) {
+        if (!CHud::bDrawingVitalStats) {
+            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_OPEN_CLOSE, 1.0f);
+
+            Audio.SetLoop(true);
+            Audio.PlayChunk(CHUNK_STATS_BACKGROUND, 1.0f);
+            Audio.SetLoop(false);
+        }
+
         CHud::bDrawingVitalStats = true;
     }
     else {
-        if (CHud::bDrawingVitalStats)
+        if (CHud::bDrawingVitalStats) {
             bJustClosed = true;
+            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_OPEN_CLOSE, 1.0f);
+            Audio.StopChunk(CHUNK_STATS_BACKGROUND);
+        }
 
         CHud::bDrawingVitalStats = false;
     }
@@ -1269,7 +1281,7 @@ void CHudNew::DrawSubtitles() {
         CFontNew::SetBackground(false);
         CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
         CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
-        CFontNew::SetWrapX(SCREEN_COORD(940.0f));
+        CFontNew::SetWrapX(SCREEN_COORD(340.0f));
         CFontNew::SetFontStyle(CFontNew::FONT_1);
         CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
         CFontNew::SetOutline(0.0f);

@@ -409,12 +409,11 @@ void CFontNew::PrintString(bool print, float x, float y, char* start, char* end,
             s = ParseToken(s);
 
         c = *s - ' ';
-        float sp = GetCharacterSize(c);
 
         if (print)
             PrintChar(x, y, c);
 
-        x += sp;
+        x += GetCharacterSize(c);
 
         if (c == 0)
             x += spwidth;
@@ -604,8 +603,8 @@ char* CFontNew::ParseToken(char* s) {
             break;
         }
     }
-    c += 2;
-    return c;
+    while (*c != '~') c++;
+    return c + 1;
 }
 
 bool CFontNew::ParseGInputActions(char* s) {

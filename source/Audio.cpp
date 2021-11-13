@@ -12,10 +12,15 @@ CAudio Audio;
 const char* AudioFileFormat = ".wav";
 
 const char* ChunksFileNames[] = {
-    "MENU_BACK",
-    "MENU_SCROLL",
-    "MENU_SELECT",
-    "MENU_MAP_MOVE",
+    "menu_back",
+    "menu_scroll",
+    "menu_select",
+    "menu_map_move",
+    "weapon_wheel_background",
+    "weapon_wheel_open_close",
+    "weapon_wheel_move",
+    "td_loading_music",
+    "stats_background",
 };
 
 CAudio::CAudio() {
@@ -65,6 +70,10 @@ void CAudio::SetChunksMasterVolume(char vol) {
     fChunksVolume = (vol / 64.0f);
 }
 
+void CAudio::SetLoop(bool on) {
+    loop = on;
+}
+
 unsigned long CAudio::LoadChunkFile(const char* path, const char* name) {
     char file[512];
 
@@ -86,9 +95,35 @@ void CAudio::PlayChunk(int chunk, float volume) {
 
     chunk = clamp(chunk, 0, NUM_CHUNKS - 1);
 
-    auto c = BASS_SampleGetChannel(Chunks[chunk], FALSE);
+    auto c = BASS_SampleGetChannel(Chunks[chunk], NULL);
 
-    volume = clamp(volume, 0.0f, 1.0f);
-    BASS_ChannelSetAttribute(c, BASS_ATTRIB_VOL, volume * (fChunksVolume * 0.5f));
+    if (loop) {
+        BASS_ChannelFlags(c, BASS_SAMPLE_LOOP, BASS_SAMPLE_LOOP);
+    }
+    else {
+        BASS_ChannelFlags(c, NULL, BASS_SAMPLE_LOOP);
+    }
+
+    if (volume < 0.0f) {
+        BASS_ChannelSetAttribute(c, BASS_ATTRIB_VOL, ABS(volume));
+    }
+    else {
+        volume = clamp(volume, 0.0f, 1.0f);
+        BASS_ChannelSetAttribute(c, BASS_ATTRIB_VOL, volume * (fChunksVolume * 0.5f));
+    }
     BASS_ChannelPlay(c, FALSE);
+}
+
+void CAudio::StopChunk(int chunk) {
+    chunk = clamp(chunk, 0, NUM_CHUNKS - 1);
+
+    BASS_SAMPLE info;
+    BASS_SampleGetInfo(Chunks[chunk], &info);
+    if (HCHANNEL* c = (HCHANNEL*)malloc(info.max * sizeof(HCHANNEL))) {
+        for (int i = 0; i < BASS_SampleGetChannels(Chunks[chunk], c); i++) {
+            BASS_ChannelSetPosition(c[i], 0, BASS_POS_BYTE);
+            BASS_SampleStop(c[i]);
+            BASS_ChannelStop(c[i]);
+        }
+    }
 }

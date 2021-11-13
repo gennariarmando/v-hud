@@ -446,6 +446,8 @@ public:
     void DrawBackground();
 
     void SetLandingPageBehaviour();
+    void PlayLoadingTune();
+    void StopLoadingTune();
     void SetSavePageBehaviour(bool background);
     void SetDefaultPageBehaviour();
 

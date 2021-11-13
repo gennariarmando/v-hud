@@ -140,6 +140,8 @@ CMenuNew::CMenuNew() {
         MenuNew.TempSettings.saveSlot = MenuNew.nCurrentEntryItem;
         MenuNew.ApplyChanges();
     };
+
+    patch::Nop(0x748CF1, 10);
 }
 
 void CMenuNew::Init() {
@@ -174,8 +176,10 @@ void CMenuNew::Init() {
     bLandingPage = Settings.landingPage;
     bStartOrLoadGame = !bLandingPage;
 
-    if (bLandingPage)
+    if (bLandingPage) {
         SetLandingPageBehaviour();
+        PlayLoadingTune();
+    }
 
     ScanGalleryPictures(true);
 
@@ -472,6 +476,16 @@ void CMenuNew::SetLandingPageBehaviour() {
     SetInputTypeAndClear(MENUINPUT_TAB, 0);
 }
 
+void CMenuNew::PlayLoadingTune() {
+    Audio.SetLoop(true);
+    Audio.PlayChunk(CHUNK_TD_LOADING_MUSIC, -0.5f);
+    Audio.SetLoop(false);
+}
+
+void CMenuNew::StopLoadingTune() {
+    Audio.StopChunk(CHUNK_TD_LOADING_MUSIC);
+}
+
 void CMenuNew::SetSavePageBehaviour(bool background) {
     if (nCurrentScreen == MENUSCREEN_SAVE)
         return;
@@ -690,6 +704,8 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
         pad->DisablePlayerControls = true;
 
         AudioEngine.StopRadio(NULL, 0);
+
+        Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
     }
     else {
         CTimer::EndUserPause();
@@ -1221,6 +1237,9 @@ void CMenuNew::Process() {
         if (pad->GetOpenCloseMenuJustDown()) {
             OpenCloseMenu(true, false);
         }
+
+        if (TheCamera.GetFading())
+            StopLoadingTune();
     }
 
     if (bStartOrLoadGame) {
