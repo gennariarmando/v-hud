@@ -1281,7 +1281,7 @@ void CHudNew::DrawSubtitles() {
         CFontNew::SetBackground(false);
         CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
         CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
-        CFontNew::SetWrapX(SCREEN_COORD(340.0f));
+        CFontNew::SetWrapX(SCREEN_COORD(940.0f));
         CFontNew::SetFontStyle(CFontNew::FONT_1);
         CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
         CFontNew::SetOutline(0.0f);
