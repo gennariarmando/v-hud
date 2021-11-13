@@ -142,6 +142,11 @@ CMenuNew::CMenuNew() {
     };
 
     patch::Nop(0x748CF1, 10);
+    
+    CdeclEvent<AddressList<0x53E972, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> onIdle;
+    onIdle += [] {
+        MenuNew.StopLoadingTune();
+    };
 }
 
 void CMenuNew::Init() {
@@ -1234,12 +1239,11 @@ void CMenuNew::Process() {
         }
     }
     else {
-        if (pad->GetOpenCloseMenuJustDown()) {
-            OpenCloseMenu(true, false);
+        if (TheCamera.GetScreenFadeStatus() != 2) {
+            if (pad->GetOpenCloseMenuJustDown()) {
+                OpenCloseMenu(true, false);
+            }
         }
-
-        if (TheCamera.GetFading())
-            StopLoadingTune();
     }
 
     if (bStartOrLoadGame) {

@@ -391,7 +391,7 @@ void CWeaponSelector::ProcessWeaponSelector() {
                 CSprite2d::Draw2DPolygon(vMousePos.x, vMousePos.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + vMousePos.x, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + vMousePos.y, centre.x, centre.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + centre.x, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + centre.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").col);
             
                 if (previousSlot != nSelectedSlot) {
-                    Audio.PlayChunk(CHUNK_WEAPON_WHEEL_MOVE, 1.0f);
+                    Audio.PlayChunk(CHUNK_WHEEL_MOVE, 1.0f);
                 }
             }
         }
@@ -467,11 +467,11 @@ void CWeaponSelector::SwitchWeaponFromSlot(const char* dir) {
     if (bShowWeaponWheel) {
         if (!strcmp(dir, "LEFT")) {
             nSelectedWeapon[nSelectedSlot] = GetPreviousWeaponInSlot(nSelectedSlot);
-            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_MOVE, 1.0f);
+            Audio.PlayChunk(CHUNK_WHEEL_MOVE, 1.0f);
         }
         else if (!strcmp(dir, "RIGHT")) {
             nSelectedWeapon[nSelectedSlot] = GetNextWeaponInSlot(nSelectedSlot);
-            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_MOVE, 1.0f);
+            Audio.PlayChunk(CHUNK_WHEEL_MOVE, 1.0f);
         }
     }
 }
@@ -578,7 +578,7 @@ void CWeaponSelector::OpenWeaponWheelQuickSwitch(const char* dir) {
                 if (nNumWeaponsAvailableInSlot[nSelectedSlot] != 0)
                     break;
             };
-            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_MOVE, 1.0f);
+            Audio.PlayChunk(CHUNK_WHEEL_MOVE, 1.0f);
         }
         else if (!strcmp(dir, "RIGHT")) {
             while (1) {
@@ -591,7 +591,7 @@ void CWeaponSelector::OpenWeaponWheelQuickSwitch(const char* dir) {
                     break;
             };
 
-            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_MOVE, 1.0f);
+            Audio.PlayChunk(CHUNK_WHEEL_MOVE, 1.0f);
         }
     }
 
@@ -620,10 +620,10 @@ void CWeaponSelector::OpenWeaponWheel(bool slow) {
 
             CTimer::ms_fTimeScale = 0.25f;
 
-            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_OPEN_CLOSE, 1.0f);
+            Audio.PlayChunk(CHUNK_WHEEL_OPEN_CLOSE, 1.0f);
 
             Audio.SetLoop(true);
-            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_BACKGROUND, 1.0f);
+            Audio.PlayChunk(CHUNK_WHEEL_BACKGROUND, 1.0f);
             Audio.SetLoop(false);
         }
     }
@@ -663,8 +663,8 @@ void CWeaponSelector::CloseWeaponWheel(bool switchon) {
 
     if (bSlowCycle) {
         ResetCameraMovement();
-        Audio.PlayChunk(CHUNK_WEAPON_WHEEL_OPEN_CLOSE, 1.0f);
-        Audio.StopChunk(CHUNK_WEAPON_WHEEL_BACKGROUND);
+        Audio.PlayChunk(CHUNK_WHEEL_OPEN_CLOSE, 1.0f);
+        Audio.StopChunk(CHUNK_WHEEL_BACKGROUND);
     }
 
     nTimeSinceClosed = 250 + CTimer::m_snTimeInMilliseconds;

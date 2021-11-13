@@ -16,9 +16,9 @@ const char* ChunksFileNames[] = {
     "menu_scroll",
     "menu_select",
     "menu_map_move",
-    "weapon_wheel_background",
-    "weapon_wheel_open_close",
-    "weapon_wheel_move",
+    "wheel_background",
+    "wheel_open_close",
+    "wheel_move",
     "td_loading_music",
     "stats_background",
 };
@@ -88,9 +88,6 @@ unsigned long CAudio::LoadChunkFile(const char* path, const char* name) {
 
 void CAudio::PlayChunk(int chunk, float volume) {
     if (!bInitialised)
-        return;
-
-    if (GetFocus() != RsGlobal.ps->window)
         return;
 
     chunk = clamp(chunk, 0, NUM_CHUNKS - 1);

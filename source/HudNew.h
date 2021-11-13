@@ -146,6 +146,7 @@ public:
     static CHudSetting GetSetting(char* name);
     static void Draw();
     static bool IsAimingWeapon();
+    static bool IsFirstPersonAiming();
     static void DrawCrosshairs();
     static void DrawPlayerInfo();
     static void DrawMoneyCounter();

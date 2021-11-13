@@ -419,12 +419,18 @@ bool CHudNew::IsAimingWeapon() {
         || mode == MODE_CAMERA
         || mode == MODE_SYPHON
         || mode == MODE_1STPERSON
-        || mode == MODE_M16_1STPERSON
-        || mode == MODE_M16_1STPERSON_RUNABOUT
-        || mode == MODE_1STPERSON_RUNABOUT
         || mode == MODE_AIMWEAPON_FROMCAR
         || mode == MODE_AIMWEAPON_ATTACHED
         || mode == MODE_TWOPLAYER_IN_CAR_AND_SHOOTING;
+}
+
+bool CHudNew::IsFirstPersonAiming() {
+    eCamMode mode = TheCamera.m_aCams[TheCamera.m_nActiveCam].m_nMode;
+
+    return mode == MODE_M16_1STPERSON
+        || mode == MODE_M16_1STPERSON_RUNABOUT
+        || mode == MODE_1STPERSON_RUNABOUT
+        || mode == MODE_HELICANNON_1STPERSON;
 }
 
 void CHudNew::DrawCrosshairs() {
@@ -436,9 +442,17 @@ void CHudNew::DrawCrosshairs() {
     CRGBA col;
     CPlayerPed* playa = FindPlayerPed(-1);
     char* crosshairName = CWeaponSelector::nCrosshairs[playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nType].name;
+    bool forceForFPS = false;
 
     if (!crosshairName)
         return;
+
+    if (IsFirstPersonAiming() && CTheScripts::bDrawCrossHair != 2) {
+        forceForFPS = true;
+        x = SCREEN_HALF_WIDTH;
+        y = SCREEN_HALF_HEIGHT;
+        goto ForcedFPSView;
+    }
 
     if (!IsAimingWeapon())
         return;
@@ -494,6 +508,7 @@ void CHudNew::DrawCrosshairs() {
                     CrosshairsSprites[CROSSHAIR_ROCKET]->Draw(rect, CRGBA(255, 255, 255, 255));
                 }
                 else if (faststrcmp(crosshairName, "none")) {
+ForcedFPSView:
                     int alpha = 255;
                     CRGBA col;
                     static int dotAlpha;
@@ -873,7 +888,7 @@ void CHudNew::DrawStats() {
     if (CPadNew::GetPad(0)->GetShowPlayerInfo(500) && !IsAimingWeapon() &&
         playa->m_vecMoveSpeed.Magnitude() < 0.01f) {
         if (!CHud::bDrawingVitalStats) {
-            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_OPEN_CLOSE, 1.0f);
+            Audio.PlayChunk(CHUNK_WHEEL_OPEN_CLOSE, 1.0f);
 
             Audio.SetLoop(true);
             Audio.PlayChunk(CHUNK_STATS_BACKGROUND, 1.0f);
@@ -885,7 +900,7 @@ void CHudNew::DrawStats() {
     else {
         if (CHud::bDrawingVitalStats) {
             bJustClosed = true;
-            Audio.PlayChunk(CHUNK_WEAPON_WHEEL_OPEN_CLOSE, 1.0f);
+            Audio.PlayChunk(CHUNK_WHEEL_OPEN_CLOSE, 1.0f);
             Audio.StopChunk(CHUNK_STATS_BACKGROUND);
         }
 
