@@ -21,6 +21,8 @@ const char* ChunksFileNames[] = {
     "wheel_move",
     "td_loading_music",
     "stats_background",
+    "wasted_busted",
+    "screen_pulse1"
 };
 
 CAudio::CAudio() {

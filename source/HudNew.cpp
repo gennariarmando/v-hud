@@ -1780,26 +1780,32 @@ void CHudNew::DrawWastedBustedText() {
     char* str = NULL;
     static eHudSettings i;
     static int time = -1;
+
     switch (FindPlayerPed(-1)->m_nPedState) {
         case PEDSTATE_DEAD:
         case PEDSTATE_DIE:
             str = TheText.Get("DEAD");
             i = HUD_WASTED_TEXT;
             COverlayLayer::SetEffect(EFFECT_BLACK_N_WHITE);
-            if (time == -1)
+            if (time == -1 && !m_bShowWastedBusted) {
+                Audio.PlayChunk(CHUNK_WASTED_BUSTED, 0.5f);
                 time = CTimer::m_snTimeInMilliseconds + 2000;
+            }
             break;
         case PEDSTATE_ARRESTED:
             str = TheText.Get("BUSTED");
             i = HUD_BUSTED_TEXT;
             COverlayLayer::SetEffect(EFFECT_BLACK_N_WHITE);
-            if (time == -1)
+            if (time == -1 && !m_bShowWastedBusted) {
+                Audio.PlayChunk(CHUNK_WASTED_BUSTED, 0.5f);
                 time = CTimer::m_snTimeInMilliseconds + 2000;
+            }
             break;
     }
 
     if (time != -1 && time < CTimer::m_snTimeInMilliseconds) {
         m_bShowWastedBusted = true;
+        Audio.PlayChunk(CHUNK_SCREEN_PULSE1, 2.0f);
         time = -1;
     }
 
