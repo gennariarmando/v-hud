@@ -147,6 +147,14 @@ CMenuNew::CMenuNew() {
     onIdle += [] {
         MenuNew.StopLoadingTune();
     };
+
+    auto preRenderEntity = []() {
+        if (CTimer::m_UserPause || CTimer::m_CodePause)
+            return;
+
+        CRenderer::PreRender();
+    };
+    patch::RedirectCall(0x53E9FE, (void(__cdecl*)())preRenderEntity);
 }
 
 void CMenuNew::Init() {
@@ -1239,7 +1247,8 @@ void CMenuNew::Process() {
         }
     }
     else {
-        if (TheCamera.GetScreenFadeStatus() != 2) {
+        if (TheCamera.GetScreenFadeStatus() != 2 
+            && COverlayLayer::GetCurrentEffect() == EFFECT_NONE) {
             if (pad->GetOpenCloseMenuJustDown()) {
                 OpenCloseMenu(true, false);
             }

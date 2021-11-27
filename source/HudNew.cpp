@@ -98,7 +98,6 @@ CHudNew::CHudNew() {
     patch::Nop(0x53E3F9, 5);
     patch::Nop(0x53E398, 5);
 
-
     CdeclEvent<AddressList<0x705310, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> onTakingScreenShot;
     onTakingScreenShot += [] {
         CHudNew::TakePhotograph();

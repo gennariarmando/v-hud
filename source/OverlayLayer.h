@@ -30,6 +30,8 @@ public:
         fShaderConstant[2] = b;
         fShaderConstant[3] = a;
     }
+
+    static eOverlayEffect& GetCurrentEffect() { return CurrentEffect; }
 };
 
 extern void* im2dPixelShader;

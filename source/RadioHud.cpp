@@ -41,7 +41,7 @@ void CRadioHud::Draw() {
     float y = 173.0f;
     float w = 112.0f;
     float h = 112.0f;
-    int i = (AERadioTrackManager.m_nStationsListed + AERadioTrackManager.m_nCurrentRadioStation);
+    int i = (AERadioTrackManager.m_nStationsListed + AERadioTrackManager.m_Settings.m_nCurrentRadioStation);
 
     if (i) {
         if (i > 0) {
