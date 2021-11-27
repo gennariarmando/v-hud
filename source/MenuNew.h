@@ -100,6 +100,7 @@ enum eMenuEntries {
     MENUENTRY_INVERTMOUSEY,
     MENUENTRY_MOUSESTEER,
     MENUENTRY_MOUSEFLYING,
+    MENUENTRY_SHOWCONTROLSFOR,
     MENUENTRY_INVERTPADX1,
     MENUENTRY_INVERTPADY1,
     MENUENTRY_INVERTPADX2,
@@ -274,6 +275,7 @@ public:
     bool mouseFlying;
 
     // Gamepad
+    int showControlsFor;
     int controller;
     bool invertPadX1;
     bool invertPadY1;
@@ -496,6 +498,7 @@ public:
     void DrawSafeZoneAngle(float x, float y, int w, int h);
     void DrawDefault();
     void DrawTabMemoryAvailable();
+    void DrawPadLine(float x, float y, int w, int h);
     void DrawTabGamePad();
     void DrawTabNumSaveGames();
     void DrawLandingPage();

@@ -351,7 +351,8 @@ void CMenuNew::BuildMenuScreen() {
     // MENUSCREEN_SETTINGS
     if (auto settings = AddNewScreen("FE_SET")) {
         if (auto pad = AddNewTab(settings, MENUENTRY_PAD, "FE_PAD", NULL, false)) {
-            AddNewEntry(pad, MENUENTRY_INVERTPADX1, "FE_ILSX", 0, 7);
+            AddNewEntry(pad, MENUENTRY_SHOWCONTROLSFOR, "FE_SCF", 0, 7);
+            AddNewEntry(pad, MENUENTRY_INVERTPADX1, "FE_ILSX", 0, 0);
             AddNewEntry(pad, MENUENTRY_INVERTPADY1, "FE_ILSY", 0, 0);
             AddNewEntry(pad, MENUENTRY_INVERTPADX2, "FE_ILA", 0, 0);
             AddNewEntry(pad, MENUENTRY_INVERTPADY2, "FE_IRSX", 0, 0);
@@ -1652,6 +1653,9 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
         TempSettings.radioMode = TempSettings.radioMode == false;
         ApplyChanges();
         break;
+    case MENUENTRY_SHOWCONTROLSFOR:
+        TempSettings.showControlsFor = TempSettings.showControlsFor == false;
+        break;
     case MENUENTRY_INVERTPADX1:
         TempSettings.invertPadX1 = TempSettings.invertPadX1 == false;
         ApplyChanges();
@@ -2564,6 +2568,9 @@ void CMenuNew::DrawDefault() {
                     break;
                 }
                 break;
+            case MENUENTRY_SHOWCONTROLSFOR:
+                rightText = CTextNew::GetText(TempSettings.showControlsFor ? "PAD_VH" : "PAD_FT").text;
+                break;
             case MENUENTRY_INVERTPADX1:
                 rightText = CTextNew::GetText(TempSettings.invertPadX1 ? "FE_ON" : "FE_OFF").text;
                 break;
@@ -2689,12 +2696,36 @@ void CMenuNew::DrawTabMemoryAvailable() {
     DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(32.0f), progress);
 }
 
+void CMenuNew::DrawPadLine(float x, float y, int w, int h) {
+    CRect r;
+    CRGBA c = { 255, 255, 255, FadeIn(100) };
+
+    float s = SCREEN_MULTIPLIER(1.0f);
+
+    r = { x, y - s, x + (s * w), y + s };
+    CSprite2d::DrawRect(r, c);
+
+    r = { x - s + (s * w), y, x + s + (s * w), y + (s * h) };
+    CSprite2d::DrawRect(r, c);
+}
+
 void CMenuNew::DrawTabGamePad() {
     CRect rect = GetMenuEntryRect();
 
     float bb = max(rect.bottom + GetMenuHorSpacing(), 0) * 6;
     CSprite2d::DrawRect(CRect(rect.left, rect.top, rect.left + rect.right, rect.top + rect.bottom + bb), CRGBA(0, 0, 0, FadeIn(180)));
 
+    if (nCurrentInputType == MENUINPUT_BAR) {
+        if (CheckHover(rect.left, rect.left + rect.right, rect.top, rect.top + rect.bottom + bb)) {
+            CPadNew* pad = CPadNew::GetPad(0);
+
+            if (pad->GetLeftMouseJustUp()) {
+                Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
+                SetInputTypeAndClear(MENUINPUT_TAB);
+            }
+        }
+    }
 
     CRect ctrlRect = rect;
     ctrlRect.left = MENU_X(990.0f);
@@ -2703,6 +2734,112 @@ void CMenuNew::DrawTabGamePad() {
     ctrlRect.bottom = SCREEN_COORD(383.0f);;
 
     MenuSprites[MENU_XBOX_GAMEPAD]->Draw(CRect(ctrlRect.left, ctrlRect.top, ctrlRect.left + ctrlRect.right, ctrlRect.top + ctrlRect.bottom), CRGBA(255, 255, 255, FadeIn(255)));
+
+    int count = 0;
+    char buff[256];
+    char* str = NULL;
+    CFontNew::SetBackground(false);
+    CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+    CFontNew::SetWrapX(SCREEN_COORD(640.0f));
+    CFontNew::SetFontStyle(CFontNew::FONT_1);
+    CFontNew::SetDropShadow(0.0f);
+    CFontNew::SetOutline(0.0f);
+    CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+    CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_PURE_WHITE, FadeIn(255)));
+    CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
+
+    CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
+
+    str = CTextNew::GetText(TempSettings.showControlsFor ? "PAD_VH" : "PAD_FT").text;
+    CTextNew::UpperCase(str);
+    CFontNew::PrintString(rect.left + rect.right / 2, rect.top, str);
+
+    CFontNew::SetScale(SCREEN_MULTIPLIER(0.5f), SCREEN_MULTIPLIER(1.0f));
+
+    { // Left
+        float x = rect.left + SCREEN_COORD(266.0f);
+        float y = rect.top + SCREEN_COORD(56.0f);
+        float next = 0.0f;
+
+        int w[] = {
+            84,
+            67,
+            137,
+            76,
+            76,
+            124,
+            104,
+            126,
+            142
+        };
+
+        int h[] = {
+            4,
+            4,
+            34,
+            6,
+            0,
+             0,
+            -10,
+            -18,
+            -56
+        };
+
+        CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
+
+        for (int i = 0; i < 9; i++) {
+            sprintf(buff, "PAD_%02d", TempSettings.showControlsFor ? count + 18 : count);
+            str = CTextNew::GetText(buff).text;
+            CTextNew::UpperCase(str);
+            DrawPadLine(x, y + next, w[i], h[i]);
+            CFontNew::PrintString(x - SCREEN_COORD(8.0f), y + next - SCREEN_COORD(12.0f), str);
+
+            next += SCREEN_COORD(30.0f - i);
+            count++;
+        }
+    }
+    { // Right
+        float x = rect.left + SCREEN_COORD(610.0f);
+        float y = rect.top + SCREEN_COORD(56.0f);
+        float next = 0.0f;
+
+        int w[] = {
+            -84,
+            -67,
+            -137,
+            -76,
+            -50,
+            -76,
+            -100,
+            -126,
+            -146
+        };
+
+        int h[] = {
+            4,
+            4,
+            34,
+             0,
+            -6,
+            -10,
+            -52,
+            -24,
+            -50
+        };
+
+        CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
+
+        for (int i = 0; i < 9; i++) {
+            sprintf(buff, "PAD_%02d", TempSettings.showControlsFor ? count + 18 : count);
+            str = CTextNew::GetText(buff).text;
+            CTextNew::UpperCase(str);
+            DrawPadLine(x, y + next, w[i], h[i]);
+            CFontNew::PrintString(x + SCREEN_COORD(8.0f), y + next - SCREEN_COORD(12.0f), str);
+
+            next += SCREEN_COORD(30.0f - i);
+            count++;
+        }
+    }
 }
 
 void CMenuNew::DrawTabNumSaveGames() {
