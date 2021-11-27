@@ -435,6 +435,9 @@ public:
     int nPreviousGalleryPage;
     int nCurrentGalleryPage;
 
+    float fLoadingTuneVolume;
+    bool bLoadingTuneStarted;
+
 public:
     CMenuNew();
     void Init();
@@ -448,6 +451,7 @@ public:
     void SetLandingPageBehaviour();
     void PlayLoadingTune();
     void StopLoadingTune();
+    void DoFadeTune();
     void SetSavePageBehaviour(bool background);
     void SetDefaultPageBehaviour();
 

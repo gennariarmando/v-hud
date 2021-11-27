@@ -65,7 +65,10 @@ void CAudio::Shutdown() {
 }
 
 void CAudio::Update() {
-    ;;
+    if (!bInitialised)
+        return;
+
+    MenuNew.DoFadeTune();
 }
 
 void CAudio::SetChunksMasterVolume(char vol) {
@@ -111,6 +114,19 @@ void CAudio::PlayChunk(int chunk, float volume) {
         BASS_ChannelSetAttribute(c, BASS_ATTRIB_VOL, volume * (fChunksVolume * 0.5f));
     }
     BASS_ChannelPlay(c, FALSE);
+}
+
+void CAudio::SetVolumeForChunk(int chunk, float volume) {
+    chunk = clamp(chunk, 0, NUM_CHUNKS - 1);
+    volume = clamp(volume, 0.0f, 1.0f);
+
+    BASS_SAMPLE info;
+    BASS_SampleGetInfo(Chunks[chunk], &info);
+    if (HCHANNEL* c = (HCHANNEL*)malloc(info.max * sizeof(HCHANNEL))) {
+        for (int i = 0; i < BASS_SampleGetChannels(Chunks[chunk], c); i++) {
+            BASS_ChannelSetAttribute(c[i], BASS_ATTRIB_VOL, volume);
+        }
+    }
 }
 
 void CAudio::StopChunk(int chunk) {

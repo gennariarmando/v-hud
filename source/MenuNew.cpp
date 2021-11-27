@@ -142,11 +142,6 @@ CMenuNew::CMenuNew() {
     };
 
     patch::Nop(0x748CF1, 10);
-    
-    CdeclEvent<AddressList<0x53E972, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> onIdle;
-    onIdle += [] {
-        MenuNew.StopLoadingTune();
-    };
 
     auto preRenderEntity = []() {
         if (CTimer::m_UserPause || CTimer::m_CodePause)
@@ -490,13 +485,33 @@ void CMenuNew::SetLandingPageBehaviour() {
 }
 
 void CMenuNew::PlayLoadingTune() {
-    Audio.SetLoop(true);
-    Audio.PlayChunk(CHUNK_TD_LOADING_MUSIC, -0.5f);
-    Audio.SetLoop(false);
+    if (!bLoadingTuneStarted) {
+        Audio.SetLoop(true);
+        Audio.PlayChunk(CHUNK_TD_LOADING_MUSIC, -0.5f);
+        Audio.SetLoop(false);
+
+        bLoadingTuneStarted = true;
+        fLoadingTuneVolume = 1.0f;
+    }
 }
 
 void CMenuNew::StopLoadingTune() {
-    Audio.StopChunk(CHUNK_TD_LOADING_MUSIC);
+    ;;
+}
+
+void CMenuNew::DoFadeTune() {
+    float p = 100.0f - (*(float*)0xBAB330); // Loading bar progress
+    p /= 100.0f;
+    if (bLoadingTuneStarted && p < 0.5f) {
+        fLoadingTuneVolume = lerp(p, 0.0f, 1.0f);
+
+        Audio.SetVolumeForChunk(CHUNK_TD_LOADING_MUSIC, fLoadingTuneVolume);
+
+        if (isNearlyEqualF(fLoadingTuneVolume, 0.0f, 0.01f)) {
+            Audio.StopChunk(CHUNK_TD_LOADING_MUSIC);
+            bLoadingTuneStarted = false;
+        }
+    }
 }
 
 void CMenuNew::SetSavePageBehaviour(bool background) {

@@ -17,6 +17,8 @@
 
 #include "VHudAPI.h"
 
+#include "CTimer.h"
+
 using namespace plugin;
 
 VHud pluginVHud;
@@ -34,11 +36,31 @@ inline int OpenConsole(bool console) {
     return false;
 }
 
+
+HANDLE thread = NULL;
+bool rwInitialized = true;
+
 VHud::VHud() {
     //OpenConsole(AllocConsole());
 
     if (!IsSupportedGameVersion())
         Error("This version of GTA: San Andreas is not supported by this plugin.");
+
+    auto VHudLoop = []() {
+        while (!RsGlobal.quit) {
+            if (rwInitialized) {
+                float f = CTimer::GetCurrentTimeInCycles() / (float)CTimer::GetCyclesPerMillisecond();
+                if (1000.0f / (float)RsGlobal.frameLimit < f) {
+                    Audio.Update();
+
+                }
+            }
+        }
+
+        CloseHandle(thread);
+    };
+
+    thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)(void(__cdecl*)())VHudLoop, 0, 0, 0);
 
     Events::initRwEvent += [] {
         Audio.Init();
@@ -47,6 +69,8 @@ VHud::VHud() {
         MenuNew.Init();
         CRadioHud::Init();
         COverlayLayer::Init();
+
+        rwInitialized = true;
     };
 
     Events::initGameEvent += [] {

@@ -30,6 +30,7 @@ public:
 
     unsigned long LoadChunkFile(const char* path, const char* name);
     void PlayChunk(int chunk, float volume);
+    void SetVolumeForChunk(int chunk, float volume);
     void StopChunk(int chunk);
     void SetChunksMasterVolume(char vol);
     void SetLoop(bool on);
