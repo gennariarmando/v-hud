@@ -124,7 +124,7 @@ void CAudio::SetVolumeForChunk(int chunk, float volume) {
     BASS_SampleGetInfo(Chunks[chunk], &info);
     if (HCHANNEL* c = (HCHANNEL*)malloc(info.max * sizeof(HCHANNEL))) {
         for (int i = 0; i < BASS_SampleGetChannels(Chunks[chunk], c); i++) {
-            BASS_ChannelSetAttribute(c[i], BASS_ATTRIB_VOL, volume);
+            BASS_ChannelSetAttribute(c[i], BASS_ATTRIB_VOL, volume * (fChunksVolume * 0.5f));
         }
     }
 }

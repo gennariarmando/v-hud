@@ -489,7 +489,7 @@ void CMenuNew::SetLandingPageBehaviour() {
 void CMenuNew::PlayLoadingTune() {
     if (!bLoadingTuneStarted) {
         Audio.SetLoop(true);
-        Audio.PlayChunk(CHUNK_TD_LOADING_MUSIC, -0.5f);
+        Audio.PlayChunk(CHUNK_TD_LOADING_MUSIC, 0.5f);
         Audio.SetLoop(false);
 
         bLoadingTuneStarted = true;
@@ -1739,6 +1739,9 @@ void CMenuNew::StartRadio() {
         AERadioTrackManager.StartRadio(Settings.radioStation, 0, 0, 0);
         bRadioEnabled = true;
     }
+
+    if (bLoadingTuneStarted)
+        Audio.SetVolumeForChunk(CHUNK_TD_LOADING_MUSIC, 0.0f);
 }
 
 void CMenuNew::StopRadio() {
@@ -1747,6 +1750,9 @@ void CMenuNew::StopRadio() {
 
     AERadioTrackManager.StopRadio(NULL, 0);
     bRadioEnabled = false;
+
+    if (bLoadingTuneStarted)
+        Audio.SetVolumeForChunk(CHUNK_TD_LOADING_MUSIC, fLoadingTuneVolume);
 }
 
 void CMenuNew::CheckSliderMovement(double value) {
@@ -1780,6 +1786,7 @@ void CMenuNew::CheckSliderMovement(double value) {
         ts.sfxVolume = clamp(ts.sfxVolume, 0, 64);
         AudioEngine.SetEffectsMasterVolume(ts.sfxVolume);
         Audio.SetChunksMasterVolume(ts.sfxVolume);
+        Audio.SetVolumeForChunk(CHUNK_TD_LOADING_MUSIC, fLoadingTuneVolume);
         break;
     case MENUENTRY_RADIOVOLUME:
         ts.radioVolume += char(value * 64);
