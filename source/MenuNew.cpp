@@ -35,6 +35,7 @@
 #include "Utility.h"
 #include "TextNew.h"
 #include "RadarNew.h"
+#include "RadioHud.h"
 
 #include "dx\VidMemViaD3D9.h"
 
@@ -1181,13 +1182,15 @@ void CMenuNew::Process() {
             break;
         };
 
-        switch (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[nCurrentEntryItem].type) {
-        case MENUENTRY_RADIOSTATION:
-            StartRadio();
-            break;
-        default:
-            StopRadio();
-            break;
+        if (CRadioHud::CanRetuneRadioStation()) {
+            switch (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[nCurrentEntryItem].type) {
+            case MENUENTRY_RADIOSTATION:
+                StartRadio();
+                break;
+            default:
+                StopRadio();
+                break;
+            }
         }
 
         if (nCurrentMessage == MENUMESSAGE_NONE) {
@@ -1622,20 +1625,23 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
         ApplyChanges();
         break;
     case MENUENTRY_RADIOSTATION:
-        if (input < 0) {
-            TempSettings.radioStation--;
+        if (CRadioHud::CanRetuneRadioStation()) {
+            if (input < 0) {
+                TempSettings.radioStation--;
 
-            if (TempSettings.radioStation < 1)
-                TempSettings.radioStation = 13;
-        }
-        else if (input > 0) {
-            TempSettings.radioStation++;
+                if (TempSettings.radioStation < 1)
+                    TempSettings.radioStation = 13;
+            }
+            else if (input > 0) {
+                TempSettings.radioStation++;
 
-            if (TempSettings.radioStation > 13)
-                TempSettings.radioStation = 1;
+                if (TempSettings.radioStation > 13)
+                    TempSettings.radioStation = 1;
+            }
+
+            RetuneRadio(TempSettings.radioStation);
+            ApplyChanges();
         }
-        AudioEngine.RetuneRadio(TempSettings.radioStation);
-        ApplyChanges();
         break;
     case MENUENTRY_RADIOAUTOSELECT:
         TempSettings.radioAutoSelect = TempSettings.radioAutoSelect == false;
@@ -1719,6 +1725,10 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
         ApplyChanges();
         break;
     }
+}
+
+void CMenuNew::RetuneRadio(char id) {
+    AudioEngine.RetuneRadio(id);
 }
 
 void CMenuNew::StartRadio() {
@@ -2544,7 +2554,7 @@ void CMenuNew::DrawDefault() {
                 rightText = CTextNew::GetText(TempSettings.mouseFlying ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_RADIOSTATION:
-                if (bool radioOff = (Settings.radioStation != RADIO_NONE)) {
+                if (bool radioOff = (Settings.radioStation != RADIO_NONE) && CRadioHud::CanRetuneRadioStation()) {
                     sprintf(rightTextTmp, "RADIO%d", Settings.radioStation);
                     rightText = CTextNew::GetText(rightTextTmp).text;
                 }

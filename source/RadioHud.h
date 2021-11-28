@@ -8,13 +8,18 @@ enum eRadioSprites {
 class CRadioHud {
 public:
     static CSprite2d* m_RadioIcons[NUM_RADIO_SPRITES];
-    static bool bInitialised;
-    static int nTimeToDisplay;
+    static bool m_bInitialised;
+    static int m_nTimeToDisplay;
+    static int m_nCurrentRadioId;
+    static int m_nPreviousRadioId;
+    static bool m_bChangeRadioStation;
 
 public:
     CRadioHud();
 
     static void Init();
+    static bool CanRetuneRadioStation();
+    static void Process();
     static void Draw();
     static void Shutdown();
 };

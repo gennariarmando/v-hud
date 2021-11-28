@@ -485,6 +485,7 @@ public:
     void ProcessAlertStuff();
     char** GetVideoModeList();
     void ProcessEntryStuff(int enter, int input);
+    void RetuneRadio(char id);
     void StartRadio();
     void StopRadio();
     void CheckSliderMovement(double value);

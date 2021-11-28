@@ -23,6 +23,7 @@
 #include "CTheZones.h"
 #include "CPickups.h"
 #include "CWeapon.h"
+#include "CAERadioTrackManager.h"
 
 #include "Audio.h"
 #include "CellPhone.h"
@@ -334,11 +335,17 @@ void CHudNew::Draw() {
 
                     DrawMissionTimers();
                 }
-                DrawHelpText();
 
-                CRadioHud::Draw();
+                if (FindPlayerVehicle(-1, 0) && AERadioTrackManager.IsVehicleRadioActive()) {
+                    CRadioHud::Process();
+                    CRadioHud::Draw();
+                }
             }
             DrawStats();
+        }
+
+        if (MenuNew.Settings.showHUD) {
+            DrawHelpText();
         }
 
         ShowTripSkipMessage = false;
