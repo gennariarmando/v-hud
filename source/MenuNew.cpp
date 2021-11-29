@@ -765,6 +765,8 @@ void CMenuNew::OpenMenuScreen(int screen) {
 
     nPreviousScreen = nCurrentScreen;
     nCurrentScreen = screen;
+
+    PreviousPlayerControls = CPadNew::GetPad(0)->DisablePlayerControls;
 }
 
 void CMenuNew::CenterCursor() {
