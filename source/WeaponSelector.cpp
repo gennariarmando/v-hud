@@ -771,14 +771,14 @@ void CWeaponSelector::DrawWheel() {
 
         for (int i = 0; i < 8; i++) {
             if (i == nSelectedSlot)
-                DrawWheelPart(WHEEL_PART_GRAD, x, y, i, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 150));
+                DrawWheelPart(WHEEL_PART_GRAD, x, y, i, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 200));
             else
-                DrawWheelPart(WHEEL_PART_SOLID, x, y, i, CRGBA(0, 0, 0, 50));
+                DrawWheelPart(WHEEL_PART_SOLID, x, y, i, CRGBA(0, 0, 0, 100));
 
             if (i == nActiveSlot && nSelectedWeapon[i] == nActiveWeapon[i])
-                DrawWheelPart(WHEEL_PART_ACTIVE, x, y, i, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 205));
+                DrawWheelPart(WHEEL_PART_ACTIVE, x, y, i, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
             else
-                DrawWheelPart(WHEEL_PART_INACTIVE, x, y, i, CRGBA(0, 0, 0, 100));
+                DrawWheelPart(WHEEL_PART_INACTIVE, x, y, i, CRGBA(0, 0, 0, 150));
 
             CWeaponWheel* wep = WeaponWheel[i][nSelectedWeapon[i]];
             int weap = nArrayOfAvailableWeapons[i][nSelectedWeapon[i]];
