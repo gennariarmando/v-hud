@@ -1,5 +1,6 @@
 #pragma once
 #include "CPad.h"
+#include "CControllerConfigManager.h"
 
 // GInput stuff
 enum eGInputActions {
@@ -29,19 +30,41 @@ enum eGInputActions {
     NUM_CUSTOM_ACTIONS
 };
 
+enum eControlsActions {
+    ACTION_PLACEHOLDER = 57,
+    SHOW_WEAPON_WHEEL,
+    EXTEND_RADAR_RANGE,
+    SHOW_PLAYER_STATS,
+    PHONE_SHOW,
+    PHONE_HIDE,
+    PHONE_UP,
+    PHONE_DOWN,
+    PHONE_ENTER,
+    NUM_CONTROL_ACTIONS
+};
+
+class CControls {
+public:
+    char action[128];
+    int key;
+};
+
 class CPadNew : public CPad {
 public:
     bool DisablePlayerAim;
 
 public:
     CPadNew();
-    void Init();
-    void Update();
-    void Shutdown();
+    static void SaveSettings();
+    static void LoadSettings();
+    static void PassControlsToCurrentGame(const CControls* c);
+    static void SetControllerKeyAssociatedWithAction(e_ControllerAction action, int key, eControllerType type);
+    static int GetNumOfSettingsForAction(e_ControllerAction action);
     static CPadNew* GetPad(int padNumber);
 
-    bool GetTarget();
-    bool GetTargetJustDown();
+    bool GetKeyDown(int key);
+    bool GetKeyJustDown(int key);
+    bool GetKeyUp(int key);
 
     bool GetOpenCloseMenuJustDown();
 
@@ -96,10 +119,13 @@ public:
     bool GetShowWeaponWheel(int time);
 
     bool GetShowPlayerInfo();
-    bool GetShowPlayerInfoJustUp();
     bool GetShowPlayerInfo(int time);
 
     bool GetExtendRadarRange();
+
+    bool CycleRadioStationLeftJustDown();
+
+    bool CycleRadioStationRightJustDown();
 
     static CVector2D GetMouseInput(float mult = 1.0f);
     bool CheckForControllerInput();
@@ -107,3 +133,5 @@ public:
 };
 
 extern bool bHasPadInHands;
+extern CControls Controls[NUM_CONTROL_ACTIONS];
+

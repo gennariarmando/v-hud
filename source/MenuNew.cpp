@@ -731,6 +731,7 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
         pad->Clear(0, 1);
         //pad->ClearKeyBoardHistory();
         pad->ClearMouseHistory();
+        PreviousPlayerControls = pad->DisablePlayerControls;
         pad->DisablePlayerControls = true;
 
         AudioEngine.StopRadio(NULL, 0);
@@ -743,7 +744,7 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
         pad->Clear(1, 1);
         //pad->ClearKeyBoardHistory();
         pad->ClearMouseHistory();
-        pad->DisablePlayerControls = false;
+        pad->DisablePlayerControls = PreviousPlayerControls;
 
         Clear();
         SetInputTypeAndClear(MENUINPUT_BAR);
@@ -1794,8 +1795,8 @@ void CMenuNew::CheckSliderMovement(double value) {
         AudioEngine.SetMusicMasterVolume(ts.radioVolume);
         break;
     case MENUENTRY_MOUSESENSITIVITY:
-        ts.mouseSensitivity += double(value * (1 / 200));
-        ts.mouseSensitivity = clamp(ts.mouseSensitivity, 1 / 3200, 1 / 200);
+        ts.mouseSensitivity += double(value * (1.0 / 200.0));
+        ts.mouseSensitivity = clamp(ts.mouseSensitivity, 1.0 / 3200.0, 1.0 / 200.0);
         TheCamera.m_fMouseAccelHorzntl = (float)ts.mouseSensitivity;
         TheCamera.m_fMouseAccelVertical = (float)ts.mouseSensitivity;
         break;
@@ -4081,6 +4082,8 @@ void CMenuSettings::Load() {
     }
 
     MenuNew.PassSettingsToCurrentGame(this);
+
+    CPadNew::LoadSettings();
 }
 
 void CMenuSettings::Save() {
@@ -4158,4 +4161,6 @@ void CMenuSettings::Save() {
     }
 
     MenuNew.PassSettingsToCurrentGame(this);
+
+    CPadNew::SaveSettings();
 }

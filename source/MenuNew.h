@@ -440,6 +440,8 @@ public:
     float fLoadingTuneVolume;
     bool bLoadingTuneStarted;
 
+    unsigned short PreviousPlayerControls;
+
 public:
     CMenuNew();
     void Init();
