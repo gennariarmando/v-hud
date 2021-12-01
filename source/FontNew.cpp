@@ -603,8 +603,9 @@ char* CFontNew::ParseToken(char* s) {
             break;
         }
     }
-    while (*c != '~') c++;
-    return c + 1;
+    while (*c != '~') ++c;
+    ++c;
+    return c;
 }
 
 bool CFontNew::ParseGInputActions(char* s) {
@@ -712,17 +713,19 @@ void CFontNew::DrawButton(float x, float y, CSprite2d* sprite) {
 void CFontNew::PrintChar(float& x, float& y, char c) {
     float _x = (c % 16);
     float _y = (c / 16);
-
-    float u1 = _x / 16.0f;
-    float v1 = _y / 12.8f;
-    float u2 = (_x + 1.0f) / 16.0f - 0.003f;
-    float v2 = _y / 12.8f;
-    float u3 = _x / 16.0f;
-    float v3 = (_y + 1.0f) / 12.8f - 0.003f;
-    float u4 = (_x + 1.0f) / 16.0f - 0.003f;
-    float v4 = (_y + 1.0f) / 12.8f - 0.003f;
-    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERMIPLINEAR);
+    
+    float b = 0.002f;
+    float u1 = _x / 16.0f + (b);
+    float v1 = _y / 12.8f + (b);
+    float u2 = (_x + 1.0f) / 16.0f + (-b);
+    float v2 = _y / 12.8f + (b);
+    float u3 = _x / 16.0f + (b);
+    float v3 = (_y + 1.0f) / 12.8f + (-b);
+    float u4 = (_x + 1.0f) / 16.0f + (-b);
+    float v4 = (_y + 1.0f) / 12.8f + (-b);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERLINEARMIPLINEAR);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
+    RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSWRAP);
 
     DrawButton(x, y, PS2Symbol);
     x += PS2Symbol ? (Details.scale.y * (PS2SymbolScale.x / 3)) : 0.0f;
