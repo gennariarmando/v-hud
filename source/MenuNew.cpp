@@ -91,6 +91,9 @@ inline CRect GetMenuEntryRect() { return CRect(MENU_X(746.0f), MENU_Y(240.0f), S
 inline CRect GetMenuScreenRect() { return CRect(MENU_X(311.0f), MENU_Y(181.0f + 39.0f + 20.0f), SCREEN_COORD(((214.0f + 3.0f) * 6.0f) - 3.0f), SCREEN_COORD(645.0f)); }
 inline float GetMenuHorSpacing() { return SCREEN_COORD(3.0f); };
 
+inline float GetMenuCenterX() { return GetMenuScreenRect().left + (GetMenuScreenRect().right * 0.5f); }
+inline float GetMenuCenterY() { return GetMenuScreenRect().top + (GetMenuScreenRect().bottom * 0.5f); }
+
 bool bSaveScreenHasBeenOpened = false;
 
 // Used for printing stats strings
@@ -1743,8 +1746,10 @@ void CMenuNew::StartRadio() {
         bRadioEnabled = true;
     }
 
-    if (bLoadingTuneStarted)
-        Audio.SetVolumeForChunk(CHUNK_TD_LOADING_MUSIC, 0.0f);
+    if (bLoadingTuneStarted) {
+        fLoadingTuneVolume = 0.0f;
+        Audio.SetVolumeForChunk(CHUNK_TD_LOADING_MUSIC, fLoadingTuneVolume);
+    }
 }
 
 void CMenuNew::StopRadio() {
@@ -1754,8 +1759,10 @@ void CMenuNew::StopRadio() {
     AERadioTrackManager.StopRadio(NULL, 0);
     bRadioEnabled = false;
 
-    if (bLoadingTuneStarted)
+    if (bLoadingTuneStarted) {
+        fLoadingTuneVolume = 1.0f;
         Audio.SetVolumeForChunk(CHUNK_TD_LOADING_MUSIC, fLoadingTuneVolume);
+    }
 }
 
 void CMenuNew::CheckSliderMovement(double value) {
@@ -2144,7 +2151,7 @@ void CMenuNew::Draw() {
 
             CRect r;
             r.left = SCREEN_COORD_CENTER_RIGHT(-64.0f) - clamp(CFontNew::GetStringWidth(str, true), 0, CFontNew::Details.wrapX) / 2;
-            r.top = SCREEN_COORD(568.0f);
+            r.top = SCREEN_COORD_CENTER_Y + SCREEN_COORD(28.0f);
             r.right = SCREEN_COORD_CENTER_RIGHT(64.0f) + clamp(CFontNew::GetStringWidth(str, true), 0, CFontNew::Details.wrapX) / 2;
             r.bottom = SCREEN_COORD(3.0f);
             CSprite2d::DrawRect(CRect(r.left, r.top, r.right, r.top + r.bottom), CRGBA(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255)));
@@ -2892,9 +2899,14 @@ void CMenuNew::DrawTabNumSaveGames() {
 void CMenuNew::DrawLandingPage() {
     CPadNew* pad = CPadNew::GetPad(0);
 
+    const float previousBaseRes = plugin::screen::GetBaseResolution();
+    if ((SCREEN_WIDTH / SCREEN_HEIGHT) < (DEFAULT_WIDTH / DEFAULT_HEIGHT)) {
+        plugin::screen::SetBaseResolution(DEFAULT_HEIGHT * (2.0f * SAFE_ZONE_HEIGHT_MULT));
+    }
+
     CRect rect;
     rect = { HUD_RIGHT(96.0f + 1302.0f), HUD_Y(218.0f), SCREEN_COORD(1302.0f), SCREEN_COORD(644.0f) };
-    DrawPatternBackground(CRect(rect.left, rect.top, rect.left + rect.right, rect.top + rect.bottom), CRGBA(HudColourNew.GetRGB(HUD_COLOUR_BLACK, FadeIn(150))));
+    DrawPatternBackground(CRect(rect.left, rect.top, (rect.left + rect.right), (rect.top + rect.bottom)), CRGBA(HudColourNew.GetRGB(HUD_COLOUR_BLACK, FadeIn(150))));
     FrontendSprites[FRONTEND_INFOBOX]->Draw(CRect(rect.left + SCREEN_COORD(870.0f), rect.top, rect.left + rect.right, rect.top + rect.bottom), CRGBA(255, 255, 255, FadeIn(255)));
 
     CFontNew::SetBackground(false);
@@ -2976,6 +2988,8 @@ void CMenuNew::DrawLandingPage() {
         CTextNew::UpperCase(leftText);
         CFontNew::PrintString(menuEntry.right, menuEntry.top + textoffset, leftText);
     }
+
+    plugin::screen::SetBaseResolution(previousBaseRes);
 }
 
 void CMenuNew::DrawSliderRightAlign(float x, float y, float progress) {
@@ -3218,7 +3232,7 @@ void CMenuNew::PrintStats() {
 }
 
 CVector2D CMenuNew::GetMapBaseDefault() {
-    return CVector2D(SCREEN_WIDTH / 2, SCREEN_COORD(28.0f) + (SCREEN_HEIGHT / 2));
+    return CVector2D(GetMenuCenterX(), GetMenuCenterY());
 }
 
 void CMenuNew::DrawLegend() {
@@ -3734,6 +3748,7 @@ void CMenuNew::PassSettingsToCurrentGame(const CMenuSettings* s) {
         AudioEngine.SetMusicMasterVolume(s->radioVolume);
         AudioEngine.SetEffectsMasterVolume(s->sfxVolume);
         Audio.SetChunksMasterVolume(s->sfxVolume);
+        Audio.SetVolumeForChunk(CHUNK_TD_LOADING_MUSIC, MenuNew.fLoadingTuneVolume); // 
         AudioEngine.SetBassEnhanceOnOff(s->radioEQ);
         AudioEngine.SetRadioAutoRetuneOnOff(s->radioAutoSelect);
     }

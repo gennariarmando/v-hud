@@ -52,7 +52,6 @@ VHud::VHud() {
                 float f = CTimer::GetCurrentTimeInCycles() / (float)CTimer::GetCyclesPerMillisecond();
                 if (1000.0f / (float)RsGlobal.frameLimit < f) {
                     Audio.Update();
-
                 }
             }
         }

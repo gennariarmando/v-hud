@@ -117,6 +117,9 @@ void CAudio::PlayChunk(int chunk, float volume) {
 }
 
 void CAudio::SetVolumeForChunk(int chunk, float volume) {
+    if (!bInitialised)
+        return;
+
     chunk = clamp(chunk, 0, NUM_CHUNKS - 1);
     volume = clamp(volume, 0.0f, 1.0f);
 
@@ -130,6 +133,9 @@ void CAudio::SetVolumeForChunk(int chunk, float volume) {
 }
 
 void CAudio::StopChunk(int chunk) {
+    if (!bInitialised)
+        return;
+
     chunk = clamp(chunk, 0, NUM_CHUNKS - 1);
 
     BASS_SAMPLE info;

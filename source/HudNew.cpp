@@ -740,12 +740,16 @@ void CHudNew::DrawSimpleRectGrad(CRect const& rect, CRGBA const& col) {
     unsigned int savedShade;
     unsigned int savedAlpha;
     unsigned int savedFilter;
+    unsigned int savedAddr;
     RwRenderStateGet(rwRENDERSTATESHADEMODE, &savedShade);
     RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEFLAT);
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
     RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
     RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
+    RwRenderStateGet(rwRENDERSTATETEXTUREADDRESS, &savedAddr);
+    RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
+
 
     CSprite2d::SetVertices(rect.left, rect.top, rect.right, rect.top,
                           rect.left, rect.bottom, rect.right, rect.bottom, col, col, col, col);
@@ -755,18 +759,22 @@ void CHudNew::DrawSimpleRectGrad(CRect const& rect, CRGBA const& col) {
     RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)savedShade);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)savedAlpha);
     RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
+    RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)savedAddr);
 }
 
 void CHudNew::DrawSimpleRectGradInverted(CRect const& rect, CRGBA const& col) {
     unsigned int savedShade;
     unsigned int savedAlpha;
     unsigned int savedFilter;
+    unsigned int savedAddr;
     RwRenderStateGet(rwRENDERSTATESHADEMODE, &savedShade);
     RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEFLAT);
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
     RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
     RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
+    RwRenderStateGet(rwRENDERSTATETEXTUREADDRESS, &savedAddr);
+    RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
 
     CSprite2d::SetVertices(rect.right, rect.top, rect.left, rect.top,
         rect.right, rect.bottom, rect.left, rect.bottom, col, col, col, col);
@@ -776,18 +784,22 @@ void CHudNew::DrawSimpleRectGradInverted(CRect const& rect, CRGBA const& col) {
     RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)savedShade);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)savedAlpha);
     RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
+    RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)savedAddr);
 }
 
 void CHudNew::DrawSimpleRectGradCentered(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, CRGBA col) {
     unsigned int savedShade;
     unsigned int savedAlpha;
     unsigned int savedFilter;
+    unsigned int savedAddr;
     RwRenderStateGet(rwRENDERSTATESHADEMODE, &savedShade);
     RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEFLAT);
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
     RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
     RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
+    RwRenderStateGet(rwRENDERSTATETEXTUREADDRESS, &savedAddr);
+    RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
 
     CSprite2d::SetVertices(x1, y1, x2, y2, x3, y3, x4, y4, col, col, col, col);
     RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(MenuNew.MiscSprites[MISC_RECTGRADCENTERED]->m_pTexture));
@@ -796,6 +808,7 @@ void CHudNew::DrawSimpleRectGradCentered(float x1, float y1, float x2, float y2,
     RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)savedShade);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)savedAlpha);
     RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
+    RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)savedAddr);
 }
 
 void CHudNew::CheckPlayerPortrait(int id) {
