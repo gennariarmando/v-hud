@@ -2226,6 +2226,7 @@ void CMenuNew::Draw() {
 
     if (bDrawMouse) {
         if (nMouseType <= MOUSE_HAND) {
+            RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
             MenuSprites[nMouseType]->Draw(vMousePos.x, vMousePos.y, SCREEN_COORD(30.0f), SCREEN_COORD(32.0f), CRGBA(255, 255, 255, 255));
             nMouseType = MOUSE_ARROW;
         }

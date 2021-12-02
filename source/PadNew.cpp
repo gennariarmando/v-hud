@@ -81,7 +81,7 @@ CControls Controls[NUM_CONTROL_ACTIONS] = {
     { "SHOW_WEAPON_WHEEL", KEY(rsTAB) },
     { "EXTEND_RADAR_RANGE", KEY('Z') },
     { "SHOW_PLAYER_STATS", KEY(rsLALT) },
-    { "PHONE_SHOW", MOUSE(rsMOUSMIDDLEBUTTON) },
+    { "PHONE_SHOW", MOUSE(rsMOUSEMIDDLEBUTTON) },
     { "PHONE_HIDE", MOUSE(rsMOUSERIGHTBUTTON) },
     { "PHONE_UP", MOUSE(rsMOUSEWHEELUPBUTTON) },
     { "PHONE_DOWN", MOUSE(rsMOUSEWHEELDOWNBUTTON) },
@@ -286,7 +286,7 @@ bool CPadNew::GetKeyDown(int key) {
             if (NewMouseControllerState.lmb)
                 return true;
             break;
-        case rsMOUSMIDDLEBUTTON:
+        case rsMOUSEMIDDLEBUTTON:
             if (NewMouseControllerState.mmb)
                 return true;
             break;
@@ -519,7 +519,7 @@ bool CPadNew::GetKeyJustDown(int key) {
             if (NewMouseControllerState.lmb && !OldMouseControllerState.lmb)
                 return true;
             break;
-        case rsMOUSMIDDLEBUTTON:
+        case rsMOUSEMIDDLEBUTTON:
             if (NewMouseControllerState.mmb && !OldMouseControllerState.mmb)
                 return true;
             break;
