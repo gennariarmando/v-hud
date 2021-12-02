@@ -57,6 +57,8 @@ public:
     CPadNew();
     static void SaveSettings();
     static void LoadSettings();
+    static int StringToKey(const char* str);
+    static const char* KeyToString(int key);
     static void PassControlsToCurrentGame(const CControls* c);
     static void SetControllerKeyAssociatedWithAction(e_ControllerAction action, int key, eControllerType type);
     static int GetNumOfSettingsForAction(e_ControllerAction action);

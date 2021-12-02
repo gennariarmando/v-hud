@@ -15,74 +15,142 @@ CPadNew Pad;
 bool bHasPadInHands = false;
 
 char* ControlsFileName = "VHud\\ufiles\\controls.xml";
-
+ 
+#define MOUSE_CUSTOM_OFFSET (2000)
+#define MOUSE(x) x + MOUSE_CUSTOM_OFFSET
+#define KEY(x) x
 CControls Controls[NUM_CONTROL_ACTIONS] = {
-    { "PED_FIREWEAPON", 2001 },
-    { "PED_FIREWEAPON_ALT", -1 },
-    { "PED_CYCLE_WEAPON_RIGHT", 2005 },
-    { "PED_CYCLE_WEAPON_LEFT", 2004 },
-    { "GO_FORWARD", 'W' },
-    { "GO_BACK", 'S' },
-    { "GO_LEFT", 'A' },
-    { "GO_RIGHT", 'D' },
-    { "PED_SNIPER_ZOOM_IN", 2004 },
-    { "PED_SNIPER_ZOOM_OUT", 2005 },
-    { "VEHICLE_ENTER_EXIT", 'F' },
-    { "CAMERA_CHANGE_VIEW_ALL_SITUATIONS", 'V' },
-    { "PED_JUMPING", 32 },
-    { "PED_SPRINT", 1046 },
-    { "PED_LOOKBEHIND", 'C' },
-    { "PED_DUCK", 1049 },
-    { "PED_ANSWER_PHONE", 1043 },
-    { "SNEAK_ABOUT", 1049 },
-    { "VEHICLE_FIREWEAPON", 2001 },
-    { "VEHICLE_FIREWEAPON_ALT", 1049 },
-    { "VEHICLE_STEERLEFT", 'A' },
-    { "VEHICLE_STEERRIGHT", 'D' },
-    { "VEHICLE_STEERUP", 1017 },
-    { "VEHICLE_STEERDOWN", 1018 },
-    { "VEHICLE_ACCELERATE", 'W' },
-    { "VEHICLE_BRAKE", 'S' },
-    { "VEHICLE_RADIO_STATION_UP", 2004 },
-    { "VEHICLE_RADIO_STATION_DOWN", 2005 },
-    { "UNKNOWN_1", 0 },
-    { "VEHICLE_HORN", 1046 },
-    { "TOGGLE_SUBMISSIONS", 1049 },
-    { "VEHICLE_HANDBRAKE", 32 },
-    { "PED_1RST_PERSON_LOOK_LEFT", 'Q' },
-    { "PED_1RST_PERSON_LOOK_RIGHT", 'E'},
-    { "VEHICLE_LOOKLEFT", 'Q' },
-    { "VEHICLE_LOOKRIGHT", 'E'},
-    { "VEHICLE_LOOKBEHIND", 'C'},
-    { "VEHICLE_MOUSELOOK", -1 },
-    { "VEHICLE_TURRETLEFT", -1 },
-    { "VEHICLE_TURRETRIGHT", -1 },
-    { "VEHICLE_TURRETUP", -1 },
-    { "VEHICLE_TURRETDOWN", -1 },
-    { "PED_CYCLE_TARGET_LEFT", 'Q'},
-    { "PED_CYCLE_TARGET_RIGHT", 'E' },
-    { "PED_CENTER_CAMERA_BEHIND_PLAYER", -1 },
-    { "PED_LOCK_TARGET", 2003 },
-    { "NETWORK_TALK", -1 },
-    { "CONVERSATION_YES", 'Y' },
-    { "CONVERSATION_NO", 'N' },
-    { "GROUP_CONTROL_FWD", 'Y' },
-    { "GROUP_CONTROL_BWD", 'N' },
-    { "PED_1RST_PERSON_LOOK_UP", -1 },
-    { "PED_1RST_PERSON_LOOK_DOWN", -1 },
-    { "UNKNOWN_2", -1 },
-    { "TOGGLE_DPAD", -1 },
-    { "SWITCH_DEBUG_CAM_ON", -1 },
-    { "TAKE_SCREEN_SHOT", -1 },
-    { "SHOW_MOUSE_POINTER_TOGGLE", -1 },
-    { "SHOW_WEAPON_WHEEL", 1043 },
-    { "EXTEND_RADAR_RANGE", 'Z' },
-    { "SHOW_PLAYER_STATS", 1051 },
-    { "PHONE_SHOW", 2002 },
-    { "PHONE_HIDE", 2003 },
-    { "PHONE_UP", 2004 },
-    { "PHONE_DOWN", 2005 },
-    { "PHONE_ENTER", 2001 },
+    { "PED_FIREWEAPON", MOUSE(rsMOUSELEFTBUTTON) },
+    { "PED_FIREWEAPON_ALT", KEY(rsNULL) },
+    { "PED_CYCLE_WEAPON_RIGHT", MOUSE(rsMOUSEWHEELUPBUTTON) },
+    { "PED_CYCLE_WEAPON_LEFT", MOUSE(rsMOUSEWHEELDOWNBUTTON) },
+    { "GO_FORWARD", KEY('W') },
+    { "GO_BACK", KEY('S') },
+    { "GO_LEFT", KEY('A') },
+    { "GO_RIGHT", KEY('D') },
+    { "PED_SNIPER_ZOOM_IN", MOUSE(rsMOUSEWHEELUPBUTTON) },
+    { "PED_SNIPER_ZOOM_OUT", MOUSE(rsMOUSEWHEELDOWNBUTTON) },
+    { "VEHICLE_ENTER_EXIT", KEY('F') },
+    { "CAMERA_CHANGE_VIEW_ALL_SITUATIONS", KEY('V') },
+    { "PED_JUMPING", rsSPACE },
+    { "PED_SPRINT", KEY(rsLSHIFT) },
+    { "PED_LOOKBEHIND", KEY('C') },
+    { "PED_DUCK", KEY(rsLCTRL) },
+    { "PED_ANSWER_PHONE", KEY(rsTAB) },
+    { "SNEAK_ABOUT", KEY(rsLCTRL) },
+    { "VEHICLE_FIREWEAPON", MOUSE(rsMOUSELEFTBUTTON) },
+    { "VEHICLE_FIREWEAPON_ALT", KEY(rsLCTRL) },
+    { "VEHICLE_STEERLEFT", KEY('A') },
+    { "VEHICLE_STEERRIGHT", KEY('D') },
+    { "VEHICLE_STEERUP", KEY(rsPGUP) },
+    { "VEHICLE_STEERDOWN", KEY(rsPGDN) },
+    { "VEHICLE_ACCELERATE", KEY('W') },
+    { "VEHICLE_BRAKE", KEY('S') },
+    { "VEHICLE_RADIO_STATION_UP", MOUSE(rsMOUSEWHEELUPBUTTON) },
+    { "VEHICLE_RADIO_STATION_DOWN", MOUSE(rsMOUSEWHEELDOWNBUTTON) },
+    { "UNKNOWN_1", KEY(rsNULL) },
+    { "VEHICLE_HORN", KEY(rsLSHIFT) },
+    { "TOGGLE_SUBMISSIONS", KEY(rsLCTRL) },
+    { "VEHICLE_HANDBRAKE", KEY(rsSPACE) },
+    { "PED_1RST_PERSON_LOOK_LEFT", KEY('Q') },
+    { "PED_1RST_PERSON_LOOK_RIGHT", KEY('E') },
+    { "VEHICLE_LOOKLEFT", KEY('Q') },
+    { "VEHICLE_LOOKRIGHT", KEY('E') },
+    { "VEHICLE_LOOKBEHIND", KEY('C') },
+    { "VEHICLE_MOUSELOOK",  KEY(rsNULL) },
+    { "VEHICLE_TURRETLEFT",  KEY(rsNULL) },
+    { "VEHICLE_TURRETRIGHT",  KEY(rsNULL) },
+    { "VEHICLE_TURRETUP", KEY(rsNULL) },
+    { "VEHICLE_TURRETDOWN", KEY(rsNULL) },
+    { "PED_CYCLE_TARGET_LEFT", KEY('Q') },
+    { "PED_CYCLE_TARGET_RIGHT", KEY('E') },
+    { "PED_CENTER_CAMERA_BEHIND_PLAYER", KEY(rsNULL) },
+    { "PED_LOCK_TARGET", MOUSE(rsMOUSERIGHTBUTTON) },
+    { "NETWORK_TALK", KEY(rsNULL) },
+    { "CONVERSATION_YES", KEY('Y') },
+    { "CONVERSATION_NO", KEY('N') },
+    { "GROUP_CONTROL_FWD", KEY('Y') },
+    { "GROUP_CONTROL_BWD", KEY('N') },
+    { "PED_1RST_PERSON_LOOK_UP", KEY(rsNULL) },
+    { "PED_1RST_PERSON_LOOK_DOWN", KEY(rsNULL) },
+    { "UNKNOWN_2", KEY(rsNULL) },
+    { "TOGGLE_DPAD", KEY(rsNULL) },
+    { "SWITCH_DEBUG_CAM_ON", KEY(rsNULL) },
+    { "TAKE_SCREEN_SHOT", KEY(rsNULL) },
+    { "SHOW_MOUSE_POINTER_TOGGLE", KEY(rsNULL) },
+    { "SHOW_WEAPON_WHEEL", KEY(rsTAB) },
+    { "EXTEND_RADAR_RANGE", KEY('Z') },
+    { "SHOW_PLAYER_STATS", KEY(rsLALT) },
+    { "PHONE_SHOW", MOUSE(rsMOUSMIDDLEBUTTON) },
+    { "PHONE_HIDE", MOUSE(rsMOUSERIGHTBUTTON) },
+    { "PHONE_UP", MOUSE(rsMOUSEWHEELUPBUTTON) },
+    { "PHONE_DOWN", MOUSE(rsMOUSEWHEELDOWNBUTTON) },
+    { "PHONE_ENTER", MOUSE(rsMOUSELEFTBUTTON) },
+};
+
+const char* controlKeysStrings[] = {
+    "ESC",
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6",
+    "F7",
+    "F8",
+    "F9",
+    "F10",
+    "F11",
+    "F12",
+    "INS",
+    "DEL",
+    "HOME",
+    "END",
+    "PGUP",
+    "PGDN",
+    "UP",
+    "DOWN",
+    "LEFT",
+    "RIGHT",
+    "DIVIDE",
+    "TIMES",
+    "PLUS",
+    "MINUS",
+    "PADDEL",
+    "PADEND",
+    "PADDOWN",
+    "PADPGDN",
+    "PADLEFT",
+    "PAD5",
+    "NUM_LOCK",
+    "PADRIGHT",
+    "PADHOME",
+    "PADUP",
+    "PADPGUP",
+    "PADINS",
+    "PADENTER",
+    "SCROLL",
+    "PAUSE",
+    "BACKSP",
+    "TAB",
+    "CAPSLK",
+    "ENTER",
+    "LSHIFT",
+    "RSHIFT",
+    "SHIFT",
+    "LCTRL",
+    "RCTRL",
+    "LALT",
+    "RALT",
+    "LWIN",
+    "RWIN",
+    "APPS",
+    "NULL",
+    "LMB",
+    "MMB",
+    "RMB",
+    "MWHU",
+    "MWHD",
 };
 
 CPadNew::CPadNew() {
@@ -97,10 +165,9 @@ void CPadNew::SaveSettings() {
     declarationNode.append_attribute("encoding") = "UTF-8";
 
     auto controls = doc.append_child("Controls");
-    controls.append_child("NUM_CONTROL_ACTIONS").append_attribute("value").set_value(NUM_CONTROL_ACTIONS);
 
     for (int i = 0; i < NUM_CONTROL_ACTIONS; i++) {
-        controls.append_child(Controls[i].action).append_attribute("value").set_value(Controls[i].key);
+        controls.append_child(Controls[i].action).append_attribute("value").set_value(KeyToString(Controls[i].key));
     }
 
     bool file = doc.save_file(PLUGIN_PATH(ControlsFileName));
@@ -123,19 +190,43 @@ void CPadNew::LoadSettings() {
 
     if (file) {
         auto controls = doc.child("Controls");
-        auto actions = controls.child("ActionsCount").attribute("value");
 
-        if (!actions || actions.as_int() != NUM_CONTROL_ACTIONS) {
-            printf("XML: Controls file is not compatible.");
-        }
-        else {
-            for (int i = 0; i < NUM_CONTROL_ACTIONS; i++) {
-                Controls[i].key = controls.child(Controls[i].action).attribute("value").as_int();
-            }
+        for (int i = 0; i < NUM_CONTROL_ACTIONS; i++) {
+            char tmp[16];
+            sprintf(tmp, "%s", controls.child(Controls[i].action).attribute("value").as_string());
+
+            if (tmp[0] && tmp[1] != '\0')
+                Controls[i].key = StringToKey(tmp);
+            else
+                Controls[i].key = tmp[0];
         }
     }
 
     PassControlsToCurrentGame(Controls);
+}
+
+int CPadNew::StringToKey(const char* str) {
+    for (int i = 0; i < ARRAY_SIZE(controlKeysStrings); i++) {
+        if (!faststrcmp(controlKeysStrings[i], str))
+            return i + rsESC;
+    }
+
+    return rsNULL;
+}
+
+const char* CPadNew::KeyToString(int key) {
+    if (key >= rsESC && key < MOUSE_CUSTOM_OFFSET) {
+        return controlKeysStrings[key - rsESC];
+    }
+    else if (key > MOUSE_CUSTOM_OFFSET) {
+        return controlKeysStrings[(key + rsNULL) - (MOUSE_CUSTOM_OFFSET + rsESC)];
+    }
+    else {
+        char c = (char)key;
+        char* buff = new char[2]{};
+        sprintf(buff, "%c", c);
+        return buff;
+    }
 }
 
 void CPadNew::PassControlsToCurrentGame(const CControls* c) {
@@ -143,9 +234,9 @@ void CPadNew::PassControlsToCurrentGame(const CControls* c) {
         int k = c[i].key;
         int t = 0;
 
-        if (k >= 2000) {
+        if (k >= MOUSE_CUSTOM_OFFSET) {
             t = CONTROLLER_MOUSE;
-            k -= 2000;
+            k -= MOUSE_CUSTOM_OFFSET;
         }
         else
             t = CONTROLLER_KEYBOARD1;
@@ -156,7 +247,7 @@ void CPadNew::PassControlsToCurrentGame(const CControls* c) {
 
 void CPadNew::SetControllerKeyAssociatedWithAction(e_ControllerAction action, int key, eControllerType type) {
     if (key == -1)
-        key = 1056;
+        key = rsNULL;
 
     ControlsManager.ResetSettingOrder(action);
 
@@ -167,10 +258,10 @@ void CPadNew::SetControllerKeyAssociatedWithAction(e_ControllerAction action, in
 int CPadNew::GetNumOfSettingsForAction(e_ControllerAction action) {
     int n = 0;
 
-    if (ControlsManager.m_actions[action].keys[0].keyCode != 1056)
+    if (ControlsManager.m_actions[action].keys[0].keyCode != rsNULL)
         n++;
 
-    if (ControlsManager.m_actions[action].keys[1].keyCode != 1056)
+    if (ControlsManager.m_actions[action].keys[1].keyCode != rsNULL)
         n++;
 
     if (ControlsManager.m_actions[action].keys[2].keyCode != 0)
@@ -187,8 +278,8 @@ bool CPadNew::GetKeyDown(int key) {
         if (NewKeyState.standardKeys[key])
             return true;
     }
-    else if (key > 2000) {
-        key -= 2000;
+    else if (key > MOUSE_CUSTOM_OFFSET) {
+        key -= MOUSE_CUSTOM_OFFSET;
 
         switch (key) {
         case rsMOUSELEFTBUTTON:
@@ -420,8 +511,8 @@ bool CPadNew::GetKeyJustDown(int key) {
         if (NewKeyState.standardKeys[key] && !OldKeyState.standardKeys[key])
             return true;
     }
-    else if (key > 2000) {
-        key -= 2000;
+    else if (key > MOUSE_CUSTOM_OFFSET) {
+        key -= MOUSE_CUSTOM_OFFSET;
 
         switch (key) {
         case rsMOUSELEFTBUTTON:
