@@ -8,14 +8,18 @@ using namespace plugin;
 
 CTextNew TextNew;
 
-CTextRead CTextNew::TextList[512];
-
 CTextNew::CTextNew() {
     CdeclEvent<AddressList<0x6A03E3, H_CALL>, PRIORITY_AFTER, ArgPickNone, void(const char*)> OnTextLoad;  
 
     OnTextLoad += [] {
-        ReadTextFile();
+        TextNew.ReadTextFile();
     };
+}
+
+CTextNew::~CTextNew() {
+    for (int i = 0; i < 512; i++) {
+        delete TextList[i].text;
+    }
 }
 
 void CTextNew::ReadTextFile() {
@@ -62,11 +66,17 @@ void CTextNew::ReadTextFile() {
             sscanf(line.c_str(), "%s = %[^\n]", &str, &text);
 
             strcpy(TextList[id].str, str);
-            strcpy(TextList[id].text, text);
+
+            int length = strlen(text);
+            TextList[id].text = new char [length];
+            strncpy(TextList[id].text, text, length);
+            TextList[id].text[length] = '\0';
             id++;
         }
         file.close();
     }
+
+    TextResult.Clear();
 }
 
 CTextRead CTextNew::GetText(int s) {
@@ -74,21 +84,16 @@ CTextRead CTextNew::GetText(int s) {
 }
 
 CTextRead CTextNew::GetText(char* str) {
-    CTextRead result = CTextRead();
-
-    if (*str == '\0')
-        return result;
+    if (str[0] == '\0')
+        return TextResult;
 
     for (int i = 0; i < 512; i++) {
-        if (TextList[i].str[0] == str[0]
-            && TextList[i].str[1] == str[1]
-            && TextList[i].str[2] == str[2]
-            && !faststrcmp(str, TextList[i].str, 3)) {
-            result = GetText(i);
+        if (!faststrcmp(str, TextList[i].str)) {
+            TextResult = GetText(i);
             break;
         }
     }
-    return result;
+    return TextResult;
 }
 
 char CTextNew::GetUpperCase(char c) {

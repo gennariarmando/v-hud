@@ -104,6 +104,8 @@ CHudNew::CHudNew() {
         CHudNew::TakePhotograph();
     };
     patch::RedirectJump(0x705331, (void*)0x7053AF);
+
+    patch::PutRetn(0x69E160);
 }
 
 void CHudNew::Init() {
@@ -1156,7 +1158,7 @@ void CHudNew::DrawVehicleName() {
                 if (vehClass == -1 || vehClass > 12)
                     vehClass = 12;
 
-                sprintf(vehicleName, "%s, %s", CHud::m_pVehicleNameToPrint, CTextNew::GetText(textClass[vehClass]).text);
+                sprintf(vehicleName, "%s, %s", CHud::m_pVehicleNameToPrint, TextNew.GetText(textClass[vehClass]).text);
             }
             else
                 strcpy(vehicleName, CHud::m_pVehicleNameToPrint);
@@ -1222,7 +1224,7 @@ void CHudNew::DrawMissionTimers() {
 
                 MissionTimersString[nTimersCount][0] = CUserDisplay::OnscnTimer.m_aCounters[i].m_szDisplayedText;
                 MissionTimersString[nTimersCount][1] = TheText.Get(CUserDisplay::OnscnTimer.m_aCounters[i].m_szDescriptionTextKey);
-                CTextNew::UpperCase(MissionTimersString[nTimersCount][1]);
+                TextNew.UpperCase(MissionTimersString[nTimersCount][1]);
                 nTimersCount++;
             }
 
@@ -1401,7 +1403,7 @@ void CHudNew::DrawHelpText() {
 
                 CFontNew::SetFontStyle(CFontNew::FONT_1);
                 CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
-                if (CFontNew::GetStringWidth(CHud::m_pHelpMessageToPrint, true) <= SCREEN_COORD(256.0f)) {//(!CHud::m_nHelpMessageStatId) {
+                if (CFontNew::GetStringWidth(CHud::m_pHelpMessageToPrint, true) < SCREEN_COORD(200.0f)) {//(!CHud::m_nHelpMessageStatId) {
                     PrintSmallHelpText(alpha);
                 }
                 else {
@@ -1426,7 +1428,7 @@ void CHudNew::PrintSmallHelpText(int alpha) {
     CFontNew::SetDropShadow(0.0f);
     CFontNew::SetOutline(0.0f);
     CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
-    CFontNew::SetWrapX(SCREEN_COORD(254.0f));
+    CFontNew::SetWrapX(SCREEN_COORD(264.0f));
 
     char string[256];
     if (CHud::m_nHelpMessageStatId) {
@@ -1548,13 +1550,13 @@ void CHudNew::DrawSuccessFailedMessage() {
 
     m_bShowSuccessFailed = true;
     if (CHud::m_BigMessage[0][0] && !strncmp(CHud::m_BigMessage[0], TheText.Get("M_PASS"), 5)) {
-        mainText = CTextNew::GetText("M_PASS").text;
+        mainText = TextNew.GetText("M_PASS").text;
         bottomText = m_LastMissionName;
         col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 150);
         slide = true;
     }
     else if (CHud::m_BigMessage[0][0] && !strcmp(CHud::m_BigMessage[0], TheText.Get("M_FAIL"))) {
-        mainText = CTextNew::GetText("M_FAIL").text;
+        mainText = TextNew.GetText("M_FAIL").text;
 
         switch (FindPlayerPed(-1)->m_nPedState) {
             case PEDSTATE_DEAD:
@@ -1769,7 +1771,7 @@ void CHudNew::DrawLevelName() {
         CRGBA col = GET_SETTING(HUD_LEVEL_NAME).col;
         CFontNew::SetColor(CRGBA(col.r, col.g, col.b, alpha));
         CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_LEVEL_NAME).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_LEVEL_NAME).h));
-        CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_LEVEL_NAME).x), HUD_BOTTOM(GET_SETTING(HUD_LEVEL_NAME).y), CTextNew::GetText(m_CurrentLevelName).text);
+        CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_LEVEL_NAME).x), HUD_BOTTOM(GET_SETTING(HUD_LEVEL_NAME).y), TextNew.GetText(m_CurrentLevelName).text);
     }
 }
 

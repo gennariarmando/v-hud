@@ -115,10 +115,10 @@ void CRadioHud::Draw() {
         char* str = NULL;
         if (bool radioOff = (i != RADIO_NONE)) {
             sprintf(gString, "RADIO%d", i);
-            str = CTextNew::GetText(gString).text;
+            str = TextNew.GetText(gString).text;
         }
         else {
-            str = CTextNew::GetText("RADOFF").text;
+            str = TextNew.GetText("RADOFF").text;
         }
 
         CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(0.0f), HUD_Y(y + h + 18.0f), str);

@@ -933,7 +933,7 @@ void CWeaponSelector::DrawWheel() {
 
             if (selected_wep && nSelectedWeapon[nSelectedSlot] != -1) {
                 CFontNew::SetScale(SCREEN_MULTIPLIER(0.64f), SCREEN_MULTIPLIER(1.46f));
-                CFontNew::PrintString(SCREEN_COORD_CENTER_X + SCREEN_COORD(x + 2.0f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 120.0f), CTextNew::GetText(selected_wep->name).text);
+                CFontNew::PrintString(SCREEN_COORD_CENTER_X + SCREEN_COORD(x + 2.0f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 120.0f), TextNew.GetText(selected_wep->name).text);
             }
 
             if (nNumWeaponsAvailableInSlot[nSelectedSlot] > 1) {
@@ -955,14 +955,14 @@ void CWeaponSelector::DrawWheel() {
             CFontNew::Details.dropColor.a = FadeIn(255);
             if (selectedInfo->m_nFlags.bTwinPistol) {
                 CFontNew::SetScale(SCREEN_MULTIPLIER(0.56f), SCREEN_MULTIPLIER(1.34f));
-                CFontNew::PrintString(SCREEN_COORD_CENTER_X + SCREEN_COORD(x + 2.0f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 47.0f), CTextNew::GetText("DOUBLEW").text);
+                CFontNew::PrintString(SCREEN_COORD_CENTER_X + SCREEN_COORD(x + 2.0f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 47.0f), TextNew.GetText("DOUBLEW").text);
                 offset += 30.0f;
             }
             int slot = playa->GetWeaponSlot((eWeaponType)selected_wep->id);
             int ammo = playa->m_aWeapons[slot].m_nTotalAmmo - playa->m_aWeapons[slot].m_nAmmoInClip;
             if (ammo > 9999) {
                 CFontNew::SetScale(SCREEN_MULTIPLIER(0.56f), SCREEN_MULTIPLIER(1.34f));
-                CFontNew::PrintString(SCREEN_COORD_CENTER_X + SCREEN_COORD(x + 2.0f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 47.0f + offset), CTextNew::GetText("UNLIMIT").text);
+                CFontNew::PrintString(SCREEN_COORD_CENTER_X + SCREEN_COORD(x + 2.0f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 47.0f + offset), TextNew.GetText("UNLIMIT").text);
             }
         }
 
@@ -1101,7 +1101,7 @@ void CWeaponSelector::DrawStats(int active_id, int selected_id) {
             col = HudColourNew.GetRGB("HUD_COLOUR_RED", 255);
 
         DrawProgressBarWithProgressDifference(HUD_RIGHT(x), HUD_Y(spacing + y) + heightLerp, SCREEN_COORD(w), SCREEN_COORD(h), fStatsProgress[i], GET_SETTING("HUD_WEAPON_STATS_BAR").col, fStatsDiff[i], col);
-        CFontNew::PrintString(HUD_RIGHT(x), HUD_Y(spacing + (y - 28.0f)) + heightLerp, CTextNew::GetText(statName[i]).text);
+        CFontNew::PrintString(HUD_RIGHT(x), HUD_Y(spacing + (y - 28.0f)) + heightLerp, TextNew.GetText(statName[i]).text);
         spacing += 42.0f;
     }
 

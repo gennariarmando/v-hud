@@ -20,7 +20,6 @@ char CFontNew::Size[NUM_FONTS][160];
 bool CFontNew::bNewLine;
 CSprite2d* CFontNew::PS2Symbol;
 CVector CFontNew::PS2SymbolScale;
-
 CSprite2d* CFontNew::ButtonSprite[NUM_BUTTONS];
 
 char* ButtonFileName[] = {
@@ -57,75 +56,105 @@ char* ButtonFileName[] = {
     "thumbry",
     "thumbryu",
     "thumbryd",
-    "pc_up",
-    "pc_down",
-    "pc_left",
-    "pc_right",
-    "alt",
-    "backspace",
-    "caps",
-    "del",
-    "down",
-    "end",
-    "enter",
-    "esc",
-    "f1",
-    "f2",
-    "f3",
-    "f4",
-    "f5",
-    "f6",
-    "f7",
-    "f8",
-    "f9",
-    "f10",
-    "f11",
-    "f12",
-    "home",
-    "ins",
-    "l",
-    "lalt",
-    "lctrl",
-    "left",
-    "lwin",
-    "menu",
-    "numlock",
-    "pause",
-    "pgdown",
-    "pgup",
-    "printscreen",
-    "ralt",
-    "rctrl",
-    "right",
-    "rwin",
-    "scrolllock",
-    "shift",
-    "spacebar",
-    "up",
-};
-
-// Custom GInput action strings
-const char* CustomGInputActions[] = {
-#if 0
-                "VEHICLE_FIREWEAPON",
-                "VEHICLE_TURRET_LEFT_RIGHT",
-                "VEHICLE_TURRET_UP_DOWN",
-                "GO_LEFTRIGHT",
-                "GO_UPDOWN",
-                "MELEE_ATTACK",
-                "BLOW_UP_RC_BUGGY",
-#else
-                "PED_MOVE",
-                "BMX_HANDBRAKE",
-                "BMX_BUNNYHOP",
-                "CAMERA_LEFT_RIGHT",
-                "CAMERA_UP_DOWN",
-                "VEHICLE_CHANGE_RADIO_STATION",
-                "GO_LEFTRIGHT",
-                "GO_UPDOWN",
-                "SNATCH_PACKAGE",
-                "HYDRA_TARGET",
-#endif
+    "SPACEBAR",
+    "ESC",
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6",
+    "F7",
+    "F8",
+    "F9",
+    "F10",
+    "F11",
+    "F12",
+    "INS",
+    "DEL",
+    "HOME",
+    "END",
+    "PGUP",
+    "PGDN",
+    "UP",
+    "DOWN",
+    "LEFT",
+    "RIGHT",
+    "DIVIDE",
+    "TIMES",
+    "PLUS",
+    "MINUS",
+    "PADDEL",
+    "PADEND",
+    "PADDOWN",
+    "PADPGDN",
+    "PADLEFT",
+    "PAD5",
+    "NUMLOCK",
+    "PADRIGHT",
+    "PADHOME",
+    "PADUP",
+    "PADPGUP",
+    "PADINS",
+    "ENTER",
+    "SCROLL",
+    "PAUSE",
+    "BACKSP",
+    "TAB",
+    "CAPSLK",
+    "ENTER",
+    "LSHIFT",
+    "RSHIFT",
+    "SHIFT",
+    "LCTRL",
+    "RCTRL",
+    "LALT",
+    "RALT",
+    "LWIN",
+    "RWIN",
+    "APPS",
+    "NULL",
+    "LMB",
+    "MMB",
+    "RMB",
+    "MWHU",
+    "MWHD",
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
 };
 
 CFontNew::CFontNew() {
@@ -253,24 +282,20 @@ float CFontNew::GetCharacterSize(char c) {
     return Size[Details.style][c] * Details.scale.x;
 }
 
-float CFontNew::GetStringWidth(char* s, bool spaces) {
+float CFontNew::GetStringWidth(const char* s, bool spaces) {
     float w;
 
     w = 0.0f;
     for (; (*s != ' ' || spaces) && *s != '\0'; s++) {
-        if (*s == '~') {
-            s++;
-            while (*s != '~') s++;
-            s++;
-            if (*s == ' ' && !spaces)
-                break;
-        }
+        if (*s == '~')
+            s = ParseToken(false, s);
+
         w += GetCharacterSize(*s - ' ');
     }
     return w;
 }
 
-char* CFontNew::GetNextSpace(char* s) {
+const char* CFontNew::GetNextSpace(const char* s) {
     for (; *s != ' ' && *s != '\0'; s++)
         if (*s == '~') {
             s++;
@@ -285,7 +310,7 @@ void CFontNew::SetTokenToIgnore(char t1, char t2) {
     Details.ignoreTokens[1] = t2;
 }
 
-int CFontNew::PrintString(float x, float y, char* s) {
+int CFontNew::PrintString(float x, float y, const char* s) {
     if (*s != '*') {
         if (Details.background) {
             CRect rect;
@@ -301,7 +326,7 @@ int CFontNew::PrintString(float x, float y, char* s) {
     }
 }
 
-int CFontNew::GetNumberLines(bool print, float xstart, float ystart, char* s) {
+int CFontNew::GetNumberLines(bool print, float xstart, float ystart, const char* s) {
     float x = xstart;
     float y = ystart;
     int n = 1;
@@ -309,8 +334,8 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, char* s) {
 
     if (Details.alignment == ALIGN_CENTER) {
         bool first = true;
-        char* start = s;
-        char* t = s;
+        char const* start = s;
+        char* t = (char*)s;
         float length = 0.0f;
         int space = 0;
 
@@ -337,7 +362,7 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, char* s) {
                     n++;
                 }
 
-                t = GetNextSpace(s);
+                t = (char*)GetNextSpace(s);
                 if (t[0] == '\0' || t[0] == ' ' && t[1] == '\0') {
                     break;
                 }
@@ -370,9 +395,6 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, char* s) {
     }
 
     for (s; *s != '\0'; s++) {
-        if (*s == '~')
-            s = ParseToken(s);
-
         char c;
         c = *s - ' ';
 
@@ -390,23 +412,28 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, char* s) {
             n++;
         }
 
+        if (*s == '~')
+            s = ParseToken(print, s);
+
         if (print)
             PrintChar(x, y, c);
 
         letterCount++;
         x += GetCharacterSize(c);
+        PS2Symbol = NULL;
     }
 
     return n;
 }
 
-void CFontNew::PrintString(bool print, float x, float y, char* start, char* end, float spwidth) {
-    char* s, c;
+void CFontNew::PrintString(bool print, float x, float y, const char* start, const char* end, float spwidth) {
+    char const* s;
+    char c;
 
     float xstart = x;
     for (s = start; s < end; s++) {
         if (*s == '~')
-            s = ParseToken(s);
+            s = ParseToken(print, s);
 
         c = *s - ' ';
 
@@ -417,11 +444,13 @@ void CFontNew::PrintString(bool print, float x, float y, char* start, char* end,
 
         if (c == 0)
             x += spwidth;
+
+        PS2Symbol = NULL;
     }
 }
 
-char* CFontNew::ParseToken(char* s) {
-    char* c = s + 1;
+const char* CFontNew::ParseToken(bool print, const char* s) {
+    char const* c = s + 1;
     int a = Details.color.a;
 
     if (Details.ignoreTokens[0] != *c && Details.ignoreTokens[1] != *c) {
@@ -462,7 +491,8 @@ char* CFontNew::ParseToken(char* s) {
             break;
         case 'K':
         case 'k':
-            PS2Symbol = ButtonSprite[BUTTON_L1];
+            c += 3;
+            PS2Symbol = GetKeyboardSprite(ParseCustomActions(c));
             break;
         case 'M':
         case 'm':
@@ -576,132 +606,83 @@ char* CFontNew::ParseToken(char* s) {
             }
             break;
         case '@':
-            if (char* nx = c) {
-                if (!ParseGInputActions(++c)) {
-                    switch (*(++nx)) {
-                    case 'E':
-                        PS2Symbol = ButtonSprite[BUTTON_PC_ENTER];
-                        break;
-                    case 'B':
-                        PS2Symbol = ButtonSprite[BUTTON_PC_ESC];
-                        break;
-                    }
-                }
-                c = nx;
-            }
-            break;
-        case '#':
-            if (char* nx = c) {
-                switch (*(++nx)) {
-                case 'L':
-                    PS2Symbol = ButtonSprite[BUTTON_PC_L];
-                    break;
-                }
-
-                c = nx;
-            }
+            PS2Symbol = GetKeyboardSprite(CPadNew::StringToKey(++c));
+            c++;
             break;
         }
     }
-    while (*c != '~') ++c;
-    ++c;
-    return c;
+    while (*c != '~') c++;
+
+    if (!print) {
+        PS2Symbol = false;
+        bNewLine = false;
+    }
+
+    if (*c == '~' || *c == ' ')
+        return c;
+
+    return c + 1;
 }
 
-bool CFontNew::ParseGInputActions(char* s) {
-    short mode = CPadNew::GetPad(0)->Mode;
-    bool southPaw = false;
-    for (int i = 0; i < ARRAY_SIZE(CustomGInputActions); i++) {
-        if (!faststrcmp(s, CustomGInputActions[i])) {
-            switch (i) {
-            case ACTION_PED_MOVE:
-                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBR] : ButtonSprite[BUTTON_THUMBL];
-                break;
-            case ACTION_BMX_HANDBRAKE:
-                switch (mode) {
-                case 0:
-                    PS2Symbol = ButtonSprite[BUTTON_R1];
-                    break;
-                case 1:
-                    PS2Symbol = ButtonSprite[BUTTON_R2];
-                    break;
-                }
-                break;
-            case ACTION_BMX_BUNNYHOP:
-                switch (mode) {
-                case 0:
-                    PS2Symbol = ButtonSprite[BUTTON_L1];
-                    break;
-                case 1:
-                    PS2Symbol = ButtonSprite[BUTTON_SQUARE];
-                    break;
-                }
-                break;
-            case ACTION_CAMERA_LEFT_RIGHT:
-                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBLX] :ButtonSprite[BUTTON_THUMBRX];
-                break;
-            case ACTION_CAMERA_UP_DOWN:
-                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBLY] :ButtonSprite[BUTTON_THUMBRY];
-                break;
-            case ACTION_VEHICLE_CHANGE_RADIO_STATION:
-                switch (mode) {
-                case 0:
-                    PS2Symbol = ButtonSprite[BUTTON_UPDOWN];
-                    break;
-                case 1:
-                    PS2Symbol = ButtonSprite[BUTTON_LEFTRIGHT];
-                    break;
-                }
-                break;
-            case ACTION_GO_LEFTRIGHT:
-                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBRX] : ButtonSprite[BUTTON_THUMBLX];
-                break;
-            case ACTION_GO_UPDOWN:
-                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBRY] : ButtonSprite[BUTTON_THUMBLY];
-                break;
-            case ACTION_SNATCH_PACKAGE:
-                switch (mode) {
-                case 0:
-                    PS2Symbol = ButtonSprite[BUTTON_L1];
-                    break;
-                case 1:
-                    PS2Symbol = ButtonSprite[BUTTON_CIRCLE];
-                    break;
-                }
-                break;
-            case ACTION_HYDRA_TARGET:
-                switch (mode) {
-                case 0:
-                    PS2Symbol = ButtonSprite[BUTTON_R1];
-                    break;
-                case 1:
-                    PS2Symbol = ButtonSprite[BUTTON_SQUARE];
-                    break;
-                }
-                break;
-            }
+CSprite2d* CFontNew::GetKeyboardSprite(int key) {
+    CSprite2d* sprite = NULL;
 
-            return true;
+    if ((key >= 'A' && key <= 'Z'))
+        sprite = ButtonSprite[(key - 'A') + BUTTON_PC_A];
+
+    if (key >= 'a' && key <= 'z')
+        sprite = ButtonSprite[(key - 'a') + BUTTON_PC_A];
+
+    if (key >= '0' && key <= '9')
+        sprite = ButtonSprite[(key - '9') + BUTTON_PC_0];
+
+    if (key == rsSPACE)
+        sprite = ButtonSprite[BUTTON_PC_SPACEBAR];
+
+    if (key >= rsESC && key < rsNULL)
+        sprite = ButtonSprite[(key - rsESC) + BUTTON_PC_ESC];
+
+    return sprite;
+}
+
+bool astrcmp(const char* s, const char* a) {
+    while (*a) {
+        if (*s != *a)
+            return false;
+
+        s++;
+        a++;
+    }
+    return true;
+}
+
+int CFontNew::ParseCustomActions(const char* s) {
+    for (int i = 0; i < NUM_CONTROL_ACTIONS; i++) {
+        if (astrcmp(s, Controls[i].action)) {
+            return Controls[i].key;
         }
     }
 
-    return false;
+    return rsNULL;
 }
 
-void CFontNew::DrawButton(float x, float y, CSprite2d* sprite) {
-    if (!sprite)
+void CFontNew::DrawButton(float& x, float y, CSprite2d* sprite) {
+    if (!sprite || sprite && !sprite->m_pTexture)
         return;
 
-    CRect rect;
-    
+    CRect rect = { };
+
     PS2SymbolScale.x = clamp(sprite->m_pTexture->raster->width, 0, 128);
     PS2SymbolScale.y = clamp(sprite->m_pTexture->raster->height, 0, 128);
     float w = Details.scale.y * (PS2SymbolScale.x / 3);
     float h = Details.scale.y * (PS2SymbolScale.y / 3);
+
     rect.left = x;
     rect.top = y + SCREEN_COORD(1.0f);
     rect.right = rect.left + (w);
     rect.bottom = rect.top + (h);
+
+    x += w - GetCharacterSize(' ');
 
     int savedAlpha;
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
@@ -710,10 +691,10 @@ void CFontNew::DrawButton(float x, float y, CSprite2d* sprite) {
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)savedAlpha);
 }
 
-void CFontNew::PrintChar(float& x, float& y, char c) {
+void CFontNew::PrintChar(float& x, float y, char c) {
     float _x = (c % 16);
     float _y = (c / 16);
-    
+
     float b = 0.002f;
     float u1 = _x / 16.0f + (b);
     float v1 = _y / 12.8f + (b);
@@ -728,8 +709,6 @@ void CFontNew::PrintChar(float& x, float& y, char c) {
     RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSWRAP);
 
     DrawButton(x, y, PS2Symbol);
-    x += PS2Symbol ? (Details.scale.y * (PS2SymbolScale.x / 3)) : 0.0f;
-    PS2Symbol = NULL;
 
     // Text shadow
     if (Details.shadow > 0.0f) {
@@ -772,7 +751,7 @@ void CFontNew::PrintChar(float& x, float& y, char c) {
         u3, v3, u4, v4);
 }
 
-void CFontNew::PrintStringFromBottom(float x, float y, char* s) {
+void CFontNew::PrintStringFromBottom(float x, float y, const char* s) {
     y -= GetHeightScale(Details.scale.y) * (GetNumberLines(false, x, y, s) - 1);
 
     PrintString(x, y, s);
@@ -814,7 +793,7 @@ float CFontNew::GetHeightScale(float h) {
     return 32.0f * h * 0.5f + 2.0f * h;
 }
 
-void CFontNew::GetTextRect(CRect* rect, float xstart, float ystart, char* s) {
+void CFontNew::GetTextRect(CRect* rect, float xstart, float ystart, const char* s) {
     if (Details.alignment == ALIGN_CENTER)
         xstart -= GetStringWidth(s, true) / 2;
 

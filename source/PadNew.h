@@ -40,6 +40,12 @@ enum eControlsActions {
     PHONE_UP,
     PHONE_DOWN,
     PHONE_ENTER,
+    MENU_SHOW_HIDE_LEGEND,
+    MENU_PLACE_WAYPOINT,
+    MENU_DELETE_SAVE,
+    MENU_APPLY_CHANGES,
+    MENU_BACK,
+    MENU_SELECT,
     NUM_CONTROL_ACTIONS
 };
 
@@ -137,3 +143,4 @@ public:
 extern bool bHasPadInHands;
 extern CControls Controls[NUM_CONTROL_ACTIONS];
 
+extern const char* controlKeysStrings[];

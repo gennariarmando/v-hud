@@ -267,7 +267,7 @@ void CCellPhone::ProcessPhoneApp() {
     switch (Apps[nCurrentItem].type) {
     case CELLPHONE_APP_QUICKSAVE:
         if (playa->m_nPedFlags.bInVehicle) {
-            CHud::SetHelpMessage(CTextNew::GetText("QSAV_ERR").text, true, false, true);
+            CHud::SetHelpMessage(TextNew.GetText("QSAV_ERR").text, true, false, true);
         }
         else {
             MenuNew.SetSavePageBehaviour(false);
@@ -334,7 +334,7 @@ void CCellPhone::DrawPhone(float x, float y) {
     char daytmp[32];
     char* day;
     sprintf(daytmp, "DAY_%d", CClock::CurrentDay);
-    day = CTextNew::GetText(daytmp).text;
+    day = TextNew.GetText(daytmp).text;
     CFontNew::PrintString(sx, dy, day);
     CFontNew::SetClipX(SCREEN_WIDTH);
     sx = dx + (dw / 2);
@@ -361,7 +361,7 @@ void CCellPhone::DrawPhone(float x, float y) {
     const float headerY = tly + SCREEN_COORD(2.0f);
     CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
     CFontNew::SetScale(SCREEN_MULTIPLIER(0.72f), SCREEN_MULTIPLIER(1.62f));
-    CFontNew::PrintString(headerX, headerY, CTextNew::GetText(Apps[nCurrentItem].name).text);
+    CFontNew::PrintString(headerX, headerY, TextNew.GetText(Apps[nCurrentItem].name).text);
 
     const float iconSize = 24.0f;
     const float spacing = SCREEN_COORD(iconSize / 2);

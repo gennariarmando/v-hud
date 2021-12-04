@@ -1830,10 +1830,10 @@ void CMenuNew::DrawPauseMenuExtraText() {
     char* header = NULL;
     switch (nCurrentScreen) {
     case MENUSCREEN_SAVE:
-        header = CTextNew::GetText("FE_SGAM").text;
+        header = TextNew.GetText("FE_SGAM").text;
         break;
     default:
-        header = CTextNew::GetText("FE_GTA").text;
+        header = TextNew.GetText("FE_GTA").text;
         break;
     }
 
@@ -1858,14 +1858,14 @@ void CMenuNew::DrawPauseMenuExtraText() {
 
         char playerName[16];
         sprintf(playerName, "%s", PedNameList[playa.m_pPed->m_nModelIndex]);
-        CTextNew::UpperCase(playerName);
+        TextNew.UpperCase(playerName);
         CFontNew::PrintString(MENU_RIGHT(311.0f + 69.0f + 8.0f), MENU_Y(92.0f), playerName);
 
         char daytmp[32];
         char* day;
         sprintf(daytmp, "DAY_%d", CClock::CurrentDay);
-        day = CTextNew::GetText(daytmp).text;
-        CTextNew::UpperCase(day);
+        day = TextNew.GetText(daytmp).text;
+        TextNew.UpperCase(day);
         CFontNew::PrintString(MENU_RIGHT(311.0f + 69.0f + 58.0f), MENU_Y(92.0f + 23.0), day);
 
         char time[16];
@@ -1972,8 +1972,8 @@ void CMenuNew::Draw() {
                 CFontNew::SetColor(menuBarTextColor);
                 CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
 
-                char* str = CTextNew::GetText(MenuBar[i].barName).text;
-                CTextNew::UpperCase(str);
+                char* str = TextNew.GetText(MenuBar[i].barName).text;
+                TextNew.UpperCase(str);
                 CFontNew::PrintString(menuBar.left + (menuBar.right * 0.5f), menuBar.top + SCREEN_COORD(6.0f), str);
 
                 menuBar.left += menuBar.right + spacing;
@@ -1984,7 +1984,7 @@ void CMenuNew::Draw() {
             char* str = MenuScreen[nCurrentScreen].screenName;
 
             if (faststrcmp(str, "BLANK")) {
-                str = CTextNew::GetText(str).text;
+                str = TextNew.GetText(str).text;
 
                 CRect bar;
                 CRGBA barColor;
@@ -2021,7 +2021,7 @@ void CMenuNew::Draw() {
                 CFontNew::SetColor(barTextColor);
                 CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
 
-                CTextNew::UpperCase(str);
+                TextNew.UpperCase(str);
                 CFontNew::PrintString(bar.left + (bar.right * 0.5f), bar.top + SCREEN_COORD(6.0f), str);
             }
         }
@@ -2138,7 +2138,7 @@ void CMenuNew::Draw() {
         CFontNew::SetScale(SCREEN_MULTIPLIER(3.2f), SCREEN_MULTIPLIER(6.3f));
 
         if (header) {
-            CFontNew::PrintStringFromBottom(SCREEN_COORD_CENTER_X, SCREEN_COORD_CENTER_Y + SCREEN_COORD(-116.0f), CTextNew::GetText(header).text);
+            CFontNew::PrintStringFromBottom(SCREEN_COORD_CENTER_X, SCREEN_COORD_CENTER_Y + SCREEN_COORD(-116.0f), TextNew.GetText(header).text);
         }
 
         if (msg) {
@@ -2146,7 +2146,7 @@ void CMenuNew::Draw() {
             CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
             CFontNew::SetScale(SCREEN_MULTIPLIER(0.86f), SCREEN_MULTIPLIER(1.80f));
 
-            char* str = CTextNew::GetText(msg).text;
+            char* str = TextNew.GetText(msg).text;
             int n = CFontNew::PrintString(SCREEN_COORD_CENTER_X, SCREEN_COORD_CENTER_Y + SCREEN_COORD(36.0f), str);
 
             CRect r;
@@ -2213,7 +2213,7 @@ void CMenuNew::Draw() {
             }
 
             if (str) {
-                str = CTextNew::GetText(str).text;
+                str = TextNew.GetText(str).text;
                 CFontNew::PrintString(x - offset, r.top + SCREEN_COORD(4.0f), str);
                 x -= CFontNew::GetStringWidth(str, true);
                 x -= spacing;
@@ -2320,13 +2320,13 @@ void CMenuNew::DrawDefault() {
                     sprintf(strTmp, "%02d - %s", i + 1, leftText);
                 }
                 else
-                    sprintf(strTmp, "%s %d/8", CTextNew::GetText("FE_NEWSAV").text, i + 1);
+                    sprintf(strTmp, "%s %d/8", TextNew.GetText("FE_NEWSAV").text, i + 1);
 
                 leftText = strTmp;
                 rightText = nSaveSlotsDate[i];
             }
             else {
-                leftText = CTextNew::GetText(MenuScreen[nCurrentScreen].Tab[i].tabName).text;
+                leftText = TextNew.GetText(MenuScreen[nCurrentScreen].Tab[i].tabName).text;
             }
 
             if (bDrawMouse && CheckHover(menuTab.left, menuTab.left + menuTab.right, menuTab.top, menuTab.top + menuTab.bottom)) {
@@ -2396,8 +2396,8 @@ void CMenuNew::DrawDefault() {
         CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(255)));
         CFontNew::SetScale(SCREEN_MULTIPLIER(2.6f), SCREEN_MULTIPLIER(4.8f));
 
-        char* h = CTextNew::GetText(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName).text;
-        char* a = CTextNew::GetText(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].actionName).text;
+        char* h = TextNew.GetText(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName).text;
+        char* a = TextNew.GetText(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].actionName).text;
         if (h)
             CFontNew::PrintString(rect.left + SCREEN_COORD(32.0f), rect.top + SCREEN_COORD(19.0f), h);
 
@@ -2433,12 +2433,12 @@ void CMenuNew::DrawDefault() {
 
             if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].type == MENUENTRY_LOADGAME) {
                 leftText = nSaveSlots[i];
-                sprintf(leftTextTmp, "%02d - %s", i + 1, leftText ? leftText : CTextNew::GetText("FE_UNK").text);
+                sprintf(leftTextTmp, "%02d - %s", i + 1, leftText ? leftText : TextNew.GetText("FE_UNK").text);
                 leftText = leftTextTmp;
                 rightText = nSaveSlotsDate[i];
             }
             else {
-                leftText = CTextNew::GetText(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].entryName).text;
+                leftText = TextNew.GetText(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].entryName).text;
             }
 
             if (i != 0) {
@@ -2495,7 +2495,7 @@ void CMenuNew::DrawDefault() {
             case MENUENTRY_NONE:
                 break;
             case MENUENTRY_SCREENTYPE:
-                rightText = CTextNew::GetText(TempSettings.screenType ? "FE_SCN1" : "FE_SCN0").text;
+                rightText = TextNew.GetText(TempSettings.screenType ? "FE_SCN1" : "FE_SCN0").text;
                 break;
             case MENUENTRY_CHANGERES:
                 if (char* mode = VideoModeList[TempSettings.videoMode]) {
@@ -2515,7 +2515,7 @@ void CMenuNew::DrawDefault() {
                 switch (TempSettings.antiAliasing) {
                 case 0:
                 case 1:
-                    rightText = CTextNew::GetText("FE_OFF").text;
+                    rightText = TextNew.GetText("FE_OFF").text;
                     break;
                 case 2:
                     rightText = "x2";
@@ -2529,96 +2529,96 @@ void CMenuNew::DrawDefault() {
                 };
                 break;
             case MENUENTRY_FRAMELIMITER:
-                rightText = CTextNew::GetText(TempSettings.frameLimiter ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.frameLimiter ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_VISUALQUALITY:
                 switch (TempSettings.visualQuality) {
                 case 0:
-                    rightText = CTextNew::GetText("FE_LOW").text;
+                    rightText = TextNew.GetText("FE_LOW").text;
                     break;
                 case 1:
-                    rightText = CTextNew::GetText("FE_MED").text;
+                    rightText = TextNew.GetText("FE_MED").text;
                     break;
                 case 2:
-                    rightText = CTextNew::GetText("FE_HIG").text;
+                    rightText = TextNew.GetText("FE_HIG").text;
                     break;
                 case 3:
-                    rightText = CTextNew::GetText("FE_VHIG").text;
+                    rightText = TextNew.GetText("FE_VHIG").text;
                     break;
                 };
                 break;
             case MENUENTRY_SHOWHUD:
-                rightText = CTextNew::GetText(TempSettings.showHUD ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.showHUD ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_SHOWRADAR:
-                rightText = CTextNew::GetText(TempSettings.showRadar ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.showRadar ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_GPSROUTE:
-                rightText = CTextNew::GetText(TempSettings.gpsRoute ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.gpsRoute ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_MEASUREMENTSYS:
-                rightText = CTextNew::GetText(TempSettings.measurementSys ? "FE_IMP" : "FE_MET").text;
+                rightText = TextNew.GetText(TempSettings.measurementSys ? "FE_IMP" : "FE_MET").text;
                 break;
             case MENUENTRY_SUBTITLES:
-                rightText = CTextNew::GetText(TempSettings.subtitles ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.subtitles ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_INVERTMOUSEY:
-                rightText = CTextNew::GetText(TempSettings.invertMouseY ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.invertMouseY ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_MOUSESTEER:
-                rightText = CTextNew::GetText(TempSettings.mouseSteering ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.mouseSteering ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_MOUSEFLYING:
-                rightText = CTextNew::GetText(TempSettings.mouseFlying ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.mouseFlying ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_RADIOSTATION:
                 if (bool radioOff = (Settings.radioStation != RADIO_NONE) && CRadioHud::CanRetuneRadioStation()) {
                     sprintf(rightTextTmp, "RADIO%d", Settings.radioStation);
-                    rightText = CTextNew::GetText(rightTextTmp).text;
+                    rightText = TextNew.GetText(rightTextTmp).text;
                 }
                 else {
-                    rightText = CTextNew::GetText("RADOFF").text;
+                    rightText = TextNew.GetText("RADOFF").text;
                 }
                 break;
             case MENUENTRY_RADIOAUTOSELECT:
-                rightText = CTextNew::GetText(TempSettings.radioAutoSelect ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.radioAutoSelect ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_RADIOEQ:
-                rightText = CTextNew::GetText(TempSettings.radioEQ ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.radioEQ ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_TRACKSAUTOSCAN:
-                rightText = CTextNew::GetText(TempSettings.tracksAutoScan ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.tracksAutoScan ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_RADIOMODE:
                 switch (TempSettings.radioMode) {
                 default:
-                    rightText = CTextNew::GetText("FE_OFF").text;
+                    rightText = TextNew.GetText("FE_OFF").text;
                     break;
                 }
                 break;
             case MENUENTRY_SHOWCONTROLSFOR:
-                rightText = CTextNew::GetText(TempSettings.showControlsFor ? "PAD_VH" : "PAD_FT").text;
+                rightText = TextNew.GetText(TempSettings.showControlsFor ? "PAD_VH" : "PAD_FT").text;
                 break;
             case MENUENTRY_INVERTPADX1:
-                rightText = CTextNew::GetText(TempSettings.invertPadX1 ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.invertPadX1 ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_INVERTPADY1:
-                rightText = CTextNew::GetText(TempSettings.invertPadY1 ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.invertPadY1 ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_INVERTPADX2:
-                rightText = CTextNew::GetText(TempSettings.invertPadX2 ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.invertPadX2 ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_INVERTPADY2:
-                rightText = CTextNew::GetText(TempSettings.invertPadY2 ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.invertPadY2 ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_SWAPPADAXIS1:
-                rightText = CTextNew::GetText(TempSettings.swapPadAxis1 ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.swapPadAxis1 ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_SWAPPADAXIS2:
-                rightText = CTextNew::GetText(TempSettings.swapPadAxis2 ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.swapPadAxis2 ? "FE_ON" : "FE_OFF").text;
                 break;
             case MENUENTRY_LANDINGPAGE:
-                rightText = CTextNew::GetText(TempSettings.landingPage ? "FE_ON" : "FE_OFF").text;
+                rightText = TextNew.GetText(TempSettings.landingPage ? "FE_ON" : "FE_OFF").text;
                 break;
 
                 // Sliders
@@ -2716,7 +2716,7 @@ void CMenuNew::DrawTabMemoryAvailable() {
     CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(255)));
     CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
 
-    char* str = CTextNew::GetText("FE_MEM").text;
+    char* str = TextNew.GetText("FE_MEM").text;
     sprintf(gString, "%s: %lu MB / %lu MB", str, nUsedVidMemory, nFreeVidMemory);
     CFontNew::PrintString(menuEntry.left + SCREEN_COORD(12.0f), menuEntry.top + SCREEN_COORD(24.0f), gString);
 
@@ -2778,8 +2778,8 @@ void CMenuNew::DrawTabGamePad() {
 
     CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
 
-    str = CTextNew::GetText(TempSettings.showControlsFor ? "PAD_VH" : "PAD_FT").text;
-    CTextNew::UpperCase(str);
+    str = TextNew.GetText(TempSettings.showControlsFor ? "PAD_VH" : "PAD_FT").text;
+    TextNew.UpperCase(str);
     CFontNew::PrintString(rect.left + rect.right / 2, rect.top, str);
 
     CFontNew::SetScale(SCREEN_MULTIPLIER(0.5f), SCREEN_MULTIPLIER(1.0f));
@@ -2817,8 +2817,8 @@ void CMenuNew::DrawTabGamePad() {
 
         for (int i = 0; i < 9; i++) {
             sprintf(buff, "PAD_%02d", TempSettings.showControlsFor ? count + 18 : count);
-            str = CTextNew::GetText(buff).text;
-            CTextNew::UpperCase(str);
+            str = TextNew.GetText(buff).text;
+            TextNew.UpperCase(str);
             DrawPadLine(x, y + next, w[i], h[i]);
             CFontNew::PrintString(x - SCREEN_COORD(8.0f), y + next - SCREEN_COORD(12.0f), str);
 
@@ -2859,8 +2859,8 @@ void CMenuNew::DrawTabGamePad() {
 
         for (int i = 0; i < 9; i++) {
             sprintf(buff, "PAD_%02d", TempSettings.showControlsFor ? count + 18 : count);
-            str = CTextNew::GetText(buff).text;
-            CTextNew::UpperCase(str);
+            str = TextNew.GetText(buff).text;
+            TextNew.UpperCase(str);
             DrawPadLine(x, y + next, w[i], h[i]);
             CFontNew::PrintString(x + SCREEN_COORD(8.0f), y + next - SCREEN_COORD(12.0f), str);
 
@@ -2888,11 +2888,11 @@ void CMenuNew::DrawTabNumSaveGames() {
 
     char* str = NULL;
     if (nNumOfSaveGames > 0) {
-        sprintf(gString, CTextNew::GetText("FE_SAVNUM").text, nNumOfSaveGames);
+        sprintf(gString, TextNew.GetText("FE_SAVNUM").text, nNumOfSaveGames);
         str = gString;
     }
     else {
-        str = CTextNew::GetText("FE_NOSAV").text;
+        str = TextNew.GetText("FE_NOSAV").text;
     }
     CFontNew::PrintString(menuEntry.left + SCREEN_COORD(12.0f), menuEntry.top + SCREEN_COORD(5.0f), str);
 }
@@ -2921,10 +2921,10 @@ void CMenuNew::DrawLandingPage() {
     CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(255)));
     CFontNew::SetScale(SCREEN_MULTIPLIER(2.6f), SCREEN_MULTIPLIER(4.8f));
 
-    char* str = CTextNew::GetText("FE_GTACUT").text;
+    char* str = TextNew.GetText("FE_GTACUT").text;
     CFontNew::PrintString(rect.left + SCREEN_COORD(32.0f), rect.top + SCREEN_COORD(19.0f), str);
 
-    char* str1 = CTextNew::GetText("FE_GTAINFO").text;
+    char* str1 = TextNew.GetText("FE_GTAINFO").text;
     CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
     CFontNew::PrintString(rect.left + SCREEN_COORD(32.0f), rect.top + SCREEN_COORD(148.0f), str1);
 
@@ -2946,10 +2946,10 @@ void CMenuNew::DrawLandingPage() {
         if (MenuScreen[nCurrentScreen].Tab[i].tabName[0] == '\0')
             continue;
 
-        char* leftText = CTextNew::GetText(MenuScreen[nCurrentScreen].Tab[i].tabName).text;
+        char* leftText = TextNew.GetText(MenuScreen[nCurrentScreen].Tab[i].tabName).text;
 
         if (i != 0) {
-            char* prevText = CTextNew::GetText(MenuScreen[nCurrentScreen].Tab[i - 1].tabName).text;
+            char* prevText = TextNew.GetText(MenuScreen[nCurrentScreen].Tab[i - 1].tabName).text;
             menuEntry.right -= (CFontNew::GetStringWidth(prevText, true) + spacing);
         }
 
@@ -2986,7 +2986,7 @@ void CMenuNew::DrawLandingPage() {
         CFontNew::SetColor(menuEntryTextColor);
         CFontNew::SetScale(SCREEN_MULTIPLIER(0.92f), SCREEN_MULTIPLIER(1.8f));
 
-        CTextNew::UpperCase(leftText);
+        TextNew.UpperCase(leftText);
         CFontNew::PrintString(menuEntry.right, menuEntry.top + textoffset, leftText);
     }
 
@@ -3157,10 +3157,10 @@ void CMenuNew::PrintBrief() {
     CFontNew::SetTokenToIgnore(NULL, NULL);
 
     if (noBrief) {
-        char* str = CTextNew::GetText("FE_BRF").text;
+        char* str = TextNew.GetText("FE_BRF").text;
         CFontNew::PrintString(mask.left + SCREEN_COORD(32.0f), mask.top + SCREEN_COORD(19.0f), str);
 
-        char* str1 = CTextNew::GetText("FE_BRF1").text;
+        char* str1 = TextNew.GetText("FE_BRF1").text;
         CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
         CFontNew::PrintString(mask.left + SCREEN_COORD(32.0f), mask.top + SCREEN_COORD(148.0f), str1);
     }
@@ -3268,7 +3268,7 @@ void CMenuNew::DrawLegend() {
         if (id > RADAR_SPRITE_CENTRE) {
             char legendString[64];
             sprintf(legendString, "LG_%02d", id);
-            str = CTextNew::GetText(legendString).text;
+            str = TextNew.GetText(legendString).text;
             col = CRadarNew::m_BlipsList[id].color;
         }
 
@@ -3284,27 +3284,27 @@ void CMenuNew::DrawLegend() {
 
         switch (id) {
         case RADAR_LEVEL_CAR:
-            str = CTextNew::GetText("LG_VEH").text;
+            str = TextNew.GetText("LG_VEH").text;
             col = CRadarNew::GetRadarTraceColour(c, false, f);
             id = level;
             break;
         case RADAR_LEVEL_CHAR_FRIENDLY:
-            str = CTextNew::GetText("LG_CHARF").text;
+            str = TextNew.GetText("LG_CHARF").text;
             col = CRadarNew::GetRadarTraceColour(c, false, f);
             id = level;
             break;
         case RADAR_LEVEL_CHAR_ENEMY:
-            str = CTextNew::GetText("LG_CHARE").text;
+            str = TextNew.GetText("LG_CHARE").text;
             col = CRadarNew::GetRadarTraceColour(c, false, f);
             id = level;
             break;
         case RADAR_LEVEL_OBJECT:
-            str = CTextNew::GetText("LG_OBJ").text;
+            str = TextNew.GetText("LG_OBJ").text;
             col = CRadarNew::GetRadarTraceColour(c, false, f);
             id = level;
             break;
         case RADAR_LEVEL_DESTINATION:
-            str = CTextNew::GetText("LG_DEST").text;
+            str = TextNew.GetText("LG_DEST").text;
             col = CRadarNew::GetRadarTraceColour(c, false, f);
             id = level;
             break;
@@ -3690,10 +3690,10 @@ void CMenuNew::DrawGallery() {
         CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
         CFontNew::SetScale(SCREEN_MULTIPLIER(2.6f), SCREEN_MULTIPLIER(4.8f));
 
-        char* str = CTextNew::GetText("FE_NOG").text;
+        char* str = TextNew.GetText("FE_NOG").text;
         CFontNew::PrintString(mask.left + SCREEN_COORD(32.0f), mask.top + SCREEN_COORD(19.0f), str);
 
-        char* str1 = CTextNew::GetText("FE_NOG1").text;
+        char* str1 = TextNew.GetText("FE_NOG1").text;
         CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
         CFontNew::PrintString(mask.left + SCREEN_COORD(32.0f), mask.top + SCREEN_COORD(148.0f), str1);
     }

@@ -86,6 +86,12 @@ CControls Controls[NUM_CONTROL_ACTIONS] = {
     { "PHONE_UP", MOUSE(rsMOUSEWHEELUPBUTTON) },
     { "PHONE_DOWN", MOUSE(rsMOUSEWHEELDOWNBUTTON) },
     { "PHONE_ENTER", MOUSE(rsMOUSELEFTBUTTON) },
+    { "MENU_SHOW_HIDE_LEGEND", KEY('L') },
+    { "MENU_PLACE_WAYPOINT", KEY(rsENTER) },
+    { "MENU_DELETE_SAVE", KEY(' ') },
+    { "MENU_APPLY_CHANGES", KEY(' ') },
+    { "MENU_BACK", KEY(rsESC) },
+    { "MENU_SELECT", KEY(rsENTER) }
 };
 
 const char* controlKeysStrings[] = {
@@ -122,7 +128,7 @@ const char* controlKeysStrings[] = {
     "PADPGDN",
     "PADLEFT",
     "PAD5",
-    "NUM_LOCK",
+    "NUMLOCK",
     "PADRIGHT",
     "PADHOME",
     "PADUP",
@@ -194,11 +200,7 @@ void CPadNew::LoadSettings() {
         for (int i = 0; i < NUM_CONTROL_ACTIONS; i++) {
             char tmp[16];
             sprintf(tmp, "%s", controls.child(Controls[i].action).attribute("value").as_string());
-
-            if (tmp[0] && tmp[1] != '\0')
-                Controls[i].key = StringToKey(tmp);
-            else
-                Controls[i].key = tmp[0];
+            Controls[i].key = StringToKey(tmp);
         }
     }
 
@@ -206,12 +208,20 @@ void CPadNew::LoadSettings() {
 }
 
 int CPadNew::StringToKey(const char* str) {
-    for (int i = 0; i < ARRAY_SIZE(controlKeysStrings); i++) {
-        if (!faststrcmp(controlKeysStrings[i], str))
-            return i + rsESC;
+    int key = str[0];
+
+    if (str[0] && str[1] != '\0') {
+        for (int i = 0; i < ARRAY_SIZE(controlKeysStrings); i++) {
+            if (!strncmp(controlKeysStrings[i], str, sizeof(controlKeysStrings[i]))) {
+                if (i > (rsNULL - rsESC))
+                    key = (i - (rsNULL - rsESC)) + MOUSE_CUSTOM_OFFSET;
+                else
+                    key = i + rsESC;
+            }
+        }
     }
 
-    return rsNULL;
+    return key;
 }
 
 const char* CPadNew::KeyToString(int key) {
