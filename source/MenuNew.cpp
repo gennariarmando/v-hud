@@ -1735,6 +1735,12 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
 
 void CMenuNew::RetuneRadio(char id) {
     AudioEngine.RetuneRadio(id);
+
+    CRadioHud::m_nPreviousRadioId = CRadioHud::m_nCurrentRadioId;
+    CRadioHud::m_nCurrentRadioId = id;
+
+    MenuNew.TempSettings.radioStation = CRadioHud::m_nCurrentRadioId;
+    MenuNew.Settings.radioStation = CRadioHud::m_nCurrentRadioId;
 }
 
 void CMenuNew::StartRadio() {

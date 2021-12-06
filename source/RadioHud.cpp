@@ -57,6 +57,7 @@ void CRadioHud::Process() {
     if (!CHud::bDrawingVitalStats && !CellPhone.bActive) {
         if (CanRetuneRadioStation()) {
             if (CPadNew::GetPad(0)->CycleRadioStationLeftJustDown()) {
+                m_nCurrentRadioId = AERadioTrackManager.m_TempSettings.m_nCurrentRadioStation;
                 m_nPreviousRadioId = m_nCurrentRadioId;
                 m_nCurrentRadioId--;
 
@@ -66,6 +67,7 @@ void CRadioHud::Process() {
                 m_bChangeRadioStation = true;
             }
             else if (CPadNew::GetPad(0)->CycleRadioStationRightJustDown()) {
+                m_nCurrentRadioId = AERadioTrackManager.m_TempSettings.m_nCurrentRadioStation;
                 m_nPreviousRadioId = m_nCurrentRadioId;
                 m_nCurrentRadioId++;
 
@@ -78,8 +80,6 @@ void CRadioHud::Process() {
     }
 
     if (m_bChangeRadioStation) {
-        MenuNew.TempSettings.radioStation = m_nCurrentRadioId;
-        MenuNew.Settings.radioStation = m_nCurrentRadioId;
         MenuNew.RetuneRadio(m_nCurrentRadioId);
 
         m_nTimeToDisplay = CTimer::m_snTimeInMilliseconds + 2000;
