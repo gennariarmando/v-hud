@@ -25,7 +25,6 @@ public:
         LANGUAGE_SPANISH,
     };
     CTextRead TextList[512];
-    CTextRead TextResult;
 
 public:
     CTextNew();

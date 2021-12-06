@@ -75,8 +75,6 @@ void CTextNew::ReadTextFile() {
         }
         file.close();
     }
-
-    TextResult.Clear();
 }
 
 CTextRead CTextNew::GetText(int s) {
@@ -84,16 +82,21 @@ CTextRead CTextNew::GetText(int s) {
 }
 
 CTextRead CTextNew::GetText(char* str) {
-    if (str[0] == '\0')
-        return TextResult;
+    CTextRead result = CTextRead();
+
+    if (*str == '\0')
+        return result;
 
     for (int i = 0; i < 512; i++) {
-        if (!faststrcmp(str, TextList[i].str)) {
-            TextResult = GetText(i);
+        if (TextList[i].str[0] == str[0]
+            && TextList[i].str[1] == str[1]
+            && TextList[i].str[2] == str[2]
+            && !faststrcmp(str, TextList[i].str, 3)) {
+            result = GetText(i);
             break;
         }
     }
-    return TextResult;
+    return result;
 }
 
 char CTextNew::GetUpperCase(char c) {

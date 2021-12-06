@@ -1868,11 +1868,15 @@ void CMenuNew::DrawPauseMenuExtraText() {
         CFontNew::PrintString(MENU_RIGHT(311.0f + 69.0f + 8.0f), MENU_Y(92.0f), playerName);
 
         char daytmp[32];
-        char* day;
+        char* day = NULL;
         sprintf(daytmp, "DAY_%d", CClock::CurrentDay);
+        printf("%d\n", CClock::CurrentDay);
         day = TextNew.GetText(daytmp).text;
-        TextNew.UpperCase(day);
-        CFontNew::PrintString(MENU_RIGHT(311.0f + 69.0f + 58.0f), MENU_Y(92.0f + 23.0), day);
+        
+        if (day) {
+            TextNew.UpperCase(day);
+            CFontNew::PrintString(MENU_RIGHT(311.0f + 69.0f + 58.0f), MENU_Y(92.0f + 23.0), day);
+        }
 
         char time[16];
         sprintf(time, "%02d:%02d", CClock::ms_nGameClockHours, CClock::ms_nGameClockMinutes);
