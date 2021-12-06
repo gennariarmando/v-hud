@@ -3,15 +3,11 @@
 class CTextRead {
 public:
     char str[16];
-    char* text;
+    char text[16000];
 
     CTextRead::CTextRead() {
-        Clear();
-    }
-
-    void Clear() {
         strcpy(str, "NONE");
-        text = NULL;
+        strcpy(text, "NONE");
     }
 };
 
@@ -28,7 +24,6 @@ public:
 
 public:
     CTextNew();
-    ~CTextNew();
 
     void ReadTextFile();
     CTextRead GetText(int s);

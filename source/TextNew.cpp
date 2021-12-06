@@ -9,17 +9,11 @@ using namespace plugin;
 CTextNew TextNew;
 
 CTextNew::CTextNew() {
-    CdeclEvent<AddressList<0x6A03E3, H_CALL>, PRIORITY_AFTER, ArgPickNone, void(const char*)> OnTextLoad;  
+    CdeclEvent<AddressList<0x6A03E3, H_CALL>, PRIORITY_AFTER, ArgPickNone, void(const char*)> OnTextLoad;
 
     OnTextLoad += [] {
         TextNew.ReadTextFile();
     };
-}
-
-CTextNew::~CTextNew() {
-    for (int i = 0; i < 512; i++) {
-        delete TextList[i].text;
-    }
 }
 
 void CTextNew::ReadTextFile() {
@@ -66,11 +60,7 @@ void CTextNew::ReadTextFile() {
             sscanf(line.c_str(), "%s = %[^\n]", &str, &text);
 
             strcpy(TextList[id].str, str);
-
-            int length = strlen(text);
-            TextList[id].text = new char [length];
-            strncpy(TextList[id].text, text, length);
-            TextList[id].text[length] = '\0';
+            strcpy(TextList[id].text, text);
             id++;
         }
         file.close();

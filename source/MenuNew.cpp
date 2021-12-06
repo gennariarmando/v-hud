@@ -83,6 +83,7 @@ char* FrontendSpritesFileNames[] = {
     "gtalogo"
 };
 
+char* UserFilesFolder = "VHud\\ufiles\\";
 char* SettingsFileName = "VHud\\ufiles\\settings.xml";
 
 inline CRect GetMenuBarRect() { return CRect(MENU_X(311.0f), MENU_Y(181.0f), SCREEN_COORD(214.0f), SCREEN_COORD(38.0f)); }
@@ -4184,8 +4185,10 @@ void CMenuSettings::Save() {
     misc.append_child("UIMainColor").append_attribute("value").set_value(uiMainColor);
 
     bool file = doc.save_file(PLUGIN_PATH(SettingsFileName));
-    if (!file) {
-        printf("XML: Settings file can't be saved.");
+    if (CreateDirectory(PLUGIN_PATH(UserFilesFolder), NULL) || GetLastError() == ERROR_ALREADY_EXISTS) {
+        if (!file) {
+            printf("XML: Settings file can't be saved.");
+        }
     }
 
     MenuNew.PassSettingsToCurrentGame(this);
