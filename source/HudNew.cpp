@@ -1152,29 +1152,34 @@ void CHudNew::DrawVehicleName() {
                 "IGNORE",
             };
 
-            char vehicleName[128];
-            if (FindPlayerVehicle(0, true)) {
-                unsigned char vehClass = ((CVehicleModelInfo*)(CModelInfo::GetModelInfo(FindPlayerVehicle(0, true)->m_nModelIndex)))->m_nVehicleClass;
-                if (vehClass == -1 || vehClass > 12)
-                    vehClass = 12;
-
-                sprintf(vehicleName, "%s, %s", CHud::m_pVehicleNameToPrint, TextNew.GetText(textClass[vehClass]).text);
-            }
-            else
+            if (CHud::m_pVehicleNameToPrint) {
+                char vehicleName[512];
                 strcpy(vehicleName, CHud::m_pVehicleNameToPrint);
 
-            CFontNew::SetBackground(false);
-            CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
-            CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
-            CFontNew::SetWrapX(SCREEN_COORD(640.0f));
-            CFontNew::SetFontStyle(CFontNew::FONT_2);
-            CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
-            CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
+                if (FindPlayerVehicle(0, true)) {
+                    unsigned char vehClass = ((CVehicleModelInfo*)(CModelInfo::GetModelInfo(FindPlayerVehicle(0, true)->m_nModelIndex)))->m_nVehicleClass;
+                    if (vehClass == -1 || vehClass > 12)
+                        vehClass = 12;
 
-            CRGBA col = GET_SETTING(HUD_VEHICLE_NAME).col;
-            CFontNew::SetColor(CRGBA(col.r, col.g, col.b, alpha));
-            CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_VEHICLE_NAME).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_VEHICLE_NAME).h));
-            CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_VEHICLE_NAME).x), HUD_BOTTOM(GET_SETTING(HUD_VEHICLE_NAME).y), vehicleName);
+                    const char* c = TextNew.GetText(textClass[vehClass]).text;
+
+                    if (c)
+                        sprintf(vehicleName, "%s, %s", CHud::m_pVehicleNameToPrint, c);
+                }
+
+                CFontNew::SetBackground(false);
+                CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+                CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
+                CFontNew::SetWrapX(SCREEN_COORD(640.0f));
+                CFontNew::SetFontStyle(CFontNew::FONT_2);
+                CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
+                CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
+
+                CRGBA col = GET_SETTING(HUD_VEHICLE_NAME).col;
+                CFontNew::SetColor(CRGBA(col.r, col.g, col.b, alpha));
+                CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_VEHICLE_NAME).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_VEHICLE_NAME).h));
+                CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_VEHICLE_NAME).x), HUD_BOTTOM(GET_SETTING(HUD_VEHICLE_NAME).y), vehicleName);
+            }
         }
     }
     else {

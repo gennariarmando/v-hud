@@ -1871,7 +1871,6 @@ void CMenuNew::DrawPauseMenuExtraText() {
         char daytmp[32];
         char* day = NULL;
         sprintf(daytmp, "DAY_%d", CClock::CurrentDay);
-        printf("%d\n", CClock::CurrentDay);
         day = TextNew.GetText(daytmp).text;
         
         if (day) {
