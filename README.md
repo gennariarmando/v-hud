@@ -47,7 +47,7 @@ Currently compatible only with GTA: San Andreas 1.0 US.
 
 
 ### Download:
-Not yet
+Check out the [Releases](https://github.com/gennariarmando/v-hud/releases) page.
 
 ### Links:
 [plugin-sdk](https://github.com/DK22Pac/plugin-sdk)\
