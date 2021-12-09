@@ -94,7 +94,7 @@ CControls Controls[NUM_CONTROL_ACTIONS] = {
     { "MENU_SELECT", KEY(rsENTER) }
 };
 
-const char* controlKeysStrings[] = {
+const char* controlKeysStrings[62] = {
     "ESC",
     "F1",
     "F2",
@@ -233,6 +233,10 @@ const char* CPadNew::KeyToString(int key) {
     }
     else {
         char c = (char)key;
+
+        if (c == ' ')
+            return "SPACEBAR";
+
         char* buff = new char[2]{};
         sprintf(buff, "%c", c);
         return buff;

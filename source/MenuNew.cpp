@@ -67,6 +67,7 @@ char* MenuSpritesFileNames[] = {
     "menu_weapons_b",
     "menu_map_crosshair_line_right",
     "menu_map_crosshair_line_up",
+    "menu_selector",
 };
 
 char* MiscSpritesFileNames[] = {
@@ -89,7 +90,7 @@ char* SettingsFileName = "VHud\\ufiles\\settings.xml";
 inline CRect GetMenuBarRect() { return CRect(MENU_X(311.0f), MENU_Y(181.0f), SCREEN_COORD(214.0f), SCREEN_COORD(38.0f)); }
 inline CRect GetMenuTabRect() { return CRect(MENU_X(311.0f), MENU_Y(240.0f), SCREEN_COORD(432.0f), SCREEN_COORD(38.0f)); }
 inline CRect GetMenuEntryRect() { return CRect(MENU_X(746.0f), MENU_Y(240.0f), SCREEN_COORD(864.0f), SCREEN_COORD(38.0f)); }
-inline CRect GetMenuScreenRect() { return CRect(MENU_X(311.0f), MENU_Y(181.0f + 39.0f + 20.0f), SCREEN_COORD(((214.0f + 3.0f) * 6.0f) - 3.0f), SCREEN_COORD(645.0f)); }
+inline CRect GetMenuScreenRect() { return CRect(MENU_X(311.0f), MENU_Y(240.0f), SCREEN_COORD(1300.0f), SCREEN_COORD(645.0f)); }
 inline float GetMenuHorSpacing() { return SCREEN_COORD(3.0f); };
 
 inline float GetMenuCenterX() { return GetMenuScreenRect().left + (GetMenuScreenRect().right * 0.5f); }
@@ -325,6 +326,8 @@ void CMenuNew::Clear() {
     bScanGallery = false;
     bPreviouslyInGallery = false;
     nGalleryCount = 0;
+
+    nTimePassedSinceLastKeyBind = 0;
 }
 
 void CMenuNew::BuildMenuBar() {
@@ -461,6 +464,15 @@ void CMenuNew::BuildMenuScreen() {
         AddNewTab(save, MENUENTRY_SAVEGAME, "FE_NOSAV", NULL, true);
         AddNewTab(save, MENUENTRY_SAVEGAME, "FE_NOSAV", NULL, true);
     }
+
+    // MENUSCREEN_KEYBIND
+    if (auto key = AddNewScreen("FE_KBIN")) {
+        if (auto foot = AddNewTab(key, MENUENTRY_KEYBINDING, "FE_GEN", NULL, false)) {
+            for (int i = 0; i < PHONE_ENTER; i++) {
+                AddNewEntry(foot, MENUENTRY_REDEFINEKEY, "BLANK", 0, i == 0 ? 1 : 0);
+            }
+        }
+    }
 }
 
 void CMenuNew::DrawBackground() {
@@ -565,6 +577,36 @@ CMenuScreen* CMenuNew::AddNewScreen(char* name) {
 
         s->AddScreen(name);
         return s;
+    }
+}
+
+CMenuScreen* CMenuNew::GetMenuScreen(char* name) {
+    for (int i = 0; i < MAX_MENU_SCREENS; i++) {
+        CMenuScreen* s = &MenuScreen[i];
+
+        if (s->screenName[0] != '\0' &&
+            !faststrcmp(s->screenName, name))
+            return s;
+    }
+}
+
+CMenuTab* CMenuNew::GetMenuTab(CMenuScreen* s, char* name) {
+    for (int i = 0; i < MAX_MENU_SCREENS; i++) {
+        CMenuTab* t = &s->Tab[i];
+
+        if (t->tabName[0] != '\0' &&
+            !faststrcmp(t->tabName, name))
+            return t;
+    }
+}
+
+CMenuEntry* CMenuNew::GetMenuEntry(CMenuTab* t, char* name) {
+    for (int i = 0; i < MAX_MENU_SCREENS; i++) {
+        CMenuEntry* e = &t->Entries[i];
+
+        if (e->entryName[0] != '\0' &&
+            !faststrcmp(e->entryName, name))
+            return e;
     }
 }
 
@@ -812,17 +854,22 @@ void CMenuNew::DoMapZoomInOut(bool out) {
 }
 
 void CMenuNew::Process() {
+    if (nTimePassedSinceLastKeyBind > CTimer::m_snTimeInMillisecondsPauseMode)
+        return;
+
     float x = CPadNew::GetMouseInput(256.0f).x;
     float y = CPadNew::GetMouseInput(256.0f).y;
 
     vOldMousePos.x = vMousePos.x;
     vOldMousePos.y = vMousePos.y;
 
-    if (x < 0.01f || x > 0.01f)
-        vMousePos.x += x;
+    if (nCurrentInputType != MENUINPUT_REDEFINEKEY) {
+        if (x < 0.01f || x > 0.01f)
+            vMousePos.x += x;
 
-    if (y < 0.01f || y > 0.01f)
-        vMousePos.y += y;
+        if (y < 0.01f || y > 0.01f)
+            vMousePos.y += y;
+    }
 
     if (vMousePos.x < 0)
         vMousePos.x = 0;
@@ -837,11 +884,6 @@ void CMenuNew::Process() {
 
     // Input
     CPadNew* pad = CPadNew::GetPad(0);
-
-    if (pad->CheckForMouseInput())
-        bDrawMouse = true;
-    else if (pad->CheckForControllerInput())
-        bDrawMouse = false;
 
     bool Up = pad->GetMenuUpJustDown();
     bool Down = pad->GetMenuDownJustDown();
@@ -879,6 +921,11 @@ void CMenuNew::Process() {
         }
     }
 
+    if (pad->CheckForMouseInput())
+        bDrawMouse = true;
+    else if (Up || Down || Left || Right || Enter || Back)
+        bDrawMouse = false;
+
     if (bMenuActive) {
         if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type == MENUENTRY_POPULATESAVESLOT ||
             bSavePage) {
@@ -901,6 +948,8 @@ void CMenuNew::Process() {
             }
             bSaveSlotsPopulated = false;
         }
+
+        static int tabItemBeforeScreenChange = nCurrentTabItem;
 
         switch (nCurrentInputType) {
         case MENUINPUT_BAR:
@@ -946,6 +995,11 @@ void CMenuNew::Process() {
                     Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
 
                     OpenCloseMenu(false, false);
+                }
+
+                if (nCurrentScreen != MenuBar[nCurrentBarItem].targetScreen) {
+                    nPreviousScreen = nCurrentScreen;
+                    nCurrentScreen = MenuBar[nCurrentBarItem].targetScreen;
                 }
             }
             break;
@@ -1008,25 +1062,35 @@ void CMenuNew::Process() {
                         Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
                     }
 
-                    if (bLandingPage) {
-                        if (nCurrentScreen != MENUSCREEN_LANDING) {
+                    switch (nCurrentScreen) {
+                    case MENUSCREEN_KEYBIND:
+                        if (int p = nPreviousScreen) {
+                            nPreviousScreen = nCurrentScreen;
+                            nCurrentScreen = p;
+                            bRequestScreenUpdate = true;
+                            SetInputTypeAndClear(nCurrentInputType, tabItemBeforeScreenChange);
+                        }
+                        break;
+                    case MENUSCREEN_LANDING:
+                        break;
+                    case MENUSCREEN_SAVE:
+                        bRequestMenuClose = true;
+                        bRequestScreenUpdate = true;
+                        break;
+                    case MENUSCREEN_SETTINGS:
+                        if (bLandingPage) {
                             bShowMenu = false;
                             bShowMenuBar = false;
                             bInvertInput = true;
                             OpenMenuScreen(MENUSCREEN_LANDING);
                             SetInputTypeAndClear(MENUINPUT_TAB, 1);
+                            break;
                         }
-                    }
-                    else if (bSavePage) {
-                        bRequestMenuClose = true;
-                        bRequestScreenUpdate = true;
-                    }
-                    else if (bDrawMenuMap) {
-                        //ResetMap();
+                        [[fallthrough]];
+                    default:
+                    def:
                         SetInputTypeAndClear(MENUINPUT_BAR, nCurrentBarItem);
-                    }
-                    else {
-                        SetInputTypeAndClear(MENUINPUT_BAR, nCurrentBarItem);
+                        break;
                     }
                 }
 
@@ -1085,7 +1149,7 @@ void CMenuNew::Process() {
                             vTempMapBase.x - halfMapSize > SCREEN_HALF_WIDTH)
                             vTempMapBase.x = prevMapBase.x;
 
-                        if (vTempMapBase.y + halfMapSize < SCREEN_HALF_HEIGHT || 
+                        if (vTempMapBase.y + halfMapSize < SCREEN_HALF_HEIGHT ||
                             vTempMapBase.y - halfMapSize > SCREEN_HALF_HEIGHT)
                             vTempMapBase.y = prevMapBase.y;
 
@@ -1104,7 +1168,7 @@ void CMenuNew::Process() {
                                 Audio.PlayChunk(CHUNK_MENU_MAP_MOVE, 0.5f);
                                 mapPlayShot = false;
                             }
-                        }                      
+                        }
                     }
                 }
             }
@@ -1118,11 +1182,11 @@ void CMenuNew::Process() {
                         nPreviousEntryItem = nCurrentEntryItem;
                         nCurrentEntryItem--;
 
-                        if (HasToContinueLoopInverse(nCurrentEntryItem))
-                            break;
-
                         if (nCurrentEntryItem < 0)
                             nCurrentEntryItem = MAX_MENU_ENTRIES - 1;
+
+                        if (HasToContinueLoopInverse(nCurrentEntryItem))
+                            break;
                     }
                 }
                 else if (Down) {
@@ -1132,11 +1196,11 @@ void CMenuNew::Process() {
                         nPreviousEntryItem = nCurrentEntryItem;
                         nCurrentEntryItem++;
 
+                        if (nCurrentEntryItem > MAX_MENU_ENTRIES - 1)
+                            nCurrentEntryItem = 0;
+
                         if (HasToContinueLoopInverse(nCurrentEntryItem))
                             break;
-
-                        if (nCurrentEntryItem > MAX_MENU_ENTRIES - 2)
-                            nCurrentEntryItem = -1;
                     }
                 }
                 else if (Back) {
@@ -1187,7 +1251,57 @@ void CMenuNew::Process() {
                 SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
             }
             break;
-        };
+        case MENUINPUT_REDEFINEKEY:
+            if (pad->GetMenuBackJustDown()) {
+                Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
+                SetInputTypeAndClear(MENUINPUT_ENTRY, nCurrentEntryItem);
+            }
+            else {
+                bool pressed = false;
+                int key = rsNULL;
+
+                for (int i = 0; i < ARRAY_SIZE(controlKeysStrings); i++) {
+                    key = CPadNew::StringToKey(controlKeysStrings[i]);
+
+                    if (CPadNew::GetPad(0)->GetKeyJustDown(key)) {
+                        pressed = true;
+                        break;
+                    }
+                }
+
+                if (!pressed) {
+                    const char* charMap[] = {
+                        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+                        "A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
+                        "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T",
+                        "U", "V", "W", "X", "Y", "Z", ".", ",", ":", ";",
+                        " ", "'", "{", "}", "[", "]", "-", "=", "_", "+"
+                        "`",
+                    };
+                    for (int i = 0; i < ARRAY_SIZE(charMap); i++) {
+                        key = CPadNew::StringToKey(charMap[i]);
+
+                        if (CPadNew::GetPad(0)->GetKeyJustDown(key)) {
+                            pressed = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (pressed && key != rsNULL && key != rsESC) {
+                    Controls[nCurrentEntryItem].key = key;
+                    Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+                    SetInputTypeAndClear(MENUINPUT_ENTRY, nCurrentEntryItem);
+                    pressed = false;
+                    CPadNew::GetPad(0)->Clear(false, 0);
+                    ApplyChanges();
+
+                    bDrawMouse = false;
+                    nTimePassedSinceLastKeyBind = CTimer::m_snTimeInMillisecondsPauseMode + 500;
+                }
+            }
+            break;
+        }
 
         if (CRadioHud::CanRetuneRadioStation()) {
             switch (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[nCurrentEntryItem].type) {
@@ -1248,15 +1362,10 @@ void CMenuNew::Process() {
             fScreenAlpha = 0;
             nLoadingTime = GetTimeInMillisecondsRight() + MENU_SCREEN_CHANGE_WAIT_TIME;
             bRequestScreenUpdate = false;
+            tabItemBeforeScreenChange = nPreviousTabItem;
         }
 
         if (!IsLoading()) {
-            if (bShowMenuBar) {
-                if (nCurrentScreen != MenuBar[nCurrentBarItem].targetScreen) {
-                    nPreviousScreen = nCurrentScreen;
-                    nCurrentScreen = MenuBar[nCurrentBarItem].targetScreen;
-                }
-            }
             if (fScreenAlpha < 255.0f) {
                 fScreenAlpha += 0.02f * 255.0f;
                 fScreenAlpha = clamp(fScreenAlpha, 0, 255);
@@ -1480,6 +1589,12 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
         else if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_EXIT")) {
             SetMenuMessage(MENUMESSAGE_EXIT_GAME);
         }
+        else if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_KBIN")) {
+            nPreviousScreen = nCurrentScreen;
+            nCurrentScreen = MENUSCREEN_KEYBIND;
+            bRequestScreenUpdate = true;
+            SetInputTypeAndClear(MENUINPUT_TAB);
+        }
         break;
     case MENUENTRY_STORYMODE:
         DoSettingsBeforeStartingAGame(true, 0);
@@ -1492,6 +1607,7 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
     case MENUENTRY_QUIT:
         SetMenuMessage(MENUMESSAGE_EXIT_GAME);
         break;
+    case MENUENTRY_KEYBINDING:
     case MENUENTRY_PAD:
     case MENUENTRY_GFX:
     case MENUENTRY_POPULATESAVESLOT:
@@ -1501,7 +1617,6 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
         if (GetLastMenuScreenEntry() - 1 != -1)
             SetInputTypeAndClear(MENUINPUT_ENTRY, nPreviousEntryItem);
         break;
-
     case MENUENTRY_LOADGAME:
         if (enter) {
             SetMenuMessage(MENUMESSAGE_LOAD_GAME);
@@ -1719,7 +1834,10 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
             //bShowMenu = false;
         }
         break;
-
+    case MENUENTRY_REDEFINEKEY:
+        SetInputTypeAndClear(MENUINPUT_REDEFINEKEY);
+        break;
+    
         // Sliders
     case MENUENTRY_DRAWDISTANCE:
     case MENUENTRY_BRIGHTNESS:
@@ -2427,12 +2545,44 @@ void CMenuNew::DrawDefault() {
         // Background rect.
         menuEntry.top += (menuEntry.bottom + GetMenuHorSpacing()) * MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[0].y;
         static float bb = 0.0f;
+        bb = clamp(bb, 0.0f, (menuEntry.bottom + GetMenuHorSpacing()) * VISIBLE_ENTRIES - 1);
         CSprite2d::DrawRect(CRect(menuEntry.left, menuEntry.top, menuEntry.left + menuEntry.right, menuEntry.top + bb), CRGBA(0, 0, 0, FadeIn(180)));
-        bb = max((menuEntry.bottom * (GetEntryBackHeight() + 1)) + (GetMenuHorSpacing() * (GetEntryBackHeight())), 0);
+        bb = max((menuEntry.bottom * (GetEntryBackHeight() + 1)) + (GetMenuHorSpacing() * (GetEntryBackHeight())), 0.0f);
         //
 
         nCurrentEntryItemHover = -1;
+
+        if (GetLastMenuScreenEntry() > VISIBLE_ENTRIES) {
+            menuEntry.top -= fMenuEntryScrollOffset;
+            CRect r = GetMenuEntryRect();
+            r.top += (r.bottom + GetMenuHorSpacing()) * VISIBLE_ENTRIES;
+            r.top += (r.bottom + GetMenuHorSpacing()) * MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[0].y;
+
+            CSprite2d::DrawRect(CRect(r.left, r.top, r.left + r.right, r.top + r.bottom), CRGBA(0, 0, 0, FadeIn(180)));
+            CRect s = {};
+
+            const float is = SCREEN_COORD(16.0f);
+            s.left = r.left + (r.right * 0.5f);
+            s.top = r.top + (r.bottom * 0.5f);
+
+            s.right = s.left + is;
+            s.bottom = s.top + is;
+            s.left -= is;
+            s.top -= is;
+
+            MenuSprites[MENU_SELECTOR]->Draw(s, CRGBA(255, 255, 255, 255));
+        }
+
         for (int i = 0; i < MAX_MENU_ENTRIES; i++) {
+            bool insideMenuBoundaries = true;
+            CRect boundaries = GetMenuEntryRect();
+
+            boundaries.top += (boundaries.bottom + GetMenuHorSpacing()) * MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[0].y;
+
+            if (menuEntry.top < boundaries.top || menuEntry.top > boundaries.top + (boundaries.bottom + GetMenuHorSpacing()) * (VISIBLE_ENTRIES - 1)) {
+                insideMenuBoundaries = false;
+            }
+
             char* leftText = NULL;
             char* rightText = NULL;
             char leftTextTmp[64];
@@ -2441,31 +2591,55 @@ void CMenuNew::DrawDefault() {
             if (HasToContinueLoop(i))
                 continue;
 
-            if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].type == MENUENTRY_LOADGAME) {
+            const int entryType = MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].type;
+            switch (entryType) {
+            case MENUENTRY_LOADGAME:
                 leftText = nSaveSlots[i];
                 sprintf(leftTextTmp, "%02d - %s", i + 1, leftText ? leftText : TextNew.GetText("FE_UNK").text);
                 leftText = leftTextTmp;
                 rightText = nSaveSlotsDate[i];
-            }
-            else {
+                break;
+            case MENUENTRY_REDEFINEKEY:
+                sprintf(leftTextTmp, "CA_%02d", i);
+                leftText = TextNew.GetText(leftTextTmp).text;
+
+                if (nCurrentInputType == MENUINPUT_REDEFINEKEY && nCurrentEntryItem == i) {
+                    sprintf(rightTextTmp, "?");
+
+                    if (FLASH_ITEM(500, 200))
+                        rightText = rightTextTmp;
+                }
+                else {
+                    if (Controls[i].key != rsNULL)
+                        rightText = (char*)CPadNew::KeyToString(Controls[i].key);
+                    else {
+                        sprintf(rightTextTmp, "???");
+                        rightText = rightTextTmp;
+                    }
+                }
+                break;
+            default:
                 leftText = TextNew.GetText(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].entryName).text;
+                break;
             }
 
-            if (i != 0) {
-                menuEntry.top += (menuEntry.bottom + GetMenuHorSpacing()) * MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].y;
-                bb += (menuEntry.bottom + GetMenuHorSpacing()) * MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].y;
-            }
+            if (insideMenuBoundaries) {
+                if (i != 0) {
+                    menuEntry.top += (menuEntry.bottom + GetMenuHorSpacing()) * MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].y;
+                    bb += (menuEntry.bottom + GetMenuHorSpacing()) * MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].y;
+                }
 
-            if (bDrawMouse && CheckHover(menuEntry.left, menuEntry.left + menuEntry.right, menuEntry.top, menuEntry.top + menuEntry.bottom)) {
-                nCurrentEntryItemHover = i;
+                if (bDrawMouse && CheckHover(menuEntry.left, menuEntry.left + menuEntry.right, menuEntry.top, menuEntry.top + menuEntry.bottom)) {
+                    nCurrentEntryItemHover = i;
 
-                if (pad->GetLeftMouseJustUp()) {
-                    Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+                    if (pad->GetLeftMouseJustUp()) {
+                        Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
 
-                    if (nCurrentEntryItemHover == nCurrentEntryItem)
-                        ProcessEntryStuff(1, 0);
-                    else
-                        SetInputTypeAndClear(MENUINPUT_ENTRY, nCurrentEntryItemHover);
+                        if (nCurrentEntryItemHover == nCurrentEntryItem)
+                            ProcessEntryStuff(1, 0);
+                        else
+                            SetInputTypeAndClear(MENUINPUT_ENTRY, nCurrentEntryItemHover);
+                    }
                 }
             }
 
@@ -2478,220 +2652,230 @@ void CMenuNew::DrawDefault() {
                 menuEntryTextColor = HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(255));
             }
 
-            if (nCurrentInputType == MENUINPUT_ENTRY) {
-                if (i == nCurrentEntryItem) {
+            if (i == nCurrentEntryItem) {
+                if (nCurrentInputType == MENUINPUT_ENTRY) {
                     menuEntryColor = { 255, 255, 255, FadeIn(255) };
                     menuEntryTextColor = HudColourNew.GetRGB(HUD_COLOUR_BLACK, FadeIn(255));
                     shiftText = 16.0f;
                 }
+
+                if (!insideMenuBoundaries) {
+                    if (nCurrentEntryItem > VISIBLE_ENTRIES - 1) {
+                        fMenuEntryScrollOffset = (menuEntry.bottom + GetMenuHorSpacing()) * (nCurrentEntryItem - VISIBLE_ENTRIES + 1);
+                    }
+                    else {
+                        fMenuEntryScrollOffset = (menuEntry.bottom + GetMenuHorSpacing()) * (nCurrentEntryItem);
+                    }
+                }
             }
 
-            CSprite2d::DrawRect(CRect(menuEntry.left, menuEntry.top, menuEntry.left + menuEntry.right, menuEntry.top + menuEntry.bottom), menuEntryColor);
+            if (insideMenuBoundaries) {
+                CSprite2d::DrawRect(CRect(menuEntry.left, menuEntry.top, menuEntry.left + menuEntry.right, menuEntry.top + menuEntry.bottom), menuEntryColor);
 
-            CFontNew::SetBackground(false);
-            CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
-            CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
-            CFontNew::SetWrapX(SCREEN_COORD(640.0f));
-            CFontNew::SetFontStyle(CFontNew::FONT_1);
-            CFontNew::SetDropShadow(0.0f);
-            CFontNew::SetOutline(0.0f);
-            CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
-            CFontNew::SetColor(menuEntryTextColor);
-            CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
-            CFontNew::PrintString(menuEntry.left + SCREEN_COORD(12.0f), menuEntry.top + SCREEN_COORD(5.0f), leftText);
+                CFontNew::SetBackground(false);
+                CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+                CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
+                CFontNew::SetWrapX(SCREEN_COORD(640.0f));
+                CFontNew::SetFontStyle(CFontNew::FONT_1);
+                CFontNew::SetDropShadow(0.0f);
+                CFontNew::SetOutline(0.0f);
+                CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+                CFontNew::SetColor(menuEntryTextColor);
+                CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
+                CFontNew::PrintString(menuEntry.left + SCREEN_COORD(12.0f), menuEntry.top + SCREEN_COORD(5.0f), leftText);
 
-            bool arrows = true;
-            switch (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].type) {
-            case MENUENTRY_NONE:
-                break;
-            case MENUENTRY_SCREENTYPE:
-                rightText = TextNew.GetText(TempSettings.screenType ? "FE_SCN1" : "FE_SCN0").text;
-                break;
-            case MENUENTRY_CHANGERES:
-                if (char* mode = VideoModeList[TempSettings.videoMode]) {
-                    strcpy(rightTextTmp, mode);
-                    rightText = rightTextTmp;
-                }
-                break;
-            case MENUENTRY_ASPECTRATIO:
-                if (char* ar[] = { "Auto", "4:3", "16:9" }) {
-                    rightText = ar[TempSettings.aspectRatio];
-                }
-                break;
-            case MENUENTRY_REFRESHRATE:
-                rightText = "60Hz";
-                break;
-            case MENUENTRY_MSAA:
-                switch (TempSettings.antiAliasing) {
-                case 0:
-                case 1:
-                    rightText = TextNew.GetText("FE_OFF").text;
+                bool arrows = true;
+                switch (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].type) {
+                case MENUENTRY_NONE:
                     break;
-                case 2:
-                    rightText = "x2";
+                case MENUENTRY_SCREENTYPE:
+                    rightText = TextNew.GetText(TempSettings.screenType ? "FE_SCN1" : "FE_SCN0").text;
                     break;
-                case 3:
-                    rightText = "x4";
+                case MENUENTRY_CHANGERES:
+                    if (char* mode = VideoModeList[TempSettings.videoMode]) {
+                        strcpy(rightTextTmp, mode);
+                        rightText = rightTextTmp;
+                    }
                     break;
-                case 4:
-                    rightText = "x8";
+                case MENUENTRY_ASPECTRATIO:
+                    if (char* ar[] = { "Auto", "4:3", "16:9" }) {
+                        rightText = ar[TempSettings.aspectRatio];
+                    }
                     break;
-                };
-                break;
-            case MENUENTRY_FRAMELIMITER:
-                rightText = TextNew.GetText(TempSettings.frameLimiter ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_VISUALQUALITY:
-                switch (TempSettings.visualQuality) {
-                case 0:
-                    rightText = TextNew.GetText("FE_LOW").text;
+                case MENUENTRY_REFRESHRATE:
+                    rightText = "60Hz";
                     break;
-                case 1:
-                    rightText = TextNew.GetText("FE_MED").text;
+                case MENUENTRY_MSAA:
+                    switch (TempSettings.antiAliasing) {
+                    case 0:
+                    case 1:
+                        rightText = TextNew.GetText("FE_OFF").text;
+                        break;
+                    case 2:
+                        rightText = "x2";
+                        break;
+                    case 3:
+                        rightText = "x4";
+                        break;
+                    case 4:
+                        rightText = "x8";
+                        break;
+                    };
                     break;
-                case 2:
-                    rightText = TextNew.GetText("FE_HIG").text;
+                case MENUENTRY_FRAMELIMITER:
+                    rightText = TextNew.GetText(TempSettings.frameLimiter ? "FE_ON" : "FE_OFF").text;
                     break;
-                case 3:
-                    rightText = TextNew.GetText("FE_VHIG").text;
+                case MENUENTRY_VISUALQUALITY:
+                    switch (TempSettings.visualQuality) {
+                    case 0:
+                        rightText = TextNew.GetText("FE_LOW").text;
+                        break;
+                    case 1:
+                        rightText = TextNew.GetText("FE_MED").text;
+                        break;
+                    case 2:
+                        rightText = TextNew.GetText("FE_HIG").text;
+                        break;
+                    case 3:
+                        rightText = TextNew.GetText("FE_VHIG").text;
+                        break;
+                    };
                     break;
-                };
-                break;
-            case MENUENTRY_SHOWHUD:
-                rightText = TextNew.GetText(TempSettings.showHUD ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_SHOWRADAR:
-                rightText = TextNew.GetText(TempSettings.showRadar ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_GPSROUTE:
-                rightText = TextNew.GetText(TempSettings.gpsRoute ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_MEASUREMENTSYS:
-                rightText = TextNew.GetText(TempSettings.measurementSys ? "FE_IMP" : "FE_MET").text;
-                break;
-            case MENUENTRY_SUBTITLES:
-                rightText = TextNew.GetText(TempSettings.subtitles ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_INVERTMOUSEY:
-                rightText = TextNew.GetText(TempSettings.invertMouseY ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_MOUSESTEER:
-                rightText = TextNew.GetText(TempSettings.mouseSteering ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_MOUSEFLYING:
-                rightText = TextNew.GetText(TempSettings.mouseFlying ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_RADIOSTATION:
-                if (bool radioOff = (Settings.radioStation != RADIO_NONE) && CRadioHud::CanRetuneRadioStation()) {
-                    sprintf(rightTextTmp, "RADIO%d", Settings.radioStation);
-                    rightText = TextNew.GetText(rightTextTmp).text;
-                }
-                else {
-                    rightText = TextNew.GetText("RADOFF").text;
-                }
-                break;
-            case MENUENTRY_RADIOAUTOSELECT:
-                rightText = TextNew.GetText(TempSettings.radioAutoSelect ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_RADIOEQ:
-                rightText = TextNew.GetText(TempSettings.radioEQ ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_TRACKSAUTOSCAN:
-                rightText = TextNew.GetText(TempSettings.tracksAutoScan ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_RADIOMODE:
-                switch (TempSettings.radioMode) {
+                case MENUENTRY_SHOWHUD:
+                    rightText = TextNew.GetText(TempSettings.showHUD ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_SHOWRADAR:
+                    rightText = TextNew.GetText(TempSettings.showRadar ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_GPSROUTE:
+                    rightText = TextNew.GetText(TempSettings.gpsRoute ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_MEASUREMENTSYS:
+                    rightText = TextNew.GetText(TempSettings.measurementSys ? "FE_IMP" : "FE_MET").text;
+                    break;
+                case MENUENTRY_SUBTITLES:
+                    rightText = TextNew.GetText(TempSettings.subtitles ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_INVERTMOUSEY:
+                    rightText = TextNew.GetText(TempSettings.invertMouseY ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_MOUSESTEER:
+                    rightText = TextNew.GetText(TempSettings.mouseSteering ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_MOUSEFLYING:
+                    rightText = TextNew.GetText(TempSettings.mouseFlying ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_RADIOSTATION:
+                    if (bool radioOff = (Settings.radioStation != RADIO_NONE) && CRadioHud::CanRetuneRadioStation()) {
+                        sprintf(rightTextTmp, "RADIO%d", Settings.radioStation);
+                        rightText = TextNew.GetText(rightTextTmp).text;
+                    }
+                    else {
+                        rightText = TextNew.GetText("RADOFF").text;
+                    }
+                    break;
+                case MENUENTRY_RADIOAUTOSELECT:
+                    rightText = TextNew.GetText(TempSettings.radioAutoSelect ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_RADIOEQ:
+                    rightText = TextNew.GetText(TempSettings.radioEQ ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_TRACKSAUTOSCAN:
+                    rightText = TextNew.GetText(TempSettings.tracksAutoScan ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_RADIOMODE:
+                    switch (TempSettings.radioMode) {
+                    default:
+                        rightText = TextNew.GetText("FE_OFF").text;
+                        break;
+                    }
+                    break;
+                case MENUENTRY_SHOWCONTROLSFOR:
+                    rightText = TextNew.GetText(TempSettings.showControlsFor ? "PAD_VH" : "PAD_FT").text;
+                    break;
+                case MENUENTRY_INVERTPADX1:
+                    rightText = TextNew.GetText(TempSettings.invertPadX1 ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_INVERTPADY1:
+                    rightText = TextNew.GetText(TempSettings.invertPadY1 ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_INVERTPADX2:
+                    rightText = TextNew.GetText(TempSettings.invertPadX2 ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_INVERTPADY2:
+                    rightText = TextNew.GetText(TempSettings.invertPadY2 ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_SWAPPADAXIS1:
+                    rightText = TextNew.GetText(TempSettings.swapPadAxis1 ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_SWAPPADAXIS2:
+                    rightText = TextNew.GetText(TempSettings.swapPadAxis2 ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_LANDINGPAGE:
+                    rightText = TextNew.GetText(TempSettings.landingPage ? "FE_ON" : "FE_OFF").text;
+                    break;
+
+                    // Sliders
+                case MENUENTRY_BRIGHTNESS:
+                    DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.brightness / 512.0f);
+                    break;
+                case MENUENTRY_GAMMA:
+                    DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.gamma / 1.0f);
+                    break;
+                case MENUENTRY_SAFEZONESIZE:
+                    DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.safeZoneSize / 96.0f);
+                    break;
+                case MENUENTRY_RADIOVOLUME:
+                    DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.radioVolume / 64.0f);
+                    break;
+                case MENUENTRY_SFXVOLUME:
+                    DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.sfxVolume / 64.0f);
+                    break;
+                case MENUENTRY_DRAWDISTANCE:
+                    DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), (TempSettings.drawDist - 0.8f) * 1.0f);
+                    break;
+                case MENUENTRY_MOUSESENSITIVITY:
+                    DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.mouseSensitivity * 200.0f);
+                    break;
                 default:
-                    rightText = TextNew.GetText("FE_OFF").text;
+                    arrows = false;
                     break;
                 }
-                break;
-            case MENUENTRY_SHOWCONTROLSFOR:
-                rightText = TextNew.GetText(TempSettings.showControlsFor ? "PAD_VH" : "PAD_FT").text;
-                break;
-            case MENUENTRY_INVERTPADX1:
-                rightText = TextNew.GetText(TempSettings.invertPadX1 ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_INVERTPADY1:
-                rightText = TextNew.GetText(TempSettings.invertPadY1 ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_INVERTPADX2:
-                rightText = TextNew.GetText(TempSettings.invertPadX2 ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_INVERTPADY2:
-                rightText = TextNew.GetText(TempSettings.invertPadY2 ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_SWAPPADAXIS1:
-                rightText = TextNew.GetText(TempSettings.swapPadAxis1 ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_SWAPPADAXIS2:
-                rightText = TextNew.GetText(TempSettings.swapPadAxis2 ? "FE_ON" : "FE_OFF").text;
-                break;
-            case MENUENTRY_LANDINGPAGE:
-                rightText = TextNew.GetText(TempSettings.landingPage ? "FE_ON" : "FE_OFF").text;
-                break;
 
-                // Sliders
-            case MENUENTRY_BRIGHTNESS:
-                DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.brightness / 512.0f);
-                break;
-            case MENUENTRY_GAMMA:
-                DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.gamma / 1.0f);
-                break;
-            case MENUENTRY_SAFEZONESIZE:
-                DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.safeZoneSize / 96.0f);
-                break;
-            case MENUENTRY_RADIOVOLUME:
-                DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.radioVolume / 64.0f);
-                break;
-            case MENUENTRY_SFXVOLUME:
-                DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.sfxVolume / 64.0f);
-                break;
-            case MENUENTRY_DRAWDISTANCE:
-                DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), (TempSettings.drawDist - 0.8f) * 1.0f);
-                break;
-            case MENUENTRY_MOUSESENSITIVITY:
-                DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.mouseSensitivity * 200.0f);
-                break;
-            default:
-                arrows = false;
-                break;
-            }
+                if (!arrows)
+                    shiftText = 0.0f;
 
-            if (!arrows)
-                shiftText = 0.0f;
+                if (rightText) {
+                    CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
+                    CFontNew::PrintString(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f - shiftText), menuEntry.top + SCREEN_COORD(5.0f), rightText);
 
-            if (rightText) {
-                CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
-                CFontNew::PrintString(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f - shiftText), menuEntry.top + SCREEN_COORD(5.0f), rightText);
+                    if (shiftText && arrows) {
+                        float arrowX = menuEntry.left + menuEntry.right + SCREEN_COORD(-52.0f) - CFontNew::GetStringWidth(rightText, true);
+                        float arrowY = menuEntry.top + SCREEN_COORD(6.0f);
+                        float arrowScale = SCREEN_COORD(24.0f);
+                        MenuSprites[MENU_ARROW_LEFT]->Draw(arrowX, arrowY, arrowScale, arrowScale, CRGBA(0, 0, 0, 255));
 
-                if (shiftText && arrows) {
-                    float arrowX = menuEntry.left + menuEntry.right + SCREEN_COORD(-52.0f) - CFontNew::GetStringWidth(rightText, true);
-                    float arrowY = menuEntry.top + SCREEN_COORD(6.0f);
-                    float arrowScale = SCREEN_COORD(24.0f);
-                    MenuSprites[MENU_ARROW_LEFT]->Draw(arrowX, arrowY, arrowScale, arrowScale, CRGBA(0, 0, 0, 255));
+                        if (CheckHover(arrowX - arrowScale, arrowX + arrowScale, arrowY, arrowY + arrowScale)) {
+                            if (pad->GetLeftMouseJustUp()) {
+                                Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
 
-                    if (CheckHover(arrowX - arrowScale, arrowX + arrowScale, arrowY, arrowY + arrowScale)) {
-                        if (pad->GetLeftMouseJustUp()) {
-                            Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
-
-                            ProcessEntryStuff(0, -1);
+                                ProcessEntryStuff(0, -1);
+                            }
                         }
-                    }
 
-                    arrowX = menuEntry.left + menuEntry.right + SCREEN_COORD(-28.0f);
-                    MenuSprites[MENU_ARROW_RIGHT]->Draw(arrowX, arrowY, arrowScale, arrowScale, CRGBA(0, 0, 0, 255));
+                        arrowX = menuEntry.left + menuEntry.right + SCREEN_COORD(-28.0f);
+                        MenuSprites[MENU_ARROW_RIGHT]->Draw(arrowX, arrowY, arrowScale, arrowScale, CRGBA(0, 0, 0, 255));
 
-                    if (CheckHover(arrowX - arrowScale, arrowX + arrowScale, arrowY, arrowY + arrowScale)) {
-                        if (pad->GetLeftMouseJustUp()) {
-                            Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+                        if (CheckHover(arrowX - arrowScale, arrowX + arrowScale, arrowY, arrowY + arrowScale)) {
+                            if (pad->GetLeftMouseJustUp()) {
+                                Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
 
-                            ProcessEntryStuff(0, 1);
+                                ProcessEntryStuff(0, 1);
+                            }
                         }
                     }
                 }
             }
-
             menuEntry.top += menuEntry.bottom + GetMenuHorSpacing();
         }
 
@@ -2704,6 +2888,9 @@ void CMenuNew::DrawDefault() {
             break;
         case MENUENTRY_POPULATESAVESLOT:
             DrawTabNumSaveGames();
+            break;
+        case MENUENTRY_KEYBINDING:
+            DrawTabKeyBindings();
             break;
         }
     }
@@ -2905,6 +3092,34 @@ void CMenuNew::DrawTabNumSaveGames() {
         str = TextNew.GetText("FE_NOSAV").text;
     }
     CFontNew::PrintString(menuEntry.left + SCREEN_COORD(12.0f), menuEntry.top + SCREEN_COORD(5.0f), str);
+}
+
+void CMenuNew::DrawTabKeyBindings() {
+    CRect menuEntry = GetMenuEntryRect();
+
+    CSprite2d::DrawRect(CRect(menuEntry.left, menuEntry.top, menuEntry.left + menuEntry.right, menuEntry.top + menuEntry.bottom), CRGBA(0, 0, 0, FadeIn(180)));
+
+    CFontNew::SetBackground(false);
+    CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+    CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
+    CFontNew::SetWrapX(SCREEN_COORD(640.0f));
+    CFontNew::SetFontStyle(CFontNew::FONT_1);
+    CFontNew::SetDropShadow(0.0f);
+    CFontNew::SetOutline(0.0f);
+    CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+    CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(105)));
+    CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
+
+    char* str = NULL;
+
+    str = TextNew.GetText("FE_ACT").text;
+    TextNew.UpperCase(str);
+    CFontNew::PrintString(menuEntry.left + SCREEN_COORD(12.0f), menuEntry.top + SCREEN_COORD(5.0f), str);
+
+    CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
+    str = TextNew.GetText("FE_PRI").text;
+    TextNew.UpperCase(str);
+    CFontNew::PrintString(menuEntry.left + menuEntry.right - SCREEN_COORD(12.0f), menuEntry.top + SCREEN_COORD(5.0f), str);
 }
 
 void CMenuNew::DrawLandingPage() {

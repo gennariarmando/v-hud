@@ -143,4 +143,4 @@ public:
 extern bool bHasPadInHands;
 extern CControls Controls[NUM_CONTROL_ACTIONS];
 
-extern const char* controlKeysStrings[];
+extern const char* controlKeysStrings[62];

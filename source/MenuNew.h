@@ -36,6 +36,7 @@ enum eMenuSprites {
     MENU_WEAPONS_B,
     MENU_MAP_CROSSHAIR_LINE_RIGHT,
     MENU_MAP_CROSSHAIR_LINE_UP,
+    MENU_SELECTOR,
     NUM_MENU_SPRITES,
 };
 
@@ -74,6 +75,7 @@ enum eMenuScreens {
     MENUSCREEN_GALLERY,
     MENUSCREEN_LANDING,
     MENUSCREEN_SAVE,
+    MENUSCREEN_KEYBIND,
     NUM_MENUSCREENS
 };
 
@@ -130,6 +132,8 @@ enum eMenuEntries {
     MENUENTRY_MAP,
     MENUENTRY_STAT,
     MENUENTRY_SHOWPICTURE,
+    MENUENTRY_REDEFINEKEY,
+    MENUENTRY_KEYBINDING,
 };
 
 enum eMenuMessages {
@@ -146,8 +150,9 @@ enum {
     MAX_MENU_BAR_ITEMS = 12,
     MAX_MENU_SCREENS = 12,
     MAX_MENU_TABS = 128,
-    MAX_MENU_ENTRIES = 32,
+    MAX_MENU_ENTRIES = 128,
     MAX_HELP_TEXT = 8,
+    VISIBLE_ENTRIES = 16,
 };
 
 enum {
@@ -160,6 +165,7 @@ enum {
     MENUINPUT_ENTRY,
     MENUINPUT_MESSAGE,
     MENUINPUT_GALLERYPIC,
+    MENUINPUT_REDEFINEKEY,
 };
 
 enum eSettingsIndex {
@@ -376,6 +382,8 @@ public:
     int nCurrentScreen;
     int nPreviousScreen;
 
+    float fMenuEntryScrollOffset;
+
     bool bRequestScreenUpdate;
     float fScreenAlpha;
     unsigned int nLoadingTime;
@@ -442,6 +450,8 @@ public:
 
     unsigned short PreviousPlayerControls;
 
+    int nTimePassedSinceLastKeyBind;
+
 public:
     CMenuNew();
     void Init();
@@ -463,6 +473,10 @@ public:
     CMenuScreen* AddNewScreen(char* name);
     CMenuTab* AddNewTab(CMenuScreen* s, int type, char* tabName, char* actionName, bool full);
     CMenuEntry* AddNewEntry(CMenuTab* t, int type, char* entryName, int x, int y);
+
+    CMenuScreen* GetMenuScreen(char* name);
+    CMenuTab* GetMenuTab(CMenuScreen* s, char* name);
+    CMenuEntry* GetMenuEntry(CMenuTab* t, char* name);
 
     void SetInputTypeAndClear(int input, int n);
     int GetLastMenuBarItem();
@@ -504,6 +518,7 @@ public:
     void DrawPadLine(float x, float y, int w, int h);
     void DrawTabGamePad();
     void DrawTabNumSaveGames();
+    void DrawTabKeyBindings();
     void DrawLandingPage();
     void DrawSliderRightAlign(float x, float y, float progress);
     void DrawTabRadioIcons(float x, float y);
