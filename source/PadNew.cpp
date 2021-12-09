@@ -211,6 +211,9 @@ int CPadNew::StringToKey(const char* str) {
     int key = str[0];
 
     if (str[0] && str[1] != '\0') {
+        if (!faststrcmp(str, "SPACEBAR"))
+            return rsSPACE;
+
         for (int i = 0; i < ARRAY_SIZE(controlKeysStrings); i++) {
             if (!strncmp(controlKeysStrings[i], str, sizeof(controlKeysStrings[i]))) {
                 if (i > (rsNULL - rsESC))
