@@ -38,7 +38,7 @@ inline int OpenConsole(bool console) {
 
 
 HANDLE thread = NULL;
-bool rwInitialized = true;
+bool rwInitialized = false;
 
 VHud::VHud() {
     //OpenConsole(AllocConsole());
@@ -51,10 +51,14 @@ VHud::VHud() {
             if (rwInitialized) {
                 float f = CTimer::GetCurrentTimeInCycles() / (float)CTimer::GetCyclesPerMillisecond();
                 if (1000.0f / (float)RsGlobal.frameLimit < f) {
-                    Audio.Update();
+
                 }
+
+                Audio.Update();
+                CPadNew::GInputUpdate();
             }
         }
+        CPadNew::GInputRelease();
 
         CloseHandle(thread);
     };

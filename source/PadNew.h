@@ -2,6 +2,52 @@
 #include "CPad.h"
 #include "CControllerConfigManager.h"
 
+#define GINPUT_COMPILE_SA_VERSION
+#include "GInputAPI.h"
+
+enum eGamePadButtons {
+    GAMEPAD_NONE = -1,
+    GAMEPAD_DPADUP,
+    GAMEPAD_DPADDOWN,
+    GAMEPAD_DPADLEFT,
+    GAMEPAD_DPADRIGHT,
+    
+    GAMEPAD_CROSS,
+    GAMEPAD_CIRCLE,
+    GAMEPAD_SQUARE,
+    GAMEPAD_TRIANGLE,
+    
+    GAMEPAD_LEFTSHOULDER1,
+    GAMEPAD_LEFTSHOULDER2,
+    GAMEPAD_LEFTSHOCK,
+    
+    GAMEPAD_RIGHTSHOULDER1,
+    GAMEPAD_RIGHTSHOULDER2,
+    GAMEPAD_RIGHTSHOCK,
+    
+    GAMEPAD_START,
+    GAMEPAD_SELECT,
+    
+    GAMEPAD_BUTTON_UPDOWN,
+    GAMEPAD_BUTTON_LEFTRIGHT,
+    
+    GAMEPAD_THUMBL,
+    GAMEPAD_THUMBLX,
+    GAMEPAD_THUMBLXL,
+    GAMEPAD_THUMBLXR,
+    GAMEPAD_THUMBLY,
+    GAMEPAD_THUMBLYU,
+    GAMEPAD_THUMBLYD,
+    
+    GAMEPAD_THUMBR,
+    GAMEPAD_THUMBRX,
+    GAMEPAD_THUMBRXL,
+    GAMEPAD_THUMBRXR,
+    GAMEPAD_THUMBRY,
+    GAMEPAD_THUMBRYU,
+    GAMEPAD_THUMBRYD,
+};
+
 // GInput stuff
 enum eGInputActions {
 #if 0
@@ -53,11 +99,13 @@ class CControls {
 public:
     char action[128];
     int key;
+    int button;
 };
 
 class CPadNew : public CPad {
 public:
     bool DisablePlayerAim;
+    bool HasPadInHands;
 
 public:
     CPadNew();
@@ -69,6 +117,8 @@ public:
     static void SetControllerKeyAssociatedWithAction(e_ControllerAction action, int key, eControllerType type);
     static int GetNumOfSettingsForAction(e_ControllerAction action);
     static CPadNew* GetPad(int padNumber);
+    static void GInputUpdate();
+    static void GInputRelease();
 
     bool GetKeyDown(int key);
     bool GetKeyJustDown(int key);
@@ -140,7 +190,9 @@ public:
     bool CheckForMouseInput();
 };
 
-extern bool bHasPadInHands;
 extern CControls Controls[NUM_CONTROL_ACTIONS];
 
 extern const char* controlKeysStrings[62];
+
+extern IGInputPad* GInputPad[2];
+extern GINPUT_PAD_SETTINGS GInputPadSettings[2];

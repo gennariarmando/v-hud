@@ -157,6 +157,30 @@ char* ButtonFileName[] = {
     "Z",
 };
 
+// Custom GInput action strings
+const char* CustomGInputActions[] = {
+#if 0
+                "VEHICLE_FIREWEAPON",
+                "VEHICLE_TURRET_LEFT_RIGHT",
+                "VEHICLE_TURRET_UP_DOWN",
+                "GO_LEFTRIGHT",
+                "GO_UPDOWN",
+                "MELEE_ATTACK",
+                "BLOW_UP_RC_BUGGY",
+#else
+                "PED_MOVE",
+                "BMX_HANDBRAKE",
+                "BMX_BUNNYHOP",
+                "CAMERA_LEFT_RIGHT",
+                "CAMERA_UP_DOWN",
+                "VEHICLE_CHANGE_RADIO_STATION",
+                "GO_LEFTRIGHT",
+                "GO_UPDOWN",
+                "SNATCH_PACKAGE",
+                "HYDRA_TARGET",
+#endif
+};
+
 CFontNew::CFontNew() {
 
 }
@@ -492,7 +516,7 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
         case 'K':
         case 'k':
             c += 3;
-            PS2Symbol = GetKeyboardSprite(ParseCustomActions(c));
+            PS2Symbol = GetActionSprite(ParseCustomActions(c));
             break;
         case 'M':
         case 'm':
@@ -512,7 +536,7 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
             break;
         case 'Q':
         case 'q':
-            PS2Symbol = bHasPadInHands ? ButtonSprite[BUTTON_SQUARE] : ButtonSprite[BUTTON_PC_SPACEBAR];
+            PS2Symbol = ButtonSprite[BUTTON_SQUARE];
             break;
         case 'R':
         case 'r':
@@ -524,7 +548,7 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
             break;
         case 'T':
         case 't':
-            PS2Symbol = bHasPadInHands ? ButtonSprite[BUTTON_TRIANGLE] : ButtonSprite[BUTTON_PC_ESC];
+            PS2Symbol = ButtonSprite[BUTTON_TRIANGLE];
             break;
         case 'U':
         case 'u':
@@ -545,7 +569,7 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
             break;
         case 'X':
         case 'x':
-            PS2Symbol = bHasPadInHands ? ButtonSprite[BUTTON_CROSS] : ButtonSprite[BUTTON_PC_ENTER];
+            PS2Symbol = ButtonSprite[BUTTON_CROSS];
             break;
         case 'Y':
         case 'y':
@@ -606,7 +630,10 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
             }
             break;
         case '@':
-            PS2Symbol = GetKeyboardSprite(CPadNew::StringToKey(++c));
+            if (CPadNew::GetPad(0)->HasPadInHands)
+                ParseGInputActions(++c);
+            else
+                PS2Symbol = GetActionSprite(CPadNew::StringToKey(++c));
             c++;
             break;
         }
@@ -624,23 +651,29 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
     return c + 1;
 }
 
-CSprite2d* CFontNew::GetKeyboardSprite(int key) {
+CSprite2d* CFontNew::GetActionSprite(int key) {
     CSprite2d* sprite = NULL;
 
-    if ((key >= 'A' && key <= 'Z'))
-        sprite = ButtonSprite[(key - 'A') + BUTTON_PC_A];
+    if (CPadNew::GetPad(0)->HasPadInHands) {
+        if (key != GAMEPAD_NONE)
+            sprite = ButtonSprite[key + 1];
+    }
+    else {
+        if ((key >= 'A' && key <= 'Z'))
+            sprite = ButtonSprite[(key - 'A') + BUTTON_PC_A];
 
-    if (key >= 'a' && key <= 'z')
-        sprite = ButtonSprite[(key - 'a') + BUTTON_PC_A];
+        if (key >= 'a' && key <= 'z')
+            sprite = ButtonSprite[(key - 'a') + BUTTON_PC_A];
 
-    if (key >= '0' && key <= '9')
-        sprite = ButtonSprite[(key - '9') + BUTTON_PC_0];
+        if (key >= '0' && key <= '9')
+            sprite = ButtonSprite[(key - '9') + BUTTON_PC_0];
 
-    if (key == rsSPACE)
-        sprite = ButtonSprite[BUTTON_PC_SPACEBAR];
+        if (key == rsSPACE)
+            sprite = ButtonSprite[BUTTON_PC_SPACEBAR];
 
-    if (key >= rsESC && key < rsNULL)
-        sprite = ButtonSprite[(key - rsESC) + BUTTON_PC_ESC];
+        if (key >= rsESC && key < rsNULL)
+            sprite = ButtonSprite[(key - rsESC) + BUTTON_PC_ESC];
+    }
 
     return sprite;
 }
@@ -659,11 +692,94 @@ bool astrcmp(const char* s, const char* a) {
 int CFontNew::ParseCustomActions(const char* s) {
     for (int i = 0; i < NUM_CONTROL_ACTIONS; i++) {
         if (astrcmp(s, Controls[i].action)) {
-            return Controls[i].key;
+            if (CPadNew::GetPad(0)->HasPadInHands)
+                return Controls[i].button;
+            else
+                return Controls[i].key;
         }
     }
 
     return rsNULL;
+}
+
+bool CFontNew::ParseGInputActions(const char* s) {
+    short mode = CPadNew::GetPad(0)->Mode;
+    bool southPaw = GInputPadSettings[0].Southpaw;
+    for (int i = 0; i < ARRAY_SIZE(CustomGInputActions); i++) {
+        if (astrcmp(s, CustomGInputActions[i])) {
+            switch (i) {
+            case ACTION_PED_MOVE:
+                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBR] : ButtonSprite[BUTTON_THUMBL];
+                break;
+            case ACTION_BMX_HANDBRAKE:
+                switch (mode) {
+                case 0:
+                    PS2Symbol = ButtonSprite[BUTTON_R1];
+                    break;
+                case 1:
+                    PS2Symbol = ButtonSprite[BUTTON_R2];
+                    break;
+                }
+                break;
+            case ACTION_BMX_BUNNYHOP:
+                switch (mode) {
+                case 0:
+                    PS2Symbol = ButtonSprite[BUTTON_L1];
+                    break;
+                case 1:
+                    PS2Symbol = ButtonSprite[BUTTON_SQUARE];
+                    break;
+                }
+                break;
+            case ACTION_CAMERA_LEFT_RIGHT:
+                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBLX] : ButtonSprite[BUTTON_THUMBRX];
+                break;
+            case ACTION_CAMERA_UP_DOWN:
+                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBLY] : ButtonSprite[BUTTON_THUMBRY];
+                break;
+            case ACTION_VEHICLE_CHANGE_RADIO_STATION:
+                switch (mode) {
+                case 0:
+                    PS2Symbol = ButtonSprite[BUTTON_UPDOWN];
+                    break;
+                case 1:
+                    PS2Symbol = ButtonSprite[BUTTON_LEFTRIGHT];
+                    break;
+                }
+                break;
+            case ACTION_GO_LEFTRIGHT:
+                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBRX] : ButtonSprite[BUTTON_THUMBLX];
+                break;
+            case ACTION_GO_UPDOWN:
+                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBRY] : ButtonSprite[BUTTON_THUMBLY];
+                break;
+            case ACTION_SNATCH_PACKAGE:
+                switch (mode) {
+                case 0:
+                    PS2Symbol = ButtonSprite[BUTTON_L1];
+                    break;
+                case 1:
+                    PS2Symbol = ButtonSprite[BUTTON_CIRCLE];
+                    break;
+                }
+                break;
+            case ACTION_HYDRA_TARGET:
+                switch (mode) {
+                case 0:
+                    PS2Symbol = ButtonSprite[BUTTON_R1];
+                    break;
+                case 1:
+                    PS2Symbol = ButtonSprite[BUTTON_SQUARE];
+                    break;
+                }
+                break;
+            }
+
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void CFontNew::DrawButton(float& x, float y, CSprite2d* sprite) {

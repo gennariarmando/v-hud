@@ -203,8 +203,9 @@ public:
 	static void SetTokenToIgnore(char t1, char t2);
 	static int GetNumberLines(bool print, float x, float y, const char* s);
 	static const char* ParseToken(bool print, char const* s);
-	static CSprite2d* GetKeyboardSprite(int key);
+	static CSprite2d* GetActionSprite(int key);
 	static int ParseCustomActions(char const* s);
+	static bool ParseGInputActions(const char* s);
 	static void DrawButton(float& x, float y, CSprite2d* sprite);
 	static int PrintString(float x, float y, const char* s);
 	static void PrintString(bool print, float x, float y, const char* start, const char* end, float spwidth);

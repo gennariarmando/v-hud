@@ -910,6 +910,8 @@ void CMenuNew::Process() {
     bool MapZoomOut = pad->GetMenuMapZoomOut();
     bool ShowHideMapLegend = pad->GetMenuShowHideLegendJustDown();
 
+    bool OpenClose = pad->GetOpenCloseMenuJustDown();
+
     if (bInvertInput) {
         if (nCurrentScreen == MENUSCREEN_GALLERY) {
             Up = Left;
@@ -927,6 +929,9 @@ void CMenuNew::Process() {
         bDrawMouse = false;
 
     if (bMenuActive) {
+        if (pad->HasPadInHands)
+            OpenClose |= pad->GetMenuBackJustDown();
+
         if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type == MENUENTRY_POPULATESAVESLOT ||
             bSavePage) {
             if (!bSaveSlotsPopulated) {
@@ -991,10 +996,11 @@ void CMenuNew::Process() {
 
                     SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
                 }
-                else if (Back) {
+                else if (OpenClose) {
                     Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
 
                     OpenCloseMenu(false, false);
+                    return;
                 }
 
                 if (nCurrentScreen != MenuBar[nCurrentBarItem].targetScreen) {
@@ -1384,8 +1390,9 @@ void CMenuNew::Process() {
     else {
         if (TheCamera.GetScreenFadeStatus() != 2 
             && COverlayLayer::GetCurrentEffect() == EFFECT_NONE) {
-            if (pad->GetOpenCloseMenuJustDown()) {
+            if (OpenClose) {
                 OpenCloseMenu(true, false);
+                return;
             }
         }
     }

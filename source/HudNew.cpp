@@ -24,6 +24,8 @@
 #include "CPickups.h"
 #include "CWeapon.h"
 #include "CAERadioTrackManager.h"
+#include "CSprite.h"
+#include "CWeaponEffects.h"
 
 #include "Audio.h"
 #include "CellPhone.h"
@@ -106,6 +108,7 @@ CHudNew::CHudNew() {
     patch::RedirectJump(0x705331, (void*)0x7053AF);
 
     patch::PutRetn(0x69E160);
+    patch::PutRetn(0x742CF0);
 }
 
 void CHudNew::Init() {
@@ -471,7 +474,43 @@ void CHudNew::DrawCrosshairs() {
         if (ik && !playa->m_nPedFlags.bIsDucking && !playa->m_nPedFlags.bInVehicle)
             return;
 
-        if (!playa->m_pPlayerData->m_bHaveTargetSelected) {
+        static bool haveTargetSelected = false;
+
+        static RwV3d previousTargetPos = {};
+        static RwV3d targetPos = {};
+        static bool selectedTargetDied = false;
+        static bool latestTargetDied = false;
+
+        if (haveTargetSelected) {
+            RwV3d pos;
+            float w, h;
+            if (CSprite::CalcScreenCoors(targetPos, &pos, &w, &h, false, false)) {
+                x = pos.x;
+                y = pos.y;
+            }
+        }
+
+        if (playa->m_pPlayerData->m_bHaveTargetSelected) {
+            targetPos = gCrossHair->m_vecPosn.ToRwV3d();
+
+            if (previousTargetPos.x != targetPos.x &&
+                previousTargetPos.y != targetPos.y &&
+                previousTargetPos.z != targetPos.z) {
+                haveTargetSelected = playa->m_pPlayerData->m_bHaveTargetSelected;
+
+                selectedTargetDied = gCrossHair->m_color == CRGBA(0, 0, 0, 255) ? true : false;
+                previousTargetPos = targetPos;
+                latestTargetDied = false;
+            }
+        }
+        else {
+            haveTargetSelected = false;
+            targetPos = { };
+            selectedTargetDied = false;
+            latestTargetDied = false;
+        }
+
+        {
             if (CTheScripts::bDrawCrossHair || !TheCamera.m_bTransitionState) {
                 if (!faststrcmp(crosshairName, "cam")) {
 
@@ -522,21 +561,29 @@ ForcedFPSView:
                     static int dotAlpha;
                     static int alphaTime = 0;
 
-                    if (playa->m_pPlayerTargettedPed && playa->m_pPlayerTargettedPed->m_fHealth <= 0.0f) {
-                        nTargettedEntityDeathTime = CTimer::m_snTimeInMilliseconds + 500;
-                        playa->m_pPlayerTargettedPed = NULL;
-                    }
-
-                    if (playa->m_pPlayerTargettedPed)
-                        alphaTime = CTimer::m_snTimeInMilliseconds + 50;
-
                     col = GET_SETTING(HUD_CROSSHAIR_DOT).col;
 
-                    if (alphaTime > CTimer::m_snTimeInMilliseconds) {
-                        col = HudColourNew.GetRGB(HUD_COLOUR_RED, 255);
-                        //alpha = 100;
-                        playa->m_pPlayerTargettedPed = NULL;
-                    }
+                        if ((playa->m_pPlayerTargettedPed && playa->m_pPlayerTargettedPed->m_fHealth <= 0.0f) ||
+                            selectedTargetDied) {
+                            nTargettedEntityDeathTime = CTimer::m_snTimeInMilliseconds + 500;
+                            playa->m_pPlayerTargettedPed = NULL;
+                            playa->m_pPlayerTargettedPed = false;
+
+                            //haveTargetSelected = false;
+                            selectedTargetDied = false;
+                            latestTargetDied = true;
+                        }
+
+                        if (playa->m_pPlayerTargettedPed || haveTargetSelected)
+                            alphaTime = CTimer::m_snTimeInMilliseconds + 50;
+
+                        if (alphaTime > CTimer::m_snTimeInMilliseconds) {
+                            if (!latestTargetDied)
+                                col = HudColourNew.GetRGB(HUD_COLOUR_RED, 255);
+                            else
+                                alpha = 100;
+                            playa->m_pPlayerTargettedPed = NULL;
+                        }
 
                     dotAlpha = (int)interpF(dotAlpha, alpha, 0.2f * CTimer::ms_fTimeStep);
 
@@ -1540,7 +1587,7 @@ void CHudNew::PrintBigHelpText(int alpha) {
 }
 
 void CHudNew::DrawOddJobMessage(bool priority) {
-
+    CHud::DrawOddJobMessage(priority);
 }
 
 void CHudNew::DrawSuccessFailedMessage() {

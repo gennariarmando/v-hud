@@ -24,7 +24,7 @@
 // uncomment the line below
 //#define GINPUT_COMPILE_SA_VERSION
 
-// You can also target all threee games at once by defining GINPUT_COMPILE_CROSSCOMPATIBLE_VERSION - define it
+// You can also target all three games at once by defining GINPUT_COMPILE_CROSSCOMPATIBLE_VERSION - define it
 // in your project settings, code headers or just uncomment the line below
 //#define GINPUT_COMPILE_CROSSCOMPATIBLE_VERSION
 
@@ -106,6 +106,13 @@ enum eGInputEvent
 												// Returns NULL all the time
 												// Callable from SendEvent: YES
 												// Callable from SendConstEvent: NO
+
+	GINPUT_EVENT_FORCE_MAP_PAD_ONE_TO_PAD_TWO = 12, // Forcibly maps XInput pad 2 to game pad 1, same as "MapPadOneToPadTwo" INI option
+													// if pParam is set to TRUE, the override gets enabled. If pParam is set to FALSE,
+													// the override gets disabled.
+													// Returns NULL all the time
+													// Callable from SendEvent: YES
+													// Callable from SendConstEvent: NO
 
 	NUM_GINPUT_EVENTS
 };
@@ -190,12 +197,22 @@ typedef void (CALLBACK *GInputOnSixaxisFetchCallback)(const SIXAXIS_INPUT&);
 // Internal declarations
 #ifndef GINPUT_COMPILE_CROSSCOMPATIBLE_VERSION
 #if defined GINPUT_COMPILE_III_VERSION
-#define GINPUT_FILENAME "GInputIII.asi"
+#define GINPUT_FILENAMEA "GInputIII"
+#define GINPUT_FILENAMEW L"GInputIII"
 #elif defined GINPUT_COMPILE_VC_VERSION
-#define GINPUT_FILENAME "GInputVC.asi"
+#define GINPUT_FILENAMEA "GInputVC"
+#define GINPUT_FILENAMEW L"GInputVC"
 #elif defined GINPUT_COMPILE_SA_VERSION
-#define GINPUT_FILENAME "GInputSA.asi"
+#define GINPUT_FILENAMEA "GInputSA"
+#define GINPUT_FILENAMEW L"GInputSA"
 #endif
+
+#ifdef UNICODE
+#define GINPUT_FILENAME GINPUT_FILENAMEW
+#else
+#define GINPUT_FILENAME GINPUT_FILENAMEA
+#endif
+
 #endif
 
 #define GINPUT_MODVERSION 0x00010B00	// 1.11
@@ -236,7 +253,6 @@ public:
 bool GInput_Load(IGInputPad** pInterfacePtr);
 // Takes a pointer to an array of TWO interface pointers as an argument, returns true if succeed and false otherwise
 // (GInput not installed or any other error occured)
-// In SA, it fetches both pads. In III/VC, the second fetched pad will ALWAYS be a dummy pad
 bool GInput_Load_TwoPads(IGInputPad** pInterfacePtr);
 
 // Releases GInput API
@@ -246,12 +262,13 @@ void GInput_Release();
 
 // Management functions definitions - internal use only, do not change anything here
 #include <windows.h>
+#include "ModuleList.hpp"
 
 // GInput ASI handle
 inline HMODULE* _GInput_HandlePtr()
 {
 	// Making it a static variable outside of the function would duplicate it for each .cpp file which uses any API funcs (bad)
-	static HMODULE		hGInputHandle = NULL;
+	static HMODULE		hGInputHandle = nullptr;
 	return &hGInputHandle;
 }
 
@@ -264,166 +281,131 @@ inline IGInputPad* _GInput_SafeMode()
 		virtual bool			IsPadConnected() const { return false; };
 		virtual bool			HasPadInHands() const { return false; };
 		virtual int				GetVersion() const { return -1; };
-		virtual void*			SendEvent(eGInputEvent eEvent, void* pParam) { UNREFERENCED_PARAMETER(eEvent); UNREFERENCED_PARAMETER(pParam); return NULL; };
-		virtual void*			SendConstEvent(eGInputEvent eEvent, void* pParam) const { UNREFERENCED_PARAMETER(eEvent); UNREFERENCED_PARAMETER(pParam); return NULL; };
+		virtual void*			SendEvent(eGInputEvent eEvent, void* pParam) { return CDummyPad::SendConstEvent(eEvent, pParam); };
+		virtual void*			SendConstEvent(eGInputEvent eEvent, void* pParam) const {
+			UNREFERENCED_PARAMETER(eEvent); UNREFERENCED_PARAMETER(pParam);
+			SetLastError(ERROR_NOT_SUPPORTED);
+			return reinterpret_cast<void*>(GINPUT_NO_EVENT);
+		};
 	} DummyClass;
 	return &DummyClass;
 }
 
 inline bool GInput_Load(IGInputPad** pInterfacePtr)
 {
-	static IGInputPad*	pCopiedPtr = NULL;		// We keep a backup of the interface pointer in case user calls GInput_Load multiple times
+	static IGInputPad*	pCopiedPtr = nullptr;		// We keep a backup of the interface pointer in case user calls GInput_Load multiple times
 	static bool			bLoadingResult = false;	// Loading result is also cached so GInput_Load always returns the same value when called multiple times
 
 	// Have we attempted to load GInput already? If so, just return a valid interface pointer and return
 	// The pointer can be either a GInput interface or a dummy, 'safe-mode' interface which got initialised
 	// due to GInput*.asi loading failure
-	if ( pCopiedPtr != NULL )
+	if ( pCopiedPtr != nullptr )
 	{
 		*pInterfacePtr = pCopiedPtr;
 		return bLoadingResult;
 	}
-	HMODULE			hHandle;
 
-	// Cross compatible version?
 #ifdef GINPUT_COMPILE_CROSSCOMPATIBLE_VERSION
-	if ( GetModuleHandleEx(0, "GInputIII.asi", &hHandle) == 0 )
+	for ( const HMODULE hHandle : ModuleList().GetAllByPrefix( L"GInput" ) )
+#else
+	const HMODULE hHandle = ModuleList().Get( GINPUT_FILENAMEW );
+#endif
 	{
-		if ( GetModuleHandleEx(0, "GInputVC.asi", &hHandle) == 0 )
+		if ( hHandle != nullptr )
 		{
-			if ( GetModuleHandleEx(0, "GInputSA.asi", &hHandle) == 0 )
+			// Let's call a GInput export to get the proper interface
+			auto ExportFunc = (IGInputPad*(*)())GetProcAddress(hHandle, "GetGInputInterface");
+			if ( ExportFunc == nullptr )
 			{
-				*pInterfacePtr = pCopiedPtr = _GInput_SafeMode();
-				bLoadingResult = false;
-				return false;
+				ExportFunc = (IGInputPad*(*)())GetProcAddress(hHandle, (LPCSTR)1);
+			}
+
+			if ( ExportFunc != nullptr )
+			{
+				*pInterfacePtr = pCopiedPtr = ExportFunc();
+				if ( pCopiedPtr != nullptr )
+				{
+					HMODULE duplicatedHandle;
+					if ( GetModuleHandleEx( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCTSTR)ExportFunc, &duplicatedHandle ) != 0 )
+					{
+						*_GInput_HandlePtr() = duplicatedHandle;
+						bLoadingResult = true;
+						return true;
+					}
+				}
 			}
 		}
 	}
-#else
-	// If not, compile non-cross compatible code
-	if ( GetModuleHandleEx(0, GINPUT_FILENAME, &hHandle) == 0 )
-	{
-		// Failed? The mod is probably not installed (or Init is called from DllMain), so let's jump into 'safe-mode' and initialise
-		// a dummy interface
-		*pInterfacePtr = pCopiedPtr = _GInput_SafeMode();
-		bLoadingResult = false;
-		return false;
-	}
-#endif
-	// Let's call a GInput export to get the proper interface
-	IGInputPad*		(*ExportFunc)() = (IGInputPad*(*)())GetProcAddress(hHandle, (LPCSTR)1);
 
-	// Just to make sure function pointer is valid (will not be valid if GInput 1.0 or 1.01 is used)
-	if ( ExportFunc == NULL )
-	{
-		// Probably too old GInput version, no API support yet (applies only to GInputVC, though)
-		*pInterfacePtr = pCopiedPtr = _GInput_SafeMode();
-		bLoadingResult = false;
-		return false;
-	}
-
-	*pInterfacePtr = pCopiedPtr = ExportFunc();
-	if ( pCopiedPtr != NULL )
-	{
-		*_GInput_HandlePtr() = hHandle;
-		bLoadingResult = true;
-		return true;
-	}
-	else
-	{
-		// GInput loaded, but for some reason there's no valid interface pointer - let's do the same safe-mode trick
-		*pInterfacePtr = pCopiedPtr = _GInput_SafeMode();
-		bLoadingResult = false;
-		return false;
-	}
+	*pInterfacePtr = pCopiedPtr = _GInput_SafeMode();
+	bLoadingResult = false;
+	return false;
 }
 
 inline bool GInput_Load_TwoPads(IGInputPad** pInterfacePtr)
 {
-	static IGInputPad*	pCopiedPtr[2];			// We keep a backup of the interface pointer in case user calls GInput_Load multiple times
+	static IGInputPad*	pCopiedPtr[2];		// We keep a backup of the interface pointer in case user calls GInput_Load multiple times
 	static bool			bLoadingResult = false;	// Loading result is also cached so GInput_Load always returns the same value when called multiple times
 
 	// Have we attempted to load GInput already? If so, just return a valid interface pointer and return
 	// The pointer can be either a GInput interface or a dummy, 'safe-mode' interface which got initialised
 	// due to GInput*.asi loading failure
-	if ( pCopiedPtr[0] != NULL && pCopiedPtr[1] != NULL )
+	if ( pCopiedPtr[0] != nullptr && pCopiedPtr[1] != nullptr )
 	{
 		pInterfacePtr[0] = pCopiedPtr[0];
 		pInterfacePtr[1] = pCopiedPtr[1];
 		return bLoadingResult;
 	}
 
-	// Cross compatible version?
 #ifdef GINPUT_COMPILE_CROSSCOMPATIBLE_VERSION
-	HMODULE			hHandle;
-
-	if ( GetModuleHandleEx(0, "GInputIII.asi", &hHandle) == 0 )
+	for ( const HMODULE hHandle : ModuleList().GetAllByPrefix( L"GInput" ) )
+#else
+	const HMODULE hHandle = ModuleList().Get( GINPUT_FILENAMEW );
+#endif
 	{
-		if ( GetModuleHandleEx(0, "GInputVC.asi", &hHandle) == 0 )
+		if ( hHandle != nullptr )
 		{
-			if ( GetModuleHandleEx(0, "GInputSA.asi", &hHandle) == 0 )
+			// Let's call a GInput export to get the proper interface
+			auto ExportFunc = (IGInputPad**(*)())GetProcAddress(hHandle, "GetGInputInterface_2Pads");
+			if ( ExportFunc == nullptr )
 			{
-				pInterfacePtr[0] = pCopiedPtr[0] = _GInput_SafeMode();
-				pInterfacePtr[1] = pCopiedPtr[1] = _GInput_SafeMode();
-				bLoadingResult = false;
-				return false;
+				ExportFunc = (IGInputPad**(*)())GetProcAddress(hHandle, (LPCSTR)2);
+			}
+
+			if ( ExportFunc != nullptr )
+			{
+				IGInputPad** pad = ExportFunc();
+				pInterfacePtr[0] = pCopiedPtr[0] = pad[0];
+				pInterfacePtr[1] = pCopiedPtr[1] = pad[1];
+				if ( pCopiedPtr[0] != nullptr && pCopiedPtr[1] != nullptr )
+				{
+					HMODULE duplicatedHandle;
+					if ( GetModuleHandleEx( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCTSTR)ExportFunc, &duplicatedHandle ) != 0 )
+					{
+						*_GInput_HandlePtr() = duplicatedHandle;
+						bLoadingResult = true;
+						return true;
+					}
+				}
 			}
 		}
 	}
-#elif defined GINPUT_COMPILE_SA_VERSION
-	HMODULE			hHandle;
 
-	// If not, compile non-cross compatible code
-	if ( GetModuleHandleEx(0, GINPUT_FILENAME, &hHandle) == 0 )
-	{
-		// Failed? The mod is probably not installed (or Init is called from DllMain), so let's jump into 'safe-mode' and initialise
-		// a dummy interface
-		pInterfacePtr[0] = pCopiedPtr[0] = _GInput_SafeMode();
-		pInterfacePtr[1] = pCopiedPtr[1] = _GInput_SafeMode();
-		bLoadingResult = false;
-		return false;
-	}
-	// Let's call a GInput export to get the proper interface
-	IGInputPad**	(*ExportFunc)() = (IGInputPad**(*)())GetProcAddress(hHandle, (LPCSTR)2);
-
-	// Just to make sure function pointer is valid (will not be valid if GInput 1.0 or 1.01 is used)
-	if ( ExportFunc == NULL )
-	{
-		pInterfacePtr[0] = pCopiedPtr[0] = _GInput_SafeMode();
-		pInterfacePtr[1] = pCopiedPtr[1] = _GInput_SafeMode();
-		bLoadingResult = false;
-		return false;
-	}
-
-	IGInputPad**	pTempPtr = ExportFunc();
-	pInterfacePtr[0] = pCopiedPtr[0] = pTempPtr[0];
-	pInterfacePtr[1] = pCopiedPtr[1] = pTempPtr[1];
-	if ( pCopiedPtr[0] != NULL && pCopiedPtr[1] != NULL )
-	{
-		*_GInput_HandlePtr() = hHandle;
-		bLoadingResult = true;
-		return true;
-	}
-	else
-	{
-		// GInput loaded, but for some reason there's no valid interface pointer - let's do the same safe-mode trick
-		pInterfacePtr[0] = pCopiedPtr[0] = _GInput_SafeMode();
-		pInterfacePtr[1] = pCopiedPtr[1] = _GInput_SafeMode();
-		bLoadingResult = false;
-		return false;
-	}
-#else
+	IGInputPad* pad = _GInput_SafeMode();
+	pInterfacePtr[0] = pCopiedPtr[0] = pad;
+	pInterfacePtr[1] = pCopiedPtr[1] = pad;
 	bLoadingResult = false;
 	return false;
-#endif
 }
 
 inline void GInput_Release()
 {
-	// Just release the ASI
-	HMODULE*	pHandle = _GInput_HandlePtr();
-	if ( *pHandle )
+	HMODULE* pHandle = _GInput_HandlePtr();
+	if ( *pHandle != nullptr )
+	{
 		FreeLibrary(*pHandle);
+		*pHandle = nullptr;
+	}
 }
 
 #endif

@@ -11,8 +11,8 @@ using namespace plugin;
 using namespace pugi;
 
 CPadNew Pad;
-
-bool bHasPadInHands = false;
+IGInputPad* GInputPad[2];
+GINPUT_PAD_SETTINGS GInputPadSettings[2];
 
 char* ControlsFileName = "VHud\\ufiles\\controls.xml";
  
@@ -20,78 +20,78 @@ char* ControlsFileName = "VHud\\ufiles\\controls.xml";
 #define MOUSE(x) x + MOUSE_CUSTOM_OFFSET
 #define KEY(x) x
 CControls Controls[NUM_CONTROL_ACTIONS] = {
-    { "PED_FIREWEAPON", MOUSE(rsMOUSELEFTBUTTON) },
-    { "PED_FIREWEAPON_ALT", KEY(rsNULL) },
-    { "PED_CYCLE_WEAPON_RIGHT", MOUSE(rsMOUSEWHEELUPBUTTON) },
-    { "PED_CYCLE_WEAPON_LEFT", MOUSE(rsMOUSEWHEELDOWNBUTTON) },
-    { "GO_FORWARD", KEY('W') },
-    { "GO_BACK", KEY('S') },
-    { "GO_LEFT", KEY('A') },
-    { "GO_RIGHT", KEY('D') },
-    { "PED_SNIPER_ZOOM_IN", MOUSE(rsMOUSEWHEELUPBUTTON) },
-    { "PED_SNIPER_ZOOM_OUT", MOUSE(rsMOUSEWHEELDOWNBUTTON) },
-    { "VEHICLE_ENTER_EXIT", KEY('F') },
-    { "CAMERA_CHANGE_VIEW_ALL_SITUATIONS", KEY('V') },
-    { "PED_JUMPING", rsSPACE },
-    { "PED_SPRINT", KEY(rsLSHIFT) },
-    { "PED_LOOKBEHIND", KEY('C') },
-    { "PED_DUCK", KEY(rsLCTRL) },
-    { "PED_ANSWER_PHONE", KEY(rsTAB) },
-    { "SNEAK_ABOUT", KEY(rsLCTRL) },
-    { "VEHICLE_FIREWEAPON", MOUSE(rsMOUSELEFTBUTTON) },
-    { "VEHICLE_FIREWEAPON_ALT", KEY(rsLCTRL) },
-    { "VEHICLE_STEERLEFT", KEY('A') },
-    { "VEHICLE_STEERRIGHT", KEY('D') },
-    { "VEHICLE_STEERUP", KEY(rsPGUP) },
-    { "VEHICLE_STEERDOWN", KEY(rsPGDN) },
-    { "VEHICLE_ACCELERATE", KEY('W') },
-    { "VEHICLE_BRAKE", KEY('S') },
-    { "VEHICLE_RADIO_STATION_UP", MOUSE(rsMOUSEWHEELUPBUTTON) },
-    { "VEHICLE_RADIO_STATION_DOWN", MOUSE(rsMOUSEWHEELDOWNBUTTON) },
-    { "UNKNOWN_1", KEY(rsNULL) },
-    { "VEHICLE_HORN", KEY(rsLSHIFT) },
-    { "TOGGLE_SUBMISSIONS", KEY(rsLCTRL) },
-    { "VEHICLE_HANDBRAKE", KEY(rsSPACE) },
-    { "PED_1RST_PERSON_LOOK_LEFT", KEY('Q') },
-    { "PED_1RST_PERSON_LOOK_RIGHT", KEY('E') },
-    { "VEHICLE_LOOKLEFT", KEY('Q') },
-    { "VEHICLE_LOOKRIGHT", KEY('E') },
-    { "VEHICLE_LOOKBEHIND", KEY('C') },
-    { "VEHICLE_MOUSELOOK",  KEY(rsNULL) },
-    { "VEHICLE_TURRETLEFT",  KEY(rsNULL) },
-    { "VEHICLE_TURRETRIGHT",  KEY(rsNULL) },
-    { "VEHICLE_TURRETUP", KEY(rsNULL) },
-    { "VEHICLE_TURRETDOWN", KEY(rsNULL) },
-    { "PED_CYCLE_TARGET_LEFT", KEY('Q') },
-    { "PED_CYCLE_TARGET_RIGHT", KEY('E') },
-    { "PED_CENTER_CAMERA_BEHIND_PLAYER", KEY(rsNULL) },
-    { "PED_LOCK_TARGET", MOUSE(rsMOUSERIGHTBUTTON) },
-    { "NETWORK_TALK", KEY(rsNULL) },
-    { "CONVERSATION_YES", KEY('Y') },
-    { "CONVERSATION_NO", KEY('N') },
-    { "GROUP_CONTROL_FWD", KEY('Y') },
-    { "GROUP_CONTROL_BWD", KEY('N') },
-    { "PED_1RST_PERSON_LOOK_UP", KEY(rsNULL) },
-    { "PED_1RST_PERSON_LOOK_DOWN", KEY(rsNULL) },
-    { "UNKNOWN_2", KEY(rsNULL) },
-    { "TOGGLE_DPAD", KEY(rsNULL) },
-    { "SWITCH_DEBUG_CAM_ON", KEY(rsNULL) },
-    { "TAKE_SCREEN_SHOT", KEY(rsNULL) },
-    { "SHOW_MOUSE_POINTER_TOGGLE", KEY(rsNULL) },
-    { "SHOW_WEAPON_WHEEL", KEY(rsTAB) },
-    { "EXTEND_RADAR_RANGE", KEY('Z') },
-    { "SHOW_PLAYER_STATS", KEY(rsLALT) },
-    { "PHONE_SHOW", MOUSE(rsMOUSEMIDDLEBUTTON) },
-    { "PHONE_HIDE", MOUSE(rsMOUSERIGHTBUTTON) },
-    { "PHONE_UP", MOUSE(rsMOUSEWHEELUPBUTTON) },
-    { "PHONE_DOWN", MOUSE(rsMOUSEWHEELDOWNBUTTON) },
-    { "PHONE_ENTER", MOUSE(rsMOUSELEFTBUTTON) },
-    { "MENU_SHOW_HIDE_LEGEND", KEY('L') },
-    { "MENU_PLACE_WAYPOINT", KEY(rsENTER) },
-    { "MENU_DELETE_SAVE", KEY(' ') },
-    { "MENU_APPLY_CHANGES", KEY(' ') },
-    { "MENU_BACK", KEY(rsESC) },
-    { "MENU_SELECT", KEY(rsENTER) }
+    { "PED_FIREWEAPON", MOUSE(rsMOUSELEFTBUTTON), GAMEPAD_CIRCLE },
+    { "PED_FIREWEAPON_ALT", KEY(rsNULL), GAMEPAD_LEFTSHOULDER1 },
+    { "PED_CYCLE_WEAPON_RIGHT", MOUSE(rsMOUSEWHEELUPBUTTON), GAMEPAD_RIGHTSHOULDER2 },
+    { "PED_CYCLE_WEAPON_LEFT", MOUSE(rsMOUSEWHEELDOWNBUTTON), GAMEPAD_LEFTSHOULDER2 },
+    { "GO_FORWARD", KEY('W'), GAMEPAD_THUMBLY },
+    { "GO_BACK", KEY('S'), GAMEPAD_THUMBLY },
+    { "GO_LEFT", KEY('A'), GAMEPAD_THUMBLX },
+    { "GO_RIGHT", KEY('D'), GAMEPAD_THUMBLX },
+    { "PED_SNIPER_ZOOM_IN", MOUSE(rsMOUSEWHEELUPBUTTON), GAMEPAD_LEFTSHOULDER2 },
+    { "PED_SNIPER_ZOOM_OUT", MOUSE(rsMOUSEWHEELDOWNBUTTON), GAMEPAD_RIGHTSHOULDER2 },
+    { "VEHICLE_ENTER_EXIT", KEY('F'), GAMEPAD_TRIANGLE },
+    { "CAMERA_CHANGE_VIEW_ALL_SITUATIONS", KEY('V'), GAMEPAD_SELECT },
+    { "PED_JUMPING", rsSPACE, GAMEPAD_SQUARE },
+    { "PED_SPRINT", KEY(rsLSHIFT), GAMEPAD_CROSS },
+    { "PED_LOOKBEHIND", KEY('C'), GAMEPAD_THUMBR },
+    { "PED_DUCK", KEY(rsLCTRL), GAMEPAD_THUMBL },
+    { "PED_ANSWER_PHONE", KEY(rsTAB), GAMEPAD_LEFTSHOULDER1 },
+    { "SNEAK_ABOUT", KEY(rsLCTRL), GAMEPAD_NONE },
+    { "VEHICLE_FIREWEAPON", MOUSE(rsMOUSELEFTBUTTON), GAMEPAD_CIRCLE },
+    { "VEHICLE_FIREWEAPON_ALT", KEY(rsLCTRL), GAMEPAD_LEFTSHOULDER1 },
+    { "VEHICLE_STEERLEFT", KEY('A'), GAMEPAD_DPADLEFT },
+    { "VEHICLE_STEERRIGHT", KEY('D'), GAMEPAD_DPADRIGHT },
+    { "VEHICLE_STEERUP", KEY(rsPGUP), GAMEPAD_DPADUP },
+    { "VEHICLE_STEERDOWN", KEY(rsPGDN), GAMEPAD_DPADDOWN },
+    { "VEHICLE_ACCELERATE", KEY('W'), GAMEPAD_CROSS },
+    { "VEHICLE_BRAKE", KEY('S'), GAMEPAD_SQUARE },
+    { "VEHICLE_RADIO_STATION_UP", MOUSE(rsMOUSEWHEELUPBUTTON), GAMEPAD_DPADUP },
+    { "VEHICLE_RADIO_STATION_DOWN", MOUSE(rsMOUSEWHEELDOWNBUTTON), GAMEPAD_DPADDOWN },
+    { "UNKNOWN_1", KEY(rsNULL), GAMEPAD_NONE },
+    { "VEHICLE_HORN", KEY(rsLSHIFT), GAMEPAD_THUMBL },
+    { "TOGGLE_SUBMISSIONS", KEY(rsLCTRL), GAMEPAD_THUMBR },
+    { "VEHICLE_HANDBRAKE", KEY(rsSPACE), GAMEPAD_RIGHTSHOULDER1 },
+    { "PED_1RST_PERSON_LOOK_LEFT", KEY('Q'), GAMEPAD_NONE },
+    { "PED_1RST_PERSON_LOOK_RIGHT", KEY('E'), GAMEPAD_NONE },
+    { "VEHICLE_LOOKLEFT", KEY('Q'), GAMEPAD_LEFTSHOULDER2 },
+    { "VEHICLE_LOOKRIGHT", KEY('E'), GAMEPAD_RIGHTSHOULDER2 },
+    { "VEHICLE_LOOKBEHIND", KEY('C'), GAMEPAD_THUMBR },
+    { "VEHICLE_MOUSELOOK",  KEY(rsNULL), GAMEPAD_NONE },
+    { "VEHICLE_TURRETLEFT",  KEY(rsNULL), GAMEPAD_NONE },
+    { "VEHICLE_TURRETRIGHT",  KEY(rsNULL), GAMEPAD_NONE },
+    { "VEHICLE_TURRETUP", KEY(rsNULL), GAMEPAD_NONE },
+    { "VEHICLE_TURRETDOWN", KEY(rsNULL), GAMEPAD_NONE },
+    { "PED_CYCLE_TARGET_LEFT", KEY('Q'), GAMEPAD_LEFTSHOULDER2 },
+    { "PED_CYCLE_TARGET_RIGHT", KEY('E'), GAMEPAD_RIGHTSHOULDER2 },
+    { "PED_CENTER_CAMERA_BEHIND_PLAYER", KEY(rsNULL), GAMEPAD_NONE },
+    { "PED_LOCK_TARGET", MOUSE(rsMOUSERIGHTBUTTON), GAMEPAD_NONE },
+    { "NETWORK_TALK", KEY(rsNULL), GAMEPAD_NONE },
+    { "CONVERSATION_YES", KEY('Y'), GAMEPAD_DPADRIGHT },
+    { "CONVERSATION_NO", KEY('N'), GAMEPAD_DPADLEFT },
+    { "GROUP_CONTROL_FWD", KEY('Y'), GAMEPAD_DPADUP },
+    { "GROUP_CONTROL_BWD", KEY('N'), GAMEPAD_DPADDOWN },
+    { "PED_1RST_PERSON_LOOK_UP", KEY(rsNULL), GAMEPAD_NONE },
+    { "PED_1RST_PERSON_LOOK_DOWN", KEY(rsNULL), GAMEPAD_NONE },
+    { "UNKNOWN_2", KEY(rsNULL), GAMEPAD_NONE },
+    { "TOGGLE_DPAD", KEY(rsNULL), GAMEPAD_NONE },
+    { "SWITCH_DEBUG_CAM_ON", KEY(rsNULL), GAMEPAD_NONE },
+    { "TAKE_SCREEN_SHOT", KEY(rsNULL), GAMEPAD_NONE },
+    { "SHOW_MOUSE_POINTER_TOGGLE", KEY(rsNULL), GAMEPAD_NONE },
+    { "SHOW_WEAPON_WHEEL", KEY(rsTAB), GAMEPAD_NONE },
+    { "EXTEND_RADAR_RANGE", KEY('Z'), GAMEPAD_DPADDOWN },
+    { "SHOW_PLAYER_STATS", KEY(rsLALT), GAMEPAD_NONE },
+    { "PHONE_SHOW", MOUSE(rsMOUSEMIDDLEBUTTON), GAMEPAD_NONE },
+    { "PHONE_HIDE", MOUSE(rsMOUSERIGHTBUTTON), GAMEPAD_NONE },
+    { "PHONE_UP", MOUSE(rsMOUSEWHEELUPBUTTON), GAMEPAD_NONE },
+    { "PHONE_DOWN", MOUSE(rsMOUSEWHEELDOWNBUTTON), GAMEPAD_NONE },
+    { "PHONE_ENTER", MOUSE(rsMOUSELEFTBUTTON), GAMEPAD_NONE },
+    { "MENU_SHOW_HIDE_LEGEND", KEY('L'), GAMEPAD_SQUARE },
+    { "MENU_PLACE_WAYPOINT", KEY(rsENTER), GAMEPAD_CROSS },
+    { "MENU_DELETE_SAVE", KEY(' '), GAMEPAD_SQUARE },
+    { "MENU_APPLY_CHANGES", KEY(' '), GAMEPAD_SQUARE },
+    { "MENU_BACK", KEY(rsESC), GAMEPAD_CIRCLE },
+    { "MENU_SELECT", KEY(rsENTER), GAMEPAD_CROSS }
 };
 
 const char* controlKeysStrings[62] = {
@@ -764,16 +764,46 @@ CPadNew* CPadNew::GetPad(int padNumber) {
     return (CPadNew*)CPad::GetPad(padNumber);
 }
 
+void CPadNew::GInputUpdate() {
+    GInput_Load(GInputPad);
+
+    for (int i = 0; i < 2; i++) {
+        CPadNew* pad = CPadNew::GetPad(i);
+        IGInputPad* gInput = GInputPad[i];
+        GINPUT_PAD_SETTINGS* s = &GInputPadSettings[i];
+
+        if (gInput) {
+            pad->HasPadInHands = gInput->HasPadInHands();
+
+            s->cbSize = sizeof(s);
+            gInput->SendConstEvent(GINPUT_EVENT_FETCH_PAD_SETTINGS, s);
+        }
+    }
+}
+
+void CPadNew::GInputRelease() {
+    GInput_Release();
+}
+
 bool CPadNew::GetOpenCloseMenuJustDown() {
+    if (HasPadInHands)
+        return (!NewState.Start && OldState.Start);
+
     return
-        (NewKeyState.esc && !OldKeyState.esc);
+        (!NewKeyState.esc && OldKeyState.esc);
 }
 
 bool CPadNew::GetMenuMapZoomIn() {
+    if (HasPadInHands)
+        return NewState.RightShoulder2;
+
     return (NewKeyState.pgup);
 }
 
 bool CPadNew::GetMenuMapZoomOut() {
+    if (HasPadInHands)
+        return NewState.LeftShoulder2;
+
     return (NewKeyState.pgdn);
 }
 
@@ -786,57 +816,90 @@ bool CPadNew::GetMenuMapZoomOutJustDown() {
 }
 
 bool CPadNew::GetMenuUp() {
+    if (HasPadInHands)
+        return NewState.DPadUp || NewState.LeftStickY < 0;
+
     return (NewKeyState.up);
 }
 
 bool CPadNew::GetMenuDown() {
+    if (HasPadInHands)
+        return NewState.DPadDown || NewState.LeftStickY > 0;
+
     return (NewKeyState.down);
 }
 
 bool CPadNew::GetMenuLeft() {
+    if (HasPadInHands)
+        return NewState.DPadLeft || NewState.LeftStickX < 0;
+
     return (NewKeyState.left);
 }
 
 bool CPadNew::GetMenuRight() {
+    if (HasPadInHands)
+        return NewState.DPadRight || NewState.LeftStickX > 0;
+
     return (NewKeyState.right);
 }
 
 bool CPadNew::GetMenuUpJustDown() {
+    if (HasPadInHands)
+        return NewState.DPadUp && !OldState.DPadUp;
+
     return
         (NewKeyState.up && !OldKeyState.up)
         || (NewMouseControllerState.wheelUp && !OldMouseControllerState.wheelUp);
 }
 
 bool CPadNew::GetMenuDownJustDown() {
+    if (HasPadInHands)
+        return NewState.DPadDown && !OldState.DPadDown;
+
     return
         (NewKeyState.down && !OldKeyState.down)
         || (NewMouseControllerState.wheelDown && !OldMouseControllerState.wheelDown);
 }
 
 bool CPadNew::GetMenuLeftJustDown() {
+    if (HasPadInHands)
+        return NewState.DPadLeft && !OldState.DPadLeft;
+
     return
         (NewKeyState.left && !OldKeyState.left);
 }
 
 bool CPadNew::GetMenuRightJustDown() {
+    if (HasPadInHands)
+        return NewState.DPadRight && !OldState.DPadRight;
+
     return
         (NewKeyState.right && !OldKeyState.right);
 }
 
 bool CPadNew::GetMenuBackJustDown() {
+    if (HasPadInHands)
+        return NewState.ButtonCircle && !OldState.ButtonCircle;
+
     return
         (NewKeyState.esc && !OldKeyState.esc);
 }
 
 bool CPadNew::GetMenuEnterJustDown() {
+    if (HasPadInHands)
+        return NewState.ButtonCross && !OldState.ButtonCross;
+
     return
         (NewKeyState.enter && !OldKeyState.enter)
         || (NewKeyState.extenter && !OldKeyState.extenter);
 }
 
 bool CPadNew::GetMenuSpaceJustDown() {
+    if (HasPadInHands)
+        return NewState.ButtonSquare && !OldState.ButtonSquare;
+
     return
-        (NewKeyState.standardKeys[32] && !OldKeyState.standardKeys[32]);
+        (GetKeyJustDown(MENU_APPLY_CHANGES));
 }
 
 bool CPadNew::GetLeftMouseDown() {
@@ -874,6 +937,9 @@ bool CPadNew::GetMiddleMouseJustDown() {
 }
 
 bool CPadNew::GetMenuShowHideLegendJustDown() {
+    if (HasPadInHands)
+        return NewState.ButtonSquare && !OldState.ButtonSquare;
+
     return !!(NewKeyState.standardKeys[76] && !OldKeyState.standardKeys[76]);
 }
 
@@ -913,12 +979,18 @@ bool CPadNew::GetShowWeaponWheel() {
     if (DisablePlayerControls || bDisablePlayerCycleWeapon)
         return false;
 
+    if (HasPadInHands)
+        return NewState.LeftShoulder1;
+
     return GetKeyDown(Controls[SHOW_WEAPON_WHEEL].key);
 }
 
 bool CPadNew::GetShowWeaponWheelJustUp() {
     if (DisablePlayerControls || bDisablePlayerCycleWeapon)
         return false;
+
+    if (HasPadInHands)
+        return !NewState.LeftShoulder1 && OldState.LeftShoulder1;
 
     return GetKeyUp(Controls[SHOW_WEAPON_WHEEL].key);
 }
@@ -953,6 +1025,9 @@ bool CPadNew::GetShowPlayerInfo(int time) {
 bool CPadNew::GetExtendRadarRange() {
     if (DisablePlayerControls)
         return false;
+
+    if (HasPadInHands)
+        return NewState.DPadDown;
 
     return GetKeyDown(Controls[EXTEND_RADAR_RANGE].key);
 }
