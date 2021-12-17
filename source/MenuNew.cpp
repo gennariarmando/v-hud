@@ -388,7 +388,7 @@ void CMenuNew::BuildMenuScreen() {
             AddNewEntry(audio, MENUENTRY_RADIOAUTOSELECT, "FE_RAUT", 0, 0);
             AddNewEntry(audio, MENUENTRY_RADIOEQ, "FE_RAEQ", 0, 0);
             AddNewEntry(audio, MENUENTRY_TRACKSAUTOSCAN, "FE_TAUT", 0, 0);
-            AddNewEntry(audio, MENUENTRY_RADIOMODE, "FE_RMOD", 0, 0);
+            //AddNewEntry(audio, MENUENTRY_RADIOMODE, "FE_RMOD", 0, 0);
             AddNewEntry(audio, MENUENTRY_RESTOREDEFAULTS, "FE_RDEF", 0, 0);
         }
 

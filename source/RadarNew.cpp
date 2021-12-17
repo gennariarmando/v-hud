@@ -9,6 +9,7 @@
 #include "PadNew.h"
 #include "resource.h"
 #include "MenuNew.h"
+#include "CellPhone.h"
 
 #include "CCamera.h"
 #include "CRadar.h"
@@ -1215,7 +1216,7 @@ void CRadarNew::DrawMap() {
         radarRange += 50.0f;
     }
 
-    if (CPadNew::GetPad(0)->GetExtendRadarRange())
+    if (CPadNew::GetPad(0)->GetExtendRadarRange() && !CellPhone.bActive && !CHud::bDrawingVitalStats)
         m_nRadarRangeExtendTime = CTimer::m_snTimeInMilliseconds + 3000;
 
     if (m_nRadarRangeExtendTime > CTimer::m_snTimeInMilliseconds) {

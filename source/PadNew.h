@@ -176,6 +176,9 @@ public:
     bool GetShowWeaponWheelJustUp();
     bool GetShowWeaponWheel(int time);
 
+    bool GetWeaponWheelCycleLeft();
+    bool GetWeaponWheelCycleRight();
+
     bool GetShowPlayerInfo();
     bool GetShowPlayerInfo(int time);
 

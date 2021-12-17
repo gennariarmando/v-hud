@@ -8,6 +8,7 @@
 #include "TextNew.h"
 #include "HudNew.h"
 #include "CellPhone.h"
+#include "Audio.h"
 
 #include "CAERadioTrackManager.h"
 #include "CTimer.h"
@@ -25,8 +26,17 @@ int CRadioHud::m_nPreviousRadioId = 1;
 bool CRadioHud::m_bChangeRadioStation = false;
 
 CRadioHud::CRadioHud() {
+    // Disable default input
     patch::Nop(0x4EB728, 32);
     patch::Nop(0x4EB751, 36);
+
+    // No retune delay
+    patch::Set(0x4EB81C + 3, 5);
+    patch::Nop(0x4EB7E4, 19);
+    patch::Nop(0x4EB829, 2);
+
+    patch::Set(0x4EB961 + 3, 5);
+    patch::Nop(0x4EB946, 19);
 }
 
 void CRadioHud::Init() {
@@ -56,8 +66,12 @@ bool CRadioHud::CanRetuneRadioStation() {
 void CRadioHud::Process() {
     if (!CHud::bDrawingVitalStats && !CellPhone.bActive) {
         if (CanRetuneRadioStation()) {
-            if (CPadNew::GetPad(0)->CycleRadioStationLeftJustDown()) {
+            if (AERadioTrackManager.field_1) {
                 m_nCurrentRadioId = AERadioTrackManager.m_TempSettings.m_nCurrentRadioStation;
+                AERadioTrackManager.field_1 = false;
+            }
+
+            if (CPadNew::GetPad(0)->CycleRadioStationLeftJustDown()) {
                 m_nPreviousRadioId = m_nCurrentRadioId;
                 m_nCurrentRadioId--;
 
@@ -67,7 +81,6 @@ void CRadioHud::Process() {
                 m_bChangeRadioStation = true;
             }
             else if (CPadNew::GetPad(0)->CycleRadioStationRightJustDown()) {
-                m_nCurrentRadioId = AERadioTrackManager.m_TempSettings.m_nCurrentRadioStation;
                 m_nPreviousRadioId = m_nCurrentRadioId;
                 m_nCurrentRadioId++;
 
@@ -84,6 +97,8 @@ void CRadioHud::Process() {
 
         m_nTimeToDisplay = CTimer::m_snTimeInMilliseconds + 2000;
         m_bChangeRadioStation = false;
+
+        Audio.PlayChunk(CHUNK_WHEEL_MOVE, 1.0f);
     }
 }
 

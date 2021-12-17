@@ -306,10 +306,10 @@ void CWeaponSelector::ProcessWeaponSelector() {
             else {
                 if (!bSlowCycle) {
                     if (!CellPhone.bActive) {
-                        if (CPad::GetPad(0)->CycleWeaponRightJustDown()) {
+                        if (!CPadNew::GetPad(0)->HasPadInHands && CPadNew::GetPad(0)->GetWeaponWheelCycleRight()) {
                             OpenWeaponWheelQuickSwitch("RIGHT");
                         }
-                        else if (CPad::GetPad(0)->CycleWeaponLeftJustDown()) {
+                        else if (!CPadNew::GetPad(0)->HasPadInHands && CPadNew::GetPad(0)->GetWeaponWheelCycleLeft()) {
                             OpenWeaponWheelQuickSwitch("LEFT");
                         }
                     }
@@ -317,10 +317,10 @@ void CWeaponSelector::ProcessWeaponSelector() {
             }
 
             if (bShowWeaponWheel && bSlowCycle && CPadNew::GetPad(0)->GetShowWeaponWheel()) {
-                if (CPad::GetPad(0)->CycleWeaponRightJustDown()) {
+                if (CPadNew::GetPad(0)->GetWeaponWheelCycleRight()) {
                     SwitchWeaponFromSlot("RIGHT");
                 }
-                else if (CPad::GetPad(0)->CycleWeaponLeftJustDown()) {
+                else if (CPadNew::GetPad(0)->GetWeaponWheelCycleLeft()) {
                     SwitchWeaponFromSlot("LEFT");
                 }
             }
@@ -415,6 +415,11 @@ void CWeaponSelector::CenterCursor() {
 void CWeaponSelector::UpdateCursorPos() {
     float x = CPadNew::GetMouseInput(256.0f).x;
     float y = CPadNew::GetMouseInput(256.0f).y;
+
+    if (CPadNew::GetPad(0)->HasPadInHands) {
+        x = CPadNew::GetPad(0)->NewState.RightStickX * 1.0f;
+        y = CPadNew::GetPad(0)->NewState.RightStickY * 1.0f;
+    }
 
     if (x < 0.01f || x > 0.01f)
         vMousePos.x += x;

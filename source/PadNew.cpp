@@ -22,8 +22,8 @@ char* ControlsFileName = "VHud\\ufiles\\controls.xml";
 CControls Controls[NUM_CONTROL_ACTIONS] = {
     { "PED_FIREWEAPON", MOUSE(rsMOUSELEFTBUTTON), GAMEPAD_CIRCLE },
     { "PED_FIREWEAPON_ALT", KEY(rsNULL), GAMEPAD_LEFTSHOULDER1 },
-    { "PED_CYCLE_WEAPON_RIGHT", MOUSE(rsMOUSEWHEELUPBUTTON), GAMEPAD_RIGHTSHOULDER2 },
-    { "PED_CYCLE_WEAPON_LEFT", MOUSE(rsMOUSEWHEELDOWNBUTTON), GAMEPAD_LEFTSHOULDER2 },
+    { "PED_CYCLE_WEAPON_RIGHT", MOUSE(rsMOUSEWHEELDOWNBUTTON), GAMEPAD_RIGHTSHOULDER2 },
+    { "PED_CYCLE_WEAPON_LEFT", MOUSE(rsMOUSEWHEELUPBUTTON), GAMEPAD_LEFTSHOULDER2 },
     { "GO_FORWARD", KEY('W'), GAMEPAD_THUMBLY },
     { "GO_BACK", KEY('S'), GAMEPAD_THUMBLY },
     { "GO_LEFT", KEY('A'), GAMEPAD_THUMBLX },
@@ -46,8 +46,8 @@ CControls Controls[NUM_CONTROL_ACTIONS] = {
     { "VEHICLE_STEERDOWN", KEY(rsPGDN), GAMEPAD_DPADDOWN },
     { "VEHICLE_ACCELERATE", KEY('W'), GAMEPAD_CROSS },
     { "VEHICLE_BRAKE", KEY('S'), GAMEPAD_SQUARE },
-    { "VEHICLE_RADIO_STATION_UP", MOUSE(rsMOUSEWHEELUPBUTTON), GAMEPAD_DPADUP },
-    { "VEHICLE_RADIO_STATION_DOWN", MOUSE(rsMOUSEWHEELDOWNBUTTON), GAMEPAD_DPADDOWN },
+    { "VEHICLE_RADIO_STATION_UP", MOUSE(rsMOUSEWHEELUPBUTTON), GAMEPAD_NONE },
+    { "VEHICLE_RADIO_STATION_DOWN", MOUSE(rsMOUSEWHEELDOWNBUTTON), GAMEPAD_NONE },
     { "UNKNOWN_1", KEY(rsNULL), GAMEPAD_NONE },
     { "VEHICLE_HORN", KEY(rsLSHIFT), GAMEPAD_THUMBL },
     { "TOGGLE_SUBMISSIONS", KEY(rsLCTRL), GAMEPAD_THUMBR },
@@ -78,14 +78,14 @@ CControls Controls[NUM_CONTROL_ACTIONS] = {
     { "SWITCH_DEBUG_CAM_ON", KEY(rsNULL), GAMEPAD_NONE },
     { "TAKE_SCREEN_SHOT", KEY(rsNULL), GAMEPAD_NONE },
     { "SHOW_MOUSE_POINTER_TOGGLE", KEY(rsNULL), GAMEPAD_NONE },
-    { "SHOW_WEAPON_WHEEL", KEY(rsTAB), GAMEPAD_NONE },
+    { "SHOW_WEAPON_WHEEL", KEY(rsTAB), GAMEPAD_LEFTSHOULDER1 },
     { "EXTEND_RADAR_RANGE", KEY('Z'), GAMEPAD_DPADDOWN },
-    { "SHOW_PLAYER_STATS", KEY(rsLALT), GAMEPAD_NONE },
-    { "PHONE_SHOW", MOUSE(rsMOUSEMIDDLEBUTTON), GAMEPAD_NONE },
-    { "PHONE_HIDE", MOUSE(rsMOUSERIGHTBUTTON), GAMEPAD_NONE },
-    { "PHONE_UP", MOUSE(rsMOUSEWHEELUPBUTTON), GAMEPAD_NONE },
-    { "PHONE_DOWN", MOUSE(rsMOUSEWHEELDOWNBUTTON), GAMEPAD_NONE },
-    { "PHONE_ENTER", MOUSE(rsMOUSELEFTBUTTON), GAMEPAD_NONE },
+    { "SHOW_PLAYER_STATS", KEY(rsLALT), GAMEPAD_DPADDOWN },
+    { "PHONE_SHOW", MOUSE(rsMOUSEMIDDLEBUTTON), GAMEPAD_DPADUP },
+    { "PHONE_HIDE", MOUSE(rsMOUSERIGHTBUTTON), GAMEPAD_CIRCLE },
+    { "PHONE_UP", MOUSE(rsMOUSEWHEELUPBUTTON), GAMEPAD_DPADUP },
+    { "PHONE_DOWN", MOUSE(rsMOUSEWHEELDOWNBUTTON), GAMEPAD_DPADDOWN },
+    { "PHONE_ENTER", MOUSE(rsMOUSELEFTBUTTON), GAMEPAD_CROSS },
     { "MENU_SHOW_HIDE_LEGEND", KEY('L'), GAMEPAD_SQUARE },
     { "MENU_PLACE_WAYPOINT", KEY(rsENTER), GAMEPAD_CROSS },
     { "MENU_DELETE_SAVE", KEY(' '), GAMEPAD_SQUARE },
@@ -944,22 +944,37 @@ bool CPadNew::GetMenuShowHideLegendJustDown() {
 }
 
 bool CPadNew::GetPhoneShowJustDown() {
+    if (HasPadInHands)
+        return NewState.DPadUp && !OldState.DPadUp;
+
     return GetKeyJustDown(Controls[PHONE_SHOW].key);
 }
 
 bool CPadNew::GetPhoneHideJustDown() {
+    if (HasPadInHands)
+        return NewState.ButtonCircle && !OldState.ButtonCircle;
+
     return GetKeyJustDown(Controls[PHONE_HIDE].key);
 }
 
 bool CPadNew::GetPhoneUpJustDown() {
+    if (HasPadInHands)
+        return NewState.DPadUp && !OldState.DPadUp;
+
     return GetKeyJustDown(Controls[PHONE_UP].key);
 }
 
 bool CPadNew::GetPhoneDownJustDown() {
+    if (HasPadInHands)
+        return NewState.DPadDown && !OldState.DPadDown;
+
     return GetKeyJustDown(Controls[PHONE_DOWN].key);
 }
 
 bool CPadNew::GetPhoneEnterJustDown() {
+    if (HasPadInHands)
+        return NewState.ButtonCross && !OldState.ButtonCross;
+
     return GetKeyJustDown(Controls[PHONE_ENTER].key);
 }
 
@@ -1005,9 +1020,38 @@ bool CPadNew::GetShowWeaponWheel(int time) {
     return (weaponWheelTime + CTimer::m_snTimeInMilliseconds > CTimer::m_snTimeInMilliseconds + time) ? GetShowWeaponWheel() : false;
 }
 
+bool CPadNew::GetWeaponWheelCycleLeft() {
+    if (HasPadInHands) {
+        switch (Mode) {
+        case 0:
+            return NewState.LeftShoulder2 && !OldState.LeftShoulder2;
+        case 1:
+            return NewState.DPadLeft && !OldState.DPadLeft;
+        }
+    }
+
+    return GetKeyJustDown(Controls[CA_PED_CYCLE_WEAPON_LEFT].key);
+}
+
+bool CPadNew::GetWeaponWheelCycleRight() {
+    if (HasPadInHands) {
+        switch (Mode) {
+        case 0:
+            return NewState.RightShoulder2 && !OldState.RightShoulder2;
+        case 1:
+            return NewState.DPadRight && !OldState.DPadRight;
+        }
+    }
+
+    return GetKeyJustDown(Controls[CA_PED_CYCLE_WEAPON_RIGHT].key);
+}
+
 bool CPadNew::GetShowPlayerInfo() {
     if (DisablePlayerControls || bDisablePlayerDisplayVitalStats)
         return false;
+
+    if (HasPadInHands)
+        return NewState.DPadDown;
 
     return GetKeyDown(Controls[SHOW_PLAYER_STATS].key);
 }
@@ -1036,14 +1080,17 @@ bool CPadNew::CycleRadioStationLeftJustDown() {
     if (DisablePlayerControls)
         return false;
 
-    return GetKeyJustDown(Controls[CA_VEHICLE_RADIO_STATION_DOWN].key);
+    return GetKeyJustDown(Controls[CA_VEHICLE_RADIO_STATION_UP].key);
 }
 
 bool CPadNew::CycleRadioStationRightJustDown() {
     if (DisablePlayerControls)
         return false;
 
-    return GetKeyJustDown(Controls[CA_VEHICLE_RADIO_STATION_UP].key);
+    if (HasPadInHands)
+        return NewState.DPadLeft && !OldState.DPadLeft;
+
+    return GetKeyJustDown(Controls[CA_VEHICLE_RADIO_STATION_DOWN].key);
 }
 
 CVector2D CPadNew::GetMouseInput(float mult) {
