@@ -899,7 +899,7 @@ bool CPadNew::GetMenuSpaceJustDown() {
         return NewState.ButtonSquare && !OldState.ButtonSquare;
 
     return
-        (GetKeyJustDown(MENU_APPLY_CHANGES));
+        (GetKeyJustDown(Controls[MENU_APPLY_CHANGES].key));
 }
 
 bool CPadNew::GetLeftMouseDown() {
