@@ -83,8 +83,10 @@ CControls Controls[NUM_CONTROL_ACTIONS] = {
     { "SHOW_PLAYER_STATS", KEY(rsLALT), GAMEPAD_DPADDOWN },
     { "PHONE_SHOW", MOUSE(rsMOUSEMIDDLEBUTTON), GAMEPAD_DPADUP },
     { "PHONE_HIDE", MOUSE(rsMOUSERIGHTBUTTON), GAMEPAD_CIRCLE },
-    { "PHONE_UP", MOUSE(rsMOUSEWHEELUPBUTTON), GAMEPAD_DPADUP },
-    { "PHONE_DOWN", MOUSE(rsMOUSEWHEELDOWNBUTTON), GAMEPAD_DPADDOWN },
+    { "PHONE_UP", KEY(rsUP), GAMEPAD_DPADUP },
+    { "PHONE_DOWN", KEY(rsDOWN), GAMEPAD_DPADDOWN },
+    { "PHONE_LEFT", MOUSE(rsMOUSEWHEELUPBUTTON), GAMEPAD_DPADLEFT },
+    { "PHONE_RIGHT", MOUSE(rsMOUSEWHEELDOWNBUTTON), GAMEPAD_DPADRIGHT },
     { "PHONE_ENTER", MOUSE(rsMOUSELEFTBUTTON), GAMEPAD_CROSS },
     { "MENU_SHOW_HIDE_LEGEND", KEY('L'), GAMEPAD_SQUARE },
     { "MENU_PLACE_WAYPOINT", KEY(rsENTER), GAMEPAD_CROSS },
@@ -787,10 +789,10 @@ void CPadNew::GInputRelease() {
 
 bool CPadNew::GetOpenCloseMenuJustDown() {
     if (HasPadInHands)
-        return (!NewState.Start && OldState.Start);
+        return (NewState.Start && !OldState.Start);
 
     return
-        (!NewKeyState.esc && OldKeyState.esc);
+        (NewKeyState.esc && !OldKeyState.esc);
 }
 
 bool CPadNew::GetMenuMapZoomIn() {
@@ -819,28 +821,28 @@ bool CPadNew::GetMenuUp() {
     if (HasPadInHands)
         return NewState.DPadUp || NewState.LeftStickY < 0;
 
-    return (NewKeyState.up);
+    return (NewKeyState.up) || (GetKeyDown('W'));
 }
 
 bool CPadNew::GetMenuDown() {
     if (HasPadInHands)
         return NewState.DPadDown || NewState.LeftStickY > 0;
 
-    return (NewKeyState.down);
+    return (NewKeyState.down) || (GetKeyDown('S'));
 }
 
 bool CPadNew::GetMenuLeft() {
     if (HasPadInHands)
         return NewState.DPadLeft || NewState.LeftStickX < 0;
 
-    return (NewKeyState.left);
+    return (NewKeyState.left) || (GetKeyDown('A'));
 }
 
 bool CPadNew::GetMenuRight() {
     if (HasPadInHands)
         return NewState.DPadRight || NewState.LeftStickX > 0;
 
-    return (NewKeyState.right);
+    return (NewKeyState.right) || (GetKeyDown('D'));
 }
 
 bool CPadNew::GetMenuUpJustDown() {
@@ -849,7 +851,8 @@ bool CPadNew::GetMenuUpJustDown() {
 
     return
         (NewKeyState.up && !OldKeyState.up)
-        || (NewMouseControllerState.wheelUp && !OldMouseControllerState.wheelUp);
+        || (NewMouseControllerState.wheelUp && !OldMouseControllerState.wheelUp)
+        || (GetKeyJustDown('W'));
 }
 
 bool CPadNew::GetMenuDownJustDown() {
@@ -858,7 +861,8 @@ bool CPadNew::GetMenuDownJustDown() {
 
     return
         (NewKeyState.down && !OldKeyState.down)
-        || (NewMouseControllerState.wheelDown && !OldMouseControllerState.wheelDown);
+        || (NewMouseControllerState.wheelDown && !OldMouseControllerState.wheelDown)
+        || (GetKeyJustDown('S'));
 }
 
 bool CPadNew::GetMenuLeftJustDown() {
@@ -866,7 +870,8 @@ bool CPadNew::GetMenuLeftJustDown() {
         return NewState.DPadLeft && !OldState.DPadLeft;
 
     return
-        (NewKeyState.left && !OldKeyState.left);
+        (NewKeyState.left && !OldKeyState.left)
+        || (GetKeyJustDown('A'));
 }
 
 bool CPadNew::GetMenuRightJustDown() {
@@ -874,7 +879,8 @@ bool CPadNew::GetMenuRightJustDown() {
         return NewState.DPadRight && !OldState.DPadRight;
 
     return
-        (NewKeyState.right && !OldKeyState.right);
+        (NewKeyState.right && !OldKeyState.right)
+        || (GetKeyJustDown('D'));
 }
 
 bool CPadNew::GetMenuBackJustDown() {
@@ -969,6 +975,20 @@ bool CPadNew::GetPhoneDownJustDown() {
         return NewState.DPadDown && !OldState.DPadDown;
 
     return GetKeyJustDown(Controls[PHONE_DOWN].key);
+}
+
+bool CPadNew::GetPhoneLeftJustDown() {
+    if (HasPadInHands)
+        return NewState.DPadLeft && !OldState.DPadLeft;
+
+    return GetKeyJustDown(Controls[PHONE_LEFT].key);
+}
+
+bool CPadNew::GetPhoneRightJustDown() {
+    if (HasPadInHands)
+        return NewState.DPadRight && !OldState.DPadRight;
+
+    return GetKeyJustDown(Controls[PHONE_RIGHT].key);
 }
 
 bool CPadNew::GetPhoneEnterJustDown() {

@@ -84,7 +84,9 @@ enum eControlsActions {
     PHONE_SHOW,
     PHONE_HIDE,
     PHONE_UP,
-    PHONE_DOWN,
+    PHONE_DOWN, 
+    PHONE_LEFT,
+    PHONE_RIGHT,
     PHONE_ENTER,
     MENU_SHOW_HIDE_LEGEND,
     MENU_PLACE_WAYPOINT,
@@ -163,6 +165,8 @@ public:
     bool GetPhoneUpJustDown();
 
     bool GetPhoneDownJustDown();
+    bool GetPhoneLeftJustDown();
+    bool GetPhoneRightJustDown();
 
     bool GetPhoneEnterJustDown();
 

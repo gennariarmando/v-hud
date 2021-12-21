@@ -4,8 +4,7 @@
 #define MENU_SCREEN_CHANGE_WAIT_TIME 250
 
 #define MENU_MAP_ZOOM_MIN (1.1f)
-#define MENU_MAP_ZOOM_MAX (10.0f)
-
+#define MENU_MAP_ZOOM_MAX (32.0f)
 
 #include "PadNew.h"
 #include "CSprite2d.h"

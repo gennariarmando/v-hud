@@ -215,9 +215,11 @@ void CCellPhone::Process() {
     if (nTimeLastTimePhoneShown < CTimer::m_snTimeInMillisecondsPauseMode) {
         if (bActive && pad->GetPhoneHideJustDown()) {
             ShowHidePhone(false);
+            return;
         }
         else if (pad->GetPhoneShowJustDown()) {
             ShowHidePhone(true);
+            return;
         }
 
         nTimeLastTimePhoneShown = 0;
@@ -228,9 +230,25 @@ void CCellPhone::Process() {
 
     bool Up = pad->GetPhoneUpJustDown();
     bool Down = pad->GetPhoneDownJustDown();
+
+    bool Left = pad->GetPhoneLeftJustDown();
+    bool Right = pad->GetPhoneRightJustDown();
+
     bool Enter = pad->GetPhoneEnterJustDown();
 
     if (Up) {
+        if (nCurrentItem - 3 >= 0 && Apps[nCurrentItem - 3].name[0] != '\0') {
+            nPreviousItem = nCurrentItem;
+            nCurrentItem -= 3;
+        }
+    }
+    else if (Down) {
+        if (nCurrentItem + 3 <= GetLastAppOnScreen() && Apps[nCurrentItem + 3].name[0] != '\0') {
+            nPreviousItem = nCurrentItem;
+            nCurrentItem += 3;
+        }
+    }
+    else if (Left) {
         while (true) {
             nPreviousItem = nCurrentItem;
             nCurrentItem--;
@@ -243,7 +261,7 @@ void CCellPhone::Process() {
                 break;
         }
     }
-    else if (Down) {
+    else if (Right) {
         while (true) {
             nPreviousItem = nCurrentItem;
             nCurrentItem++;
