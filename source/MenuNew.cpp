@@ -36,6 +36,7 @@
 #include "TextNew.h"
 #include "RadarNew.h"
 #include "RadioHud.h"
+#include "WeaponSelector.h"
 
 #include "dx\VidMemViaD3D9.h"
 
@@ -187,12 +188,14 @@ void CMenuNew::Init() {
     MenuNew.Settings.Load();
     TempSettings = Settings;
 
-    bLandingPage = Settings.landingPage;
-    bStartOrLoadGame = !bLandingPage;
+    if (!SAMP) {
+        bLandingPage = Settings.landingPage;
+        bStartOrLoadGame = !bLandingPage;
 
-    if (bLandingPage) {
-        SetLandingPageBehaviour();
-        PlayLoadingTune();
+        if (bLandingPage) {
+            SetLandingPageBehaviour();
+            PlayLoadingTune();
+        }
     }
 
     ScanGalleryPictures(true);
@@ -771,7 +774,11 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
 
     CPadNew* pad = CPadNew::GetPad(0);
     if (on) {
-        CTimer::StartUserPause();
+        if (SAMP) {
+            CWeaponSelector::DisableCameraMovement();
+        }
+        else
+            CTimer::StartUserPause();
         AudioEngine.Service();
 
         pad->Clear(0, 1);
@@ -785,7 +792,11 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
         Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
     }
     else {
-        CTimer::EndUserPause();
+        if (SAMP) {
+            CWeaponSelector::ResetCameraMovement();
+        }
+        else
+            CTimer::EndUserPause();
 
         pad->Clear(1, 1);
         //pad->ClearKeyBoardHistory();
@@ -816,6 +827,9 @@ void CMenuNew::OpenMenuScreen(int screen) {
 }
 
 void CMenuNew::CenterCursor() {
+    if (SAMP)
+        return;
+
     POINT p;
     p.x = SCREEN_WIDTH / 2;
     p.y = SCREEN_HEIGHT / 2;

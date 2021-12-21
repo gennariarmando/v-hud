@@ -8,3 +8,6 @@ public:
     VHud();
 
 };
+
+extern bool SAMP;
+extern void CheckForMP();

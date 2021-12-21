@@ -623,7 +623,8 @@ void CWeaponSelector::OpenWeaponWheel(bool slow) {
         if (bSlowCycle) {
             DisableCameraMovement();
 
-            CTimer::ms_fTimeScale = 0.25f;
+            if (!SAMP)
+                CTimer::ms_fTimeScale = 0.25f;
 
             Audio.PlayChunk(CHUNK_WHEEL_OPEN_CLOSE, 1.0f);
 

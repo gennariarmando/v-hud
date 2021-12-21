@@ -40,6 +40,8 @@ inline int OpenConsole(bool console) {
 HANDLE thread = NULL;
 bool rwInitialized = false;
 
+bool SAMP = false;
+
 VHud::VHud() {
     //OpenConsole(AllocConsole());
 
@@ -57,6 +59,8 @@ VHud::VHud() {
                 Audio.Update();
                 CPadNew::GInputUpdate();
             }
+
+            CheckForMP();
         }
         CPadNew::GInputRelease();
 
@@ -113,4 +117,15 @@ VHud::VHud() {
         CMenuPanels::Shutdown();
         Audio.Shutdown();
     };
+}
+
+void CheckForMP() {
+    if (SAMP)
+        return;
+
+    const HMODULE h = ModuleList().Get(L"SAMP");
+
+    if (h) {
+        SAMP = true;
+    }
 }
