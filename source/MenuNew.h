@@ -240,6 +240,14 @@ public:
         y = _y;
         return this;
     }
+
+    inline void RemoveEntry() {
+        type = MENUENTRY_NONE;
+        for (int i = 0; i < 16; i++)
+            entryName[i] = '\0';
+        x = 0;
+        y = 0;
+    }
 };
 
 class CMenuTab {
@@ -476,6 +484,7 @@ public:
     CMenuScreen* GetMenuScreen(char* name);
     CMenuTab* GetMenuTab(CMenuScreen* s, char* name);
     CMenuEntry* GetMenuEntry(CMenuTab* t, char* name);
+    CMenuEntry* GetMenuEntry(CMenuTab* t, int i);
 
     void SetInputTypeAndClear(int input, int n);
     int GetLastMenuBarItem();
@@ -489,6 +498,7 @@ public:
     void OpenMenuScreen(int screen);
     void CenterCursor();
     void DoMapZoomInOut(bool out);
+    void RemoveUnusedControllerSettings();
     void Process();
     void ScanGalleryPictures(bool force);
     unsigned int GetTimeInMillisecondsRight();

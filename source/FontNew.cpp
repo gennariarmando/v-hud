@@ -929,5 +929,5 @@ void CFontNew::GetTextRect(CRect* rect, float xstart, float ystart, const char* 
     rect->right = xstart + Details.wrapX + (Details.backgroundBorder.right);
 
     rect->top = ystart - Details.backgroundBorder.top;
-    rect->bottom = ystart + (Details.backgroundBorder.bottom) + ((32.0f * Details.scale.y * 0.5f + 2.0f * Details.scale.y) * GetNumberLines(false, xstart, ystart, s));
+    rect->bottom = ystart + (Details.backgroundBorder.bottom) + ((32.0f * Details.scale.y * 0.5f + 2.0f * Details.scale.y) * GetNumberLines(true, xstart, ystart, s));
 }

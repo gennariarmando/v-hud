@@ -613,6 +613,11 @@ CMenuEntry* CMenuNew::GetMenuEntry(CMenuTab* t, char* name) {
     }
 }
 
+CMenuEntry* CMenuNew::GetMenuEntry(CMenuTab* t, int i) {
+    CMenuEntry* e = &t->Entries[i];
+    return e;
+}
+
 CMenuTab* CMenuNew::AddNewTab(CMenuScreen* s, int type, char* tabName, char* actionName, bool full) {
     for (int j = 0; j < MAX_MENU_TABS; j++) {
         CMenuTab* t = &s->Tab[j];
@@ -864,6 +869,30 @@ void CMenuNew::DoMapZoomInOut(bool out) {
         }
 
         nMapZoomTime = CTimer::m_snTimeInMillisecondsPauseMode + 25;
+    }
+}
+
+void CMenuNew::RemoveUnusedControllerSettings() {
+    static bool checkGInput = false;
+    if (!checkGInput) {
+        CMenuScreen* s = GetMenuScreen("FE_SET");
+        CMenuTab* t = GetMenuTab(s, "FE_PAD");
+
+        if (GINPUT) {
+            for (int i = 1; i < 8; i++) {
+                CMenuEntry* e = GetMenuEntry(t, i);
+                e->RemoveEntry();
+            }
+        }
+        else {
+            CMenuEntry* e = GetMenuEntry(t, 0);
+            e->RemoveEntry();
+
+            e = GetMenuEntry(t, 0);
+            e->y = 7;
+        }
+
+        checkGInput = true;
     }
 }
 
@@ -1377,6 +1406,7 @@ void CMenuNew::Process() {
         }
 
         FindOutUsedMemory();
+        RemoveUnusedControllerSettings();
 
         if (bRequestScreenUpdate) {
             fScreenAlpha = 0;
@@ -2976,6 +3006,23 @@ void CMenuNew::DrawTabGamePad() {
         }
     }
 
+    if (!GINPUT) {
+        CFontNew::SetBackground(false);
+        CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+        CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
+        CFontNew::SetWrapX(SCREEN_COORD(640.0f));
+        CFontNew::SetFontStyle(CFontNew::FONT_1);
+        CFontNew::SetDropShadow(0.0f);
+        CFontNew::SetOutline(0.0f);
+        CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+        CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(255)));
+        CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
+
+        char* str = TextNew.GetText("FE_GINPUT").text;
+        CFontNew::PrintString(rect.left + rect.right / 2, rect.top + bb / 2, str);
+        return;
+    }
+
     CRect ctrlRect = rect;
     ctrlRect.left = MENU_X(990.0f);
     ctrlRect.top = MENU_Y(212.0f);;
@@ -3037,7 +3084,39 @@ void CMenuNew::DrawTabGamePad() {
         CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
 
         for (int i = 0; i < 9; i++) {
-            sprintf(buff, "PAD_%02d", TempSettings.showControlsFor ? count + 18 : count);
+            if (GInputPadSettings[0].ControlsSet == 1)
+                sprintf(buff, "PAD_%02d", TempSettings.showControlsFor ? count + 18 : count);
+            else if (GInputPadSettings[0].ControlsSet == 2) {
+                switch (i) {
+                case 0:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_33" : "PAD_10");
+                    break;
+                case 1:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_18" : "PAD_36");
+                    break;
+                case 2:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_02" : "PAD_02");
+                    break;
+                case 3:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_21" : "PAD_03");
+                    break;
+                case 4:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_22" : "PAD_04");
+                    break;
+                case 5:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_37" : "PAD_37");
+                    break;
+                case 6:
+                    strcpy(buff, TempSettings.showControlsFor ? (FLASH_ITEM(4000, 2000) ? "PAD_25" : "PAD_38") : "PAD_38");
+                    break;
+                case 7:
+                    strcpy(buff, TempSettings.showControlsFor ? (FLASH_ITEM(4000, 2000) ? "PAD_41" : "PAD_39") : (FLASH_ITEM(4000, 2000) ? "PAD_41" : "PAD_39"));
+                    break;
+                case 8:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_40" : "PAD_40");
+                    break;
+                }               
+            }
             str = TextNew.GetText(buff).text;
             TextNew.UpperCase(str);
             DrawPadLine(x, y + next, w[i], h[i]);
@@ -3079,7 +3158,39 @@ void CMenuNew::DrawTabGamePad() {
         CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
 
         for (int i = 0; i < 9; i++) {
-            sprintf(buff, "PAD_%02d", TempSettings.showControlsFor ? count + 18 : count);
+            if (GInputPadSettings[0].ControlsSet == 1)
+                sprintf(buff, "PAD_%02d", TempSettings.showControlsFor ? count + 18 : count);
+            else if (GInputPadSettings[0].ControlsSet == 2) {
+                switch (i) {
+                case 0:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_32" : "PAD_31");
+                    break;
+                case 1:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_27" : "PAD_43");
+                    break;
+                case 2:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_11" : "PAD_11");
+                    break;
+                case 3:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_12" : "PAD_12");
+                    break;
+                case 4:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_24" : "PAD_13");
+                    break;
+                case 5:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_28" : "PAD_14");
+                    break;
+                case 6:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_24" : "PAD_15");
+                    break;
+                case 7:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_34" : "PAD_16");
+                    break;
+                case 8:
+                    strcpy(buff, TempSettings.showControlsFor ? "PAD_17" : "PAD_17");
+                    break;
+                }            
+            }            
             str = TextNew.GetText(buff).text;
             TextNew.UpperCase(str);
             DrawPadLine(x, y + next, w[i], h[i]);

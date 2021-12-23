@@ -203,3 +203,4 @@ extern const char* controlKeysStrings[62];
 
 extern IGInputPad* GInputPad[2];
 extern GINPUT_PAD_SETTINGS GInputPadSettings[2];
+extern bool GINPUT;

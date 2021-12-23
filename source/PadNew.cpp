@@ -11,8 +11,9 @@ using namespace plugin;
 using namespace pugi;
 
 CPadNew Pad;
-IGInputPad* GInputPad[2];
+IGInputPad* GInputPad[2] = { NULL, NULL };
 GINPUT_PAD_SETTINGS GInputPadSettings[2];
+bool GINPUT = false;
 
 char* ControlsFileName = "VHud\\ufiles\\controls.xml";
  
@@ -767,19 +768,23 @@ CPadNew* CPadNew::GetPad(int padNumber) {
 }
 
 void CPadNew::GInputUpdate() {
-    GInput_Load(GInputPad);
+    const HMODULE h = ModuleList().Get(GINPUT_FILENAMEW);
+    if (h) {
+        GInput_Load(GInputPad);
 
-    for (int i = 0; i < 2; i++) {
-        CPadNew* pad = CPadNew::GetPad(i);
-        IGInputPad* gInput = GInputPad[i];
-        GINPUT_PAD_SETTINGS* s = &GInputPadSettings[i];
+        for (int i = 0; i < 2; i++) {
+            CPadNew* pad = CPadNew::GetPad(i);
+            IGInputPad* gInput = GInputPad[i];
+            GINPUT_PAD_SETTINGS* s = &GInputPadSettings[i];
 
-        if (gInput) {
-            pad->HasPadInHands = gInput->HasPadInHands();
+            if (gInput) {
+                pad->HasPadInHands = gInput->HasPadInHands();
 
-            s->cbSize = sizeof(s);
-            gInput->SendConstEvent(GINPUT_EVENT_FETCH_PAD_SETTINGS, s);
+                s->cbSize = sizeof(GINPUT_PAD_SETTINGS);
+                gInput->SendEvent(GINPUT_EVENT_FETCH_PAD_SETTINGS, s);
+            }
         }
+        GINPUT = true;
     }
 }
 
