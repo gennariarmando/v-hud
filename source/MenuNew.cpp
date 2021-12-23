@@ -1979,7 +1979,10 @@ void CMenuNew::DrawPauseMenuExtraText() {
         header = TextNew.GetText("FE_SGAM").text;
         break;
     default:
-        header = TextNew.GetText("FE_GTA").text;
+        if (SAMP)
+            header = TextNew.GetText("FE_GTAO").text;
+        else
+            header = TextNew.GetText("FE_GTA").text;
         break;
     }
 

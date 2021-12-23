@@ -303,6 +303,14 @@ void CFontNew::Shutdown() {
 }
 
 float CFontNew::GetCharacterSize(char c) {
+    float n = 0.0f;
+    char cs = c + ' ';
+
+    switch (cs) {
+    case '~':
+        return n;
+    }
+
     return Size[Details.style][c] * Details.scale.x;
 }
 
@@ -638,17 +646,18 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
             break;
         }
     }
-    while (*c != '~') c++;
 
     if (!print) {
         PS2Symbol = false;
         bNewLine = false;
     }
 
-    if (*c == '~' || *c == ' ')
-        return c;
+    while (*c != '~') c++;
 
-    return c + 1;
+    if (*c == '~' && *c + 1 == '~')
+        return c + 1;
+
+    return c;
 }
 
 CSprite2d* CFontNew::GetActionSprite(int key) {
@@ -798,7 +807,7 @@ void CFontNew::DrawButton(float& x, float y, CSprite2d* sprite) {
     rect.right = rect.left + (w);
     rect.bottom = rect.top + (h);
 
-    x += w - GetCharacterSize(' ');
+    x += w;
 
     int savedAlpha;
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
