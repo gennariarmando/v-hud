@@ -3504,7 +3504,6 @@ void CMenuNew::PrintBrief() {
                 brief.m_nNumber[2], brief.m_nNumber[3],
                 brief.m_nNumber[4], brief.m_nNumber[5], gString);
             CMessages::InsertStringInString(gString, brief.m_pString);
-            CMessages::InsertPlayerControlKeysInString(gString);
 
             CFontNew::SetTokenToIgnore('N', 'n');
             CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));

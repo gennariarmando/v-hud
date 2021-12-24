@@ -186,7 +186,7 @@ void CMenuPanels::Draw(unsigned char panelId) {
                     }
 
                     CMessages::InsertNumberInString(TheText.Get(title), num1, num2, -1, -1, -1, -1, gString);
-                    CMessages::InsertPlayerControlKeysInString(gString);
+
                     if (panel->m_anColumnAlignment[i] == ALIGN_RIGHT) {
                         CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
                         x = rect.right - 12.0f;

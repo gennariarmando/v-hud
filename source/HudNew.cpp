@@ -107,8 +107,23 @@ CHudNew::CHudNew() {
     };
     patch::RedirectJump(0x705331, (void*)0x7053AF);
 
-    patch::PutRetn(0x69E160);
     patch::PutRetn(0x742CF0);
+
+    // CMessages::InsertPlayerControlKeysInString
+    patch::Nop(0x588C55, 5);
+    patch::Nop(0x588EB3, 5);
+    patch::Nop(0x69E3AB, 5);
+    patch::Nop(0x69E52B, 5);
+    patch::Nop(0x69E63B, 5);
+    patch::Nop(0x69E72B, 5);
+    patch::Nop(0x69E836, 5);
+    patch::Nop(0x69E986, 5);
+    patch::Nop(0x69F018, 5);
+    patch::Nop(0x69F092, 5);
+    patch::Nop(0x69F0D3, 5);
+    patch::Nop(0x69F203, 5);
+    patch::Nop(0x69F2D3, 5);
+    patch::Nop(0x69F394, 5);
 }
 
 void CHudNew::Init() {
