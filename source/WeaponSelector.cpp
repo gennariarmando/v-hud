@@ -306,10 +306,10 @@ void CWeaponSelector::ProcessWeaponSelector() {
             else {
                 if (!bSlowCycle) {
                     if (!CellPhone.bActive) {
-                        if (!CPadNew::GetPad(0)->HasPadInHands && CPadNew::GetPad(0)->GetWeaponWheelCycleRight()) {
+                        if (!HAS_PAD_IN_HANDS(0) && CPadNew::GetPad(0)->GetWeaponWheelCycleRight()) {
                             OpenWeaponWheelQuickSwitch("RIGHT");
                         }
-                        else if (!CPadNew::GetPad(0)->HasPadInHands && CPadNew::GetPad(0)->GetWeaponWheelCycleLeft()) {
+                        else if (!HAS_PAD_IN_HANDS(0) && CPadNew::GetPad(0)->GetWeaponWheelCycleLeft()) {
                             OpenWeaponWheelQuickSwitch("LEFT");
                         }
                     }
@@ -416,7 +416,7 @@ void CWeaponSelector::UpdateCursorPos() {
     float x = CPadNew::GetMouseInput(256.0f).x;
     float y = CPadNew::GetMouseInput(256.0f).y;
 
-    if (CPadNew::GetPad(0)->HasPadInHands) {
+    if (HAS_PAD_IN_HANDS(0)) {
         x = CPadNew::GetPad(0)->NewState.RightStickX * 1.0f;
         y = CPadNew::GetPad(0)->NewState.RightStickY * 1.0f;
     }

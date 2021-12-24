@@ -10,7 +10,6 @@
 using namespace plugin;
 using namespace pugi;
 
-CPadNew Pad;
 IGInputPad* GInputPad[2] = { NULL, NULL };
 GINPUT_PAD_SETTINGS GInputPadSettings[2];
 bool GINPUT = false;
@@ -162,8 +161,11 @@ const char* controlKeysStrings[62] = {
     "MWHD",
 };
 
+static int savedID = -1;
 CPadNew::CPadNew() {
-    patch::RedirectJump(0x748995, (void*)0x7489D4);
+    Id = savedID + 1;
+    savedID = Id;
+    DisablePlayerAim = false;
 }
 
 void CPadNew::SaveSettings() {
@@ -768,6 +770,9 @@ CPadNew* CPadNew::GetPad(int padNumber) {
 }
 
 void CPadNew::GInputUpdate() {
+    if (GINPUT)
+        return;
+
     const HMODULE h = ModuleList().Get(GINPUT_FILENAMEW);
     if (h) {
         GInput_Load(GInputPad);
@@ -778,8 +783,6 @@ void CPadNew::GInputUpdate() {
             GINPUT_PAD_SETTINGS* s = &GInputPadSettings[i];
 
             if (gInput) {
-                pad->HasPadInHands = gInput->HasPadInHands();
-
                 s->cbSize = sizeof(GINPUT_PAD_SETTINGS);
                 gInput->SendEvent(GINPUT_EVENT_FETCH_PAD_SETTINGS, s);
             }
@@ -793,7 +796,7 @@ void CPadNew::GInputRelease() {
 }
 
 bool CPadNew::GetOpenCloseMenuJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return (NewState.Start && !OldState.Start);
 
     return
@@ -801,14 +804,14 @@ bool CPadNew::GetOpenCloseMenuJustDown() {
 }
 
 bool CPadNew::GetMenuMapZoomIn() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.RightShoulder2;
 
     return (NewKeyState.pgup);
 }
 
 bool CPadNew::GetMenuMapZoomOut() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.LeftShoulder2;
 
     return (NewKeyState.pgdn);
@@ -823,35 +826,35 @@ bool CPadNew::GetMenuMapZoomOutJustDown() {
 }
 
 bool CPadNew::GetMenuUp() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadUp || NewState.LeftStickY < 0;
 
     return (NewKeyState.up) || (GetKeyDown('W'));
 }
 
 bool CPadNew::GetMenuDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadDown || NewState.LeftStickY > 0;
 
     return (NewKeyState.down) || (GetKeyDown('S'));
 }
 
 bool CPadNew::GetMenuLeft() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadLeft || NewState.LeftStickX < 0;
 
     return (NewKeyState.left) || (GetKeyDown('A'));
 }
 
 bool CPadNew::GetMenuRight() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadRight || NewState.LeftStickX > 0;
 
     return (NewKeyState.right) || (GetKeyDown('D'));
 }
 
 bool CPadNew::GetMenuUpJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadUp && !OldState.DPadUp;
 
     return
@@ -861,7 +864,7 @@ bool CPadNew::GetMenuUpJustDown() {
 }
 
 bool CPadNew::GetMenuDownJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadDown && !OldState.DPadDown;
 
     return
@@ -871,7 +874,7 @@ bool CPadNew::GetMenuDownJustDown() {
 }
 
 bool CPadNew::GetMenuLeftJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadLeft && !OldState.DPadLeft;
 
     return
@@ -880,7 +883,7 @@ bool CPadNew::GetMenuLeftJustDown() {
 }
 
 bool CPadNew::GetMenuRightJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadRight && !OldState.DPadRight;
 
     return
@@ -889,7 +892,7 @@ bool CPadNew::GetMenuRightJustDown() {
 }
 
 bool CPadNew::GetMenuBackJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.ButtonCircle && !OldState.ButtonCircle;
 
     return
@@ -897,7 +900,7 @@ bool CPadNew::GetMenuBackJustDown() {
 }
 
 bool CPadNew::GetMenuEnterJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.ButtonCross && !OldState.ButtonCross;
 
     return
@@ -906,7 +909,7 @@ bool CPadNew::GetMenuEnterJustDown() {
 }
 
 bool CPadNew::GetMenuSpaceJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.ButtonSquare && !OldState.ButtonSquare;
 
     return
@@ -948,56 +951,56 @@ bool CPadNew::GetMiddleMouseJustDown() {
 }
 
 bool CPadNew::GetMenuShowHideLegendJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.ButtonSquare && !OldState.ButtonSquare;
 
     return !!(NewKeyState.standardKeys[76] && !OldKeyState.standardKeys[76]);
 }
 
 bool CPadNew::GetPhoneShowJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadUp && !OldState.DPadUp;
 
     return GetKeyJustDown(Controls[PHONE_SHOW].key);
 }
 
 bool CPadNew::GetPhoneHideJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.ButtonCircle && !OldState.ButtonCircle;
 
     return GetKeyJustDown(Controls[PHONE_HIDE].key);
 }
 
 bool CPadNew::GetPhoneUpJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadUp && !OldState.DPadUp;
 
     return GetKeyJustDown(Controls[PHONE_UP].key);
 }
 
 bool CPadNew::GetPhoneDownJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadDown && !OldState.DPadDown;
 
     return GetKeyJustDown(Controls[PHONE_DOWN].key);
 }
 
 bool CPadNew::GetPhoneLeftJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadLeft && !OldState.DPadLeft;
 
     return GetKeyJustDown(Controls[PHONE_LEFT].key);
 }
 
 bool CPadNew::GetPhoneRightJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadRight && !OldState.DPadRight;
 
     return GetKeyJustDown(Controls[PHONE_RIGHT].key);
 }
 
 bool CPadNew::GetPhoneEnterJustDown() {
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.ButtonCross && !OldState.ButtonCross;
 
     return GetKeyJustDown(Controls[PHONE_ENTER].key);
@@ -1019,7 +1022,7 @@ bool CPadNew::GetShowWeaponWheel() {
     if (DisablePlayerControls || bDisablePlayerCycleWeapon)
         return false;
 
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.LeftShoulder1;
 
     return GetKeyDown(Controls[SHOW_WEAPON_WHEEL].key);
@@ -1029,7 +1032,7 @@ bool CPadNew::GetShowWeaponWheelJustUp() {
     if (DisablePlayerControls || bDisablePlayerCycleWeapon)
         return false;
 
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return !NewState.LeftShoulder1 && OldState.LeftShoulder1;
 
     return GetKeyUp(Controls[SHOW_WEAPON_WHEEL].key);
@@ -1046,7 +1049,7 @@ bool CPadNew::GetShowWeaponWheel(int time) {
 }
 
 bool CPadNew::GetWeaponWheelCycleLeft() {
-    if (HasPadInHands) {
+    if (HAS_PAD_IN_HANDS(Id)) {
         switch (Mode) {
         case 0:
             return NewState.LeftShoulder2 && !OldState.LeftShoulder2;
@@ -1059,7 +1062,7 @@ bool CPadNew::GetWeaponWheelCycleLeft() {
 }
 
 bool CPadNew::GetWeaponWheelCycleRight() {
-    if (HasPadInHands) {
+    if (HAS_PAD_IN_HANDS(Id)) {
         switch (Mode) {
         case 0:
             return NewState.RightShoulder2 && !OldState.RightShoulder2;
@@ -1075,7 +1078,7 @@ bool CPadNew::GetShowPlayerInfo() {
     if (DisablePlayerControls || bDisablePlayerDisplayVitalStats)
         return false;
 
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadDown;
 
     return GetKeyDown(Controls[SHOW_PLAYER_STATS].key);
@@ -1095,7 +1098,7 @@ bool CPadNew::GetExtendRadarRange() {
     if (DisablePlayerControls)
         return false;
 
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadDown;
 
     return GetKeyDown(Controls[EXTEND_RADAR_RANGE].key);
@@ -1112,7 +1115,7 @@ bool CPadNew::CycleRadioStationRightJustDown() {
     if (DisablePlayerControls)
         return false;
 
-    if (HasPadInHands)
+    if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadLeft && !OldState.DPadLeft;
 
     return GetKeyJustDown(Controls[CA_VEHICLE_RADIO_STATION_DOWN].key);
@@ -1139,6 +1142,16 @@ CVector2D CPadNew::GetMouseInput(float mult) {
     y *= mult;
 
     return CVector2D(x * sx, y * sy);
+}
+
+bool CPadNew::CheckForKeyboardInput() {
+    for (int i = 0; i < 255; i++)
+        return GetKeyDown(i);
+
+    for (int i = rsESC; i < rsAPPS; i++)
+        return GetKeyDown(i);
+
+    return false;
 }
 
 bool CPadNew::CheckForControllerInput() {

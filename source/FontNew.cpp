@@ -638,7 +638,7 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
             }
             break;
         case '@':
-            if (CPadNew::GetPad(0)->HasPadInHands)
+            if (HAS_PAD_IN_HANDS(0))
                 ParseGInputActions(++c);
             else
                 PS2Symbol = GetActionSprite(CPadNew::StringToKey(++c));
@@ -663,7 +663,7 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
 CSprite2d* CFontNew::GetActionSprite(int key) {
     CSprite2d* sprite = NULL;
 
-    if (CPadNew::GetPad(0)->HasPadInHands) {
+    if (HAS_PAD_IN_HANDS(0)) {
         if (key != GAMEPAD_NONE)
             sprite = ButtonSprite[key + 1];
     }
@@ -701,7 +701,7 @@ bool astrcmp(const char* s, const char* a) {
 int CFontNew::ParseCustomActions(const char* s) {
     for (int i = 0; i < NUM_CONTROL_ACTIONS; i++) {
         if (astrcmp(s, Controls[i].action)) {
-            if (CPadNew::GetPad(0)->HasPadInHands)
+            if (HAS_PAD_IN_HANDS(0))
                 return Controls[i].button;
             else
                 return Controls[i].key;

@@ -113,6 +113,8 @@ CMenuNew::CMenuNew() {
     patch::Set<BYTE>(0xC8D4C0, 5);
     patch::Nop(0x747483, 6);
 
+    patch::RedirectJump(0x748995, (void*)0x7489D4);
+
     auto openSavePage = [](int, int, int, int, int) {
         if (!bSaveScreenHasBeenOpened) {
             MenuNew.SetSavePageBehaviour(true);
@@ -972,7 +974,7 @@ void CMenuNew::Process() {
         bDrawMouse = false;
 
     if (bMenuActive) {
-        if (pad->HasPadInHands)
+        if (HAS_PAD_IN_HANDS(0))
             OpenClose |= pad->GetMenuBackJustDown();
 
         if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type == MENUENTRY_POPULATESAVESLOT ||

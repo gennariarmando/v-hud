@@ -1,4 +1,6 @@
 #pragma once
+#define HAS_PAD_IN_HANDS(id) GInputPad[id]->HasPadInHands()
+
 #include "CPad.h"
 #include "CControllerConfigManager.h"
 
@@ -106,8 +108,8 @@ public:
 
 class CPadNew : public CPad {
 public:
+    int Id;
     bool DisablePlayerAim;
-    bool HasPadInHands;
 
 public:
     CPadNew();
@@ -193,6 +195,7 @@ public:
     bool CycleRadioStationRightJustDown();
 
     static CVector2D GetMouseInput(float mult = 1.0f);
+    bool CheckForKeyboardInput();
     bool CheckForControllerInput();
     bool CheckForMouseInput();
 };

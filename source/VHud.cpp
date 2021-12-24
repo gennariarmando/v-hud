@@ -39,6 +39,7 @@ inline int OpenConsole(bool console) {
 
 HANDLE thread = NULL;
 bool rwInitialized = false;
+bool rwQuit = false;
 
 bool SAMP = false;
 
@@ -49,7 +50,7 @@ VHud::VHud() {
         Error("This version of GTA: San Andreas is not supported by this plugin.");
 
     auto VHudLoop = []() {
-        while (!RsGlobal.quit) {
+        while (!rwQuit) {
             if (rwInitialized) {
                 float f = CTimer::GetCurrentTimeInCycles() / (float)CTimer::GetCyclesPerMillisecond();
                 if (1000.0f / (float)RsGlobal.frameLimit < f) {
@@ -116,6 +117,8 @@ VHud::VHud() {
         CWeaponSelector::Shutdown();
         CMenuPanels::Shutdown();
         Audio.Shutdown();
+
+        rwQuit = true;
     };
 }
 
