@@ -136,24 +136,24 @@ void CHudNew::Init() {
     WantedSprites[WANTED_STAR_2]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\wanted"), "star2");
 
     CrosshairsSprites[CROSSHAIR_DOT] = new CSprite2d();
-    CrosshairsSprites[CROSSHAIR_DOT]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\crosshair"), "dot");
+    CrosshairsSprites[CROSSHAIR_DOT]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\crosshair"), "dot");
     CrosshairsSprites[CROSSHAIR_CROSS] = new CSprite2d();
-    CrosshairsSprites[CROSSHAIR_CROSS]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\crosshair"), "cross");
+    CrosshairsSprites[CROSSHAIR_CROSS]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\crosshair"), "cross");
     CrosshairsSprites[CROSSHAIR_ROCKET] = new CSprite2d();
-    CrosshairsSprites[CROSSHAIR_ROCKET]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\crosshair"), "rocket");
+    CrosshairsSprites[CROSSHAIR_ROCKET]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\crosshair"), "rocket");
     CrosshairsSprites[CROSSHAIR_SNIPER] = new CSprite2d();
-    CrosshairsSprites[CROSSHAIR_SNIPER]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\crosshair"), "sniper");
+    CrosshairsSprites[CROSSHAIR_SNIPER]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\crosshair"), "sniper");
     CrosshairsSprites[CROSSHAIR_SNIPERTARGET] = new CSprite2d();
-    CrosshairsSprites[CROSSHAIR_SNIPERTARGET]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\crosshair"), "snipertarget");
+    CrosshairsSprites[CROSSHAIR_SNIPERTARGET]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\crosshair"), "snipertarget");
     CrosshairsSprites[CROSSHAIR_ASSAULT] = new CSprite2d();
-    CrosshairsSprites[CROSSHAIR_ASSAULT]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\crosshair\\crosshairs"), "assault");
+    CrosshairsSprites[CROSSHAIR_ASSAULT]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\crosshair\\crosshairs"), "assault");
 
     CrosshairsSprites[CROSSHAIR_PISTOL] = new CSprite2d();
-    CrosshairsSprites[CROSSHAIR_PISTOL]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\crosshair\\crosshairs"), "pistol");
+    CrosshairsSprites[CROSSHAIR_PISTOL]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\crosshair\\crosshairs"), "pistol");
     CrosshairsSprites[CROSSHAIR_SHOTGUN] = new CSprite2d();
-    CrosshairsSprites[CROSSHAIR_SHOTGUN]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\crosshair\\crosshairs"), "shotgun");
+    CrosshairsSprites[CROSSHAIR_SHOTGUN]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\crosshair\\crosshairs"), "shotgun");
     CrosshairsSprites[CROSSHAIR_SMG] = new CSprite2d();
-    CrosshairsSprites[CROSSHAIR_SMG]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\crosshair\\crosshairs"), "smg");
+    CrosshairsSprites[CROSSHAIR_SMG]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\crosshair\\crosshairs"), "smg");
 
     StatsSprites[PLRSTAT_PLAYER1_ACTIVE] = new CSprite2d();
     StatsSprites[PLRSTAT_PLAYER1_ACTIVE]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\stats\\wheel_part"), "player1_active");
@@ -214,6 +214,9 @@ void CHudNew::ReInit() {
     for (int i = 0; i < 4; i++) {
         previousModelIndex[i] = MODEL_NULL;
     }
+
+    CRadioHud::Clear();
+    CRadarNew::Clear();
 }
 
 void CHudNew::Shutdown() {
@@ -326,10 +329,9 @@ void CHudNew::Draw() {
         CFontNew::SetClipX(SCREEN_WIDTH);
         CFontNew::SetWrapX(SCREEN_WIDTH);
 
-        CWeaponSelector::ProcessWeaponSelector();
-        CWeaponSelector::DrawWheel();
-
         if (!TheCamera.m_bWideScreenOn) {
+            CWeaponSelector::ProcessWeaponSelector();
+            CWeaponSelector::DrawWheel();
             DrawCrosshairs();
 
             if (MenuNew.Settings.showRadar && !CHud::bScriptDontDisplayRadar) {
@@ -444,7 +446,7 @@ bool CHudNew::IsAimingWeapon() {
         || mode == MODE_SNIPER_RUNABOUT
         || mode == MODE_CAMERA
         || mode == MODE_SYPHON
-        || mode == MODE_1STPERSON
+        || (mode == MODE_1STPERSON && !FindPlayerPed(0)->m_nPedFlags.bInVehicle)
         || mode == MODE_AIMWEAPON_FROMCAR
         || mode == MODE_AIMWEAPON_ATTACHED
         || mode == MODE_TWOPLAYER_IN_CAR_AND_SHOOTING;
@@ -463,12 +465,24 @@ void CHudNew::DrawCrosshairs() {
     float x = SCREEN_WIDTH * CCamera::m_f3rdPersonCHairMultX;
     float y = SCREEN_HEIGHT * CCamera::m_f3rdPersonCHairMultY;
     int modelId = CWeaponInfo::GetWeaponInfo(CWorld::Players[CWorld::PlayerInFocus].m_pPed->m_aWeapons[CWorld::Players[CWorld::PlayerInFocus].m_pPed->m_nActiveWeaponSlot].m_nType, 1)->m_nModelId1;
-    float radius = CWorld::Players[CWorld::PlayerInFocus].m_pPed->GetWeaponRadiusOnScreen();
+    float radius = CWorld::Players[CWorld::PlayerInFocus].m_pPed->GetWeaponRadiusOnScreen() * 2.0f;
+    bool reloading = CWorld::Players[CWorld::PlayerInFocus].m_pPed->m_aWeapons[CWorld::Players[CWorld::PlayerInFocus].m_pPed->m_nActiveWeaponSlot].m_nState == WEAPONSTATE_RELOADING;
+
     CRect rect;
     CRGBA col;
     CPlayerPed* playa = FindPlayerPed(-1);
     char* crosshairName = CWeaponSelector::nCrosshairs[playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nType].name;
     bool forceForFPS = false;
+
+    unsigned int savedShade;
+    unsigned int savedAlpha;
+    unsigned int savedFilter;
+    RwRenderStateGet(rwRENDERSTATESHADEMODE, &savedShade);
+    RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEFLAT);
+    RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
+    RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERMIPLINEAR);
 
     if (!crosshairName)
         return;
@@ -576,6 +590,9 @@ ForcedFPSView:
                     static int dotAlpha;
                     static int alphaTime = 0;
 
+                    if (reloading)
+                        alpha = 100;
+
                     col = GET_SETTING(HUD_CROSSHAIR_DOT).col;
 
                         if ((playa->m_pPlayerTargettedPed && playa->m_pPlayerTargettedPed->m_fHealth <= 0.0f) ||
@@ -603,13 +620,48 @@ ForcedFPSView:
                     dotAlpha = (int)interpF(dotAlpha, alpha, 0.2f * CTimer::ms_fTimeStep);
 
                     float w = GET_SETTING(HUD_CROSSHAIR_DOT).w;
-                    float h = GET_SETTING(HUD_CROSSHAIR_DOT).w;
+                    float h = GET_SETTING(HUD_CROSSHAIR_DOT).h;
                     col.a = dotAlpha;
-                    CrosshairsSprites[CROSSHAIR_DOT]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), col);
+                    int crosshairType = CROSSHAIR_DOT;
+                    bool withDot = true;
+                     
+                    if (MenuNew.Settings.weaponTarget) {
+                        radius = clamp(radius, 1.0f, 4.0f);
+
+                        if (!faststrcmp(crosshairName, "assault")) {
+                            crosshairType = CROSSHAIR_ASSAULT;
+                            w = h = 18.0f * radius;
+                            withDot = false;
+                        }
+                        else if (!faststrcmp(crosshairName, "pistol")) {
+                            crosshairType = CROSSHAIR_PISTOL;
+                            w = h = 18.0f * radius;
+                            withDot = true;
+                        }
+                        else if (!faststrcmp(crosshairName, "shotgun")) {
+                            crosshairType = CROSSHAIR_SHOTGUN;
+                            w = h = 34.0f * radius;
+                            withDot = true;
+                        }
+                        else if (!faststrcmp(crosshairName, "smg")) {
+                            crosshairType = CROSSHAIR_SMG;
+                            w = h = 18.0f * radius;
+                            withDot = true;
+                        }
+
+                        if (crosshairType != CROSSHAIR_DOT)
+                            CrosshairsSprites[crosshairType]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), CRGBA(255, 255, 255, alpha));
+                    }
+                    
+                    if (withDot) {
+                        w = GET_SETTING(HUD_CROSSHAIR_DOT).w;
+                        h = GET_SETTING(HUD_CROSSHAIR_DOT).h;
+                        CrosshairsSprites[CROSSHAIR_DOT]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), col);
+                    }
 
                     if (nTargettedEntityDeathTime > CTimer::m_snTimeInMilliseconds) {
                         w = GET_SETTING(HUD_CROSSHAIR_CROSS).w;
-                        h = GET_SETTING(HUD_CROSSHAIR_CROSS).w;
+                        h = GET_SETTING(HUD_CROSSHAIR_CROSS).h;
 
                         CRGBA crossCol = HudColourNew.GetRGB("HUD_COLOUR_WHITE", 255);
 
@@ -622,6 +674,11 @@ ForcedFPSView:
             }
         }
     }
+
+    RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)savedShade);
+    RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)savedAlpha);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
+
 }
 
 void CHudNew::DrawPlayerInfo() {
@@ -791,7 +848,7 @@ void CHudNew::DrawSimpleRect(CRect const& rect, CRGBA const& col) {
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
     RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
-    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERMIPLINEAR);
 
     CSprite2d::DrawRect(rect, col);
 
@@ -810,7 +867,7 @@ void CHudNew::DrawSimpleRectGrad(CRect const& rect, CRGBA const& col) {
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
     RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
-    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERMIPLINEAR);
     RwRenderStateGet(rwRENDERSTATETEXTUREADDRESS, &savedAddr);
     RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
 
@@ -836,7 +893,7 @@ void CHudNew::DrawSimpleRectGradInverted(CRect const& rect, CRGBA const& col) {
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
     RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
-    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERMIPLINEAR);
     RwRenderStateGet(rwRENDERSTATETEXTUREADDRESS, &savedAddr);
     RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
 
@@ -861,7 +918,7 @@ void CHudNew::DrawSimpleRectGradCentered(float x1, float y1, float x2, float y2,
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
     RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
-    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
+    RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERMIPLINEAR);
     RwRenderStateGet(rwRENDERSTATETEXTUREADDRESS, &savedAddr);
     RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
 

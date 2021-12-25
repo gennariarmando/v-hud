@@ -54,6 +54,10 @@ void CRadioHud::Init() {
     m_bInitialised = true;
 }
 
+void CRadioHud::Clear() {
+    m_nTimeToDisplay = 0;
+}
+
 bool CRadioHud::CanRetuneRadioStation() {
     bool result = true;
 
@@ -112,7 +116,7 @@ void CRadioHud::Draw() {
     if (!CanRetuneRadioStation() || i < 1)
         return;
 
-    if (CTimer::m_snTimeInMilliseconds < m_nTimeToDisplay) {
+    if (m_nTimeToDisplay > CTimer::m_snTimeInMilliseconds) {
         m_RadioIcons[i]->Draw(SCREEN_COORD_CENTER_LEFT(x + (w / 2)), HUD_Y(y), SCREEN_COORD(w), SCREEN_COORD(h), CRGBA(255, 255, 255, 255));
         m_RadioIcons[14]->Draw(SCREEN_COORD_CENTER_LEFT(x + (w / 2)), HUD_Y(y), SCREEN_COORD(w), SCREEN_COORD(h), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
 

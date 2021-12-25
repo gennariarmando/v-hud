@@ -202,6 +202,8 @@ void CMenuNew::Init() {
 
     ScanGalleryPictures(true);
 
+    nOpenCloseWaitTime = CTimer::m_snTimeInMillisecondsPauseMode + 2000;
+
     bInitialised = true;
 }
 
@@ -400,6 +402,7 @@ void CMenuNew::BuildMenuScreen() {
         if (auto display = AddNewTab(settings, MENUENTRY_CHANGETAB, "FE_DIS", NULL, false)) {
             AddNewEntry(display, MENUENTRY_SHOWRADAR, "FE_RAD", 0, 0);
             AddNewEntry(display, MENUENTRY_SHOWHUD, "FE_HUD", 0, 0);
+            AddNewEntry(display, MENUENTRY_WEAPONTARGET, "FE_TAR", 0, 0);
             AddNewEntry(display, MENUENTRY_GPSROUTE, "FE_GPS", 0, 0);
             AddNewEntry(display, MENUENTRY_BRIGHTNESS, "FE_BRI", 0, 0);
             AddNewEntry(display, MENUENTRY_GAMMA, "FE_GMA", 0, 0);
@@ -792,7 +795,7 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
         //pad->ClearKeyBoardHistory();
         pad->ClearMouseHistory();
         PreviousPlayerControls = pad->DisablePlayerControls;
-        pad->DisablePlayerControls = true;
+        CurrentPlayerControls = true;
 
         AudioEngine.StopRadio(NULL, 0);
 
@@ -808,7 +811,7 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
         pad->Clear(1, 1);
         //pad->ClearKeyBoardHistory();
         pad->ClearMouseHistory();
-        pad->DisablePlayerControls = PreviousPlayerControls;
+        CurrentPlayerControls = PreviousPlayerControls;
 
         Clear();
         SetInputTypeAndClear(MENUINPUT_BAR);
@@ -818,6 +821,8 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
     nLoadingTime = GetTimeInMillisecondsRight() + MENU_SCREEN_CHANGE_WAIT_TIME;
     nOpenCloseWaitTime = GetTimeInMillisecondsRight() + MENU_OPEN_CLOSE_WAIT_TIME;
     bMenuActive = on;
+
+    CenterCursor();
 }
 
 void CMenuNew::OpenMenuScreen(int screen) {
@@ -925,46 +930,74 @@ void CMenuNew::Process() {
     if (vMousePos.y > SCREEN_HEIGHT)
         vMousePos.y = SCREEN_HEIGHT;
 
-    CenterCursor();
-
     // Input
     CPadNew* pad = CPadNew::GetPad(0);
+    pad->DisablePlayerControls = CurrentPlayerControls;
 
-    bool Up = pad->GetMenuUpJustDown();
-    bool Down = pad->GetMenuDownJustDown();
-    bool Left = pad->GetMenuLeftJustDown();
-    bool Right = pad->GetMenuRightJustDown();
+    bool Up = false;
+    bool Down = false;
+    bool Left = false;
+    bool Right = false;
 
-    bool UpPressed = pad->GetMenuUp();
-    bool DownPressed = pad->GetMenuDown();
-    bool LeftPressed = pad->GetMenuLeft();
-    bool RightPressed = pad->GetMenuRight();
+    bool UpPressed = false;
+    bool DownPressed = false;
+    bool LeftPressed = false;
+    bool RightPressed = false;
 
-    bool Enter = pad->GetMenuEnterJustDown();
-    bool Back = pad->GetMenuBackJustDown() || (pad->GetRightMouseJustDown() && nCurrentInputType != MENUINPUT_BAR);
-    bool Space = pad->GetMenuSpaceJustDown();
-    bool WheelUp = pad->GetMenuMapZoomInJustDown();
-    bool WheelDown = pad->GetMenuMapZoomOutJustDown();
-    bool LeftMouseDown = pad->GetLeftMouseDown();
-    bool LeftMouseJustDown = pad->GetLeftMouseJustDown();
-    bool LeftMouseJustUp = pad->GetLeftMouseJustUp();
-    bool MiddleMouseJustDown = pad->GetMiddleMouseJustDown();
-    bool LeftMouseDoubleClickJustDown = pad->GetLeftMouseDoubleClickJustDown();
+    bool Enter = false;
+    bool Back = false;
+    bool Space = false;
+    bool WheelUp = false;
+    bool WheelDown = false;
+    bool LeftMouseDown = false;
+    bool LeftMouseJustDown = false;
+    bool LeftMouseJustUp = false;
+    bool MiddleMouseJustDown = false;
+    bool LeftMouseDoubleClickJustDown = false;
 
-    bool MapZoomIn = pad->GetMenuMapZoomIn();
-    bool MapZoomOut = pad->GetMenuMapZoomOut();
-    bool ShowHideMapLegend = pad->GetMenuShowHideLegendJustDown();
+    bool MapZoomIn = false;
+    bool MapZoomOut = false;
+    bool ShowHideMapLegend = false;
 
-    bool OpenClose = pad->GetOpenCloseMenuJustDown();
+    bool OpenClose = false;
 
-    if (bInvertInput) {
-        if (nCurrentScreen == MENUSCREEN_GALLERY) {
-            Up = Left;
-            Down = Right;
-        }
-        else {
-            Up = Right;
-            Down = Left;
+    if (nOpenCloseWaitTime < GetTimeInMillisecondsRight()) {
+        Up = pad->GetMenuUpJustDown();
+        Down = pad->GetMenuDownJustDown();
+        Left = pad->GetMenuLeftJustDown();
+        Right = pad->GetMenuRightJustDown();
+
+        UpPressed = pad->GetMenuUp();
+        DownPressed = pad->GetMenuDown();
+        LeftPressed = pad->GetMenuLeft();
+        RightPressed = pad->GetMenuRight();
+
+        Enter = pad->GetMenuEnterJustDown();
+        Back = pad->GetMenuBackJustDown() || (pad->GetRightMouseJustDown() && nCurrentInputType != MENUINPUT_BAR);
+        Space = pad->GetMenuSpaceJustDown();
+        WheelUp = pad->GetMenuMapZoomInJustDown();
+        WheelDown = pad->GetMenuMapZoomOutJustDown();
+        LeftMouseDown = pad->GetLeftMouseDown();
+        LeftMouseJustDown = pad->GetLeftMouseJustDown();
+        LeftMouseJustUp = pad->GetLeftMouseJustUp();
+        MiddleMouseJustDown = pad->GetMiddleMouseJustDown();
+        LeftMouseDoubleClickJustDown = pad->GetLeftMouseDoubleClickJustDown();
+
+        MapZoomIn = pad->GetMenuMapZoomIn();
+        MapZoomOut = pad->GetMenuMapZoomOut();
+        ShowHideMapLegend = pad->GetMenuShowHideLegendJustDown();
+
+        OpenClose = pad->GetOpenCloseMenuJustDown();
+
+        if (bInvertInput) {
+            if (nCurrentScreen == MENUSCREEN_GALLERY) {
+                Up = Left;
+                Down = Right;
+            }
+            else {
+                Up = Right;
+                Down = Left;
+            }
         }
     }
 
@@ -1774,6 +1807,21 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
         break;
     case MENUENTRY_SHOWRADAR:
         TempSettings.showRadar = TempSettings.showRadar == false;
+        ApplyChanges();
+        break;
+    case MENUENTRY_WEAPONTARGET:
+        if (input < 0) {
+            TempSettings.weaponTarget--;
+
+            if (TempSettings.weaponTarget < 0)
+                TempSettings.weaponTarget = 1;
+        }
+        else if (input > 0) {
+            TempSettings.weaponTarget++;
+
+            if (TempSettings.weaponTarget > 1)
+                TempSettings.weaponTarget = 0;
+        }
         ApplyChanges();
         break;
     case MENUENTRY_GPSROUTE:
@@ -2804,6 +2852,9 @@ void CMenuNew::DrawDefault() {
                 case MENUENTRY_SHOWRADAR:
                     rightText = TextNew.GetText(TempSettings.showRadar ? "FE_ON" : "FE_OFF").text;
                     break;
+                case MENUENTRY_WEAPONTARGET:
+                    rightText = TextNew.GetText(TempSettings.weaponTarget ? "FE_COMP" : "FE_SIM").text;
+                    break;
                 case MENUENTRY_GPSROUTE:
                     rightText = TextNew.GetText(TempSettings.gpsRoute ? "FE_ON" : "FE_OFF").text;
                     break;
@@ -3417,6 +3468,7 @@ void CMenuNew::ResetMap() {
     bDrawMenuMap = false;
     bCleanMapScreenNextFrame = false;
     bShowLegend = true;
+    CRadarNew::m_bRemoveBlipsLimit = false;
 }
 
 void CMenuNew::SetWaypoint(float x, float y) {
@@ -3679,6 +3731,7 @@ void CMenuNew::DrawLegend() {
             col = CTimer::m_snTimeInMillisecondsPauseMode % 800 < 400 ? HudColourNew.GetRGB("HUD_COLOUR_REDDARK", 255) : HudColourNew.GetRGB("HUD_COLOUR_BLUEDARK", 255);
             break;
         }
+        CRadarNew::m_MapLegendBlipList[i].sprite = id;
 
         if (str) {
             if (!faststrcmp(str, "NONE"))
@@ -3715,7 +3768,7 @@ void CMenuNew::DrawMap() {
 
     if (nCurrentInputType == MENUINPUT_TAB) {
         if (bShowMenu) {
-            CVector2D in = FindPlayerCoors(0);
+            CVector2D in = FindPlayerCentreOfWorld_NoInteriorShift(0);
             CVector2D out;
             CRadarNew::TransformRealWorldPointToRadarSpace(out, in);
             in = out;
@@ -3751,6 +3804,7 @@ void CMenuNew::DrawMap() {
 
     bDrawMenuMap = true;
     bCleanMapScreenNextFrame = true;
+    CRadarNew::m_bRemoveBlipsLimit = true;
 
     float mapZoom = GetMenuMapTileSize() * fMapZoom;
     rect.left = vMapBase.x;
@@ -4423,6 +4477,7 @@ void CMenuSettings::Load() {
                 language = display.child("Language").attribute("value").as_int();
                 showHUD = display.child("ShowHUD").attribute("value").as_bool();
                 showRadar = display.child("ShowRadar").attribute("value").as_bool();
+                weaponTarget = display.child("WeaponTarget").attribute("value").as_int();
                 savePhotos = display.child("SavePhotos").attribute("value").as_bool();
                 gpsRoute = display.child("GpsRoute").attribute("value").as_bool();
                 safeZoneSize = display.child("SafeZoneSize").attribute("value").as_double();
@@ -4512,6 +4567,7 @@ void CMenuSettings::Save() {
     display.append_child("Language").append_attribute("value").set_value(language);
     display.append_child("ShowHUD").append_attribute("value").set_value(showHUD);
     display.append_child("ShowRadar").append_attribute("value").set_value(showRadar);
+    display.append_child("WeaponTarget").append_attribute("value").set_value(weaponTarget);
     display.append_child("SavePhotos").append_attribute("value").set_value(savePhotos);
     display.append_child("GpsRoute").append_attribute("value").set_value(gpsRoute);
     display.append_child("SafeZoneSize").append_attribute("value").set_value(safeZoneSize);

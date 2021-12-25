@@ -187,7 +187,7 @@ void CMenuPanels::Draw(unsigned char panelId) {
 
                     CMessages::InsertNumberInString(TheText.Get(title), num1, num2, -1, -1, -1, -1, gString);
 
-                    if (panel->m_anColumnAlignment[i] == ALIGN_RIGHT) {
+                    if (i > 0) {
                         CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
                         x = rect.right - 12.0f;
                     }

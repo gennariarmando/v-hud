@@ -138,7 +138,10 @@ void CGPS::DrawLine(CVector2D const&a, CVector2D const&b, float width, CRGBA col
 }
 
 void CGPS::ProcessPath(CLocalization& l) {
-    ThePaths.DoPathSearch(0, FindPlayerCoors(0), CNodeAddress(), l.vecDest, l.resultNodes, &l.nNodesCount, MAX_NODE_POINTS, &l.fGPSDistance,
+    if (FindPlayerPed(0) && FindPlayerPed(0)->m_nAreaCode)
+        return;
+
+    ThePaths.DoPathSearch(0, FindPlayerCentreOfWorld_NoInteriorShift(0), CNodeAddress(), l.vecDest, l.resultNodes, &l.nNodesCount, MAX_NODE_POINTS, &l.fGPSDistance,
         999999.0f, NULL, 999999.0f, false, CNodeAddress(), false, false);
 
     if (l.nNodesCount > 0) {
@@ -181,7 +184,7 @@ void CGPS::DrawPathLine() {
         if (FrontEndMenuManager.m_nTargetBlipIndex
             && CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nCounter == HIWORD(FrontEndMenuManager.m_nTargetBlipIndex)
             && CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nBlipDisplayFlag
-            && DistanceBetweenPoints(CVector2D(FindPlayerCoors(-1)), CVector2D(CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_vPosition)) < MAX_TARGET_DISTANCE) {
+            && DistanceBetweenPoints(CVector2D(FindPlayerCentreOfWorld_NoInteriorShift(0)), CVector2D(CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_vPosition)) < MAX_TARGET_DISTANCE) {
             CRadar::ClearBlip(FrontEndMenuManager.m_nTargetBlipIndex);
             FrontEndMenuManager.m_nTargetBlipIndex = 0;
         }
@@ -203,18 +206,19 @@ void CGPS::DrawPathLine() {
             else {
                 for (int i = 0; i < 175; i++) {
                     tRadarTrace trace = CRadar::ms_RadarTrace[i];
-                    if (!trace.m_bTrackingBlip || trace.m_nBlipSprite != RADAR_SPRITE_NONE || trace.m_dwColour != BLIP_COLOUR_DESTINATION)
+                    if (!trace.m_bTrackingBlip)
                         continue;
 
-
-                    switch (trace.m_nBlipType) {
-                    case BLIP_COORD:
-                    case BLIP_CONTACTPOINT:
-                        if (CRadar::DisplayThisBlip(HIBYTE(trace.m_nBlipSprite), i) || LOBYTE(trace.m_nBlipSprite) != RADAR_SPRITE_NONE) {
-                            Dest.pathColor = CRadar::GetRadarTraceColour(trace.m_dwColour, trace.m_bBright, trace.m_bFriendly);
-                            Dest.vecDest = trace.m_vPosition;
-                            Dest.bDestFound = true;
-                            break;
+                    if (CTheScripts::IsPlayerOnAMission() && trace.m_dwColour == BLIP_COLOUR_DESTINATION) {
+                        switch (trace.m_nBlipType) {
+                        case BLIP_COORD:
+                        case BLIP_CONTACTPOINT:
+                            if (CRadarNew::DisplayThisBlip(HIBYTE(trace.m_nBlipSprite), i) || LOBYTE(trace.m_nBlipSprite) != RADAR_SPRITE_NONE) {
+                                Dest.pathColor = CRadarNew::GetRadarTraceColour(trace.m_dwColour, trace.m_bBright, trace.m_bFriendly);
+                                Dest.vecDest = trace.m_vPosition;
+                                Dest.bDestFound = true;
+                                break;
+                            }
                         }
                     }
                 }
@@ -230,8 +234,8 @@ void CGPS::DrawPathLine() {
                     if (!node)
                         return;
 
-                    Dest.fGPSDistance += DistanceBetweenPoints(FindPlayerCoors(-1), node->GetNodeCoors());
-                    Dest.nPathDirection = GetPathDirection(ThePaths.GetPathNode(Dest.resultNodes[0])->GetNodeCoors(), FindPlayerCoors(-1), ThePaths.GetPathNode(Dest.resultNodes[1])->GetNodeCoors());
+                    Dest.fGPSDistance += DistanceBetweenPoints(FindPlayerCentreOfWorld_NoInteriorShift(0), node->GetNodeCoors());
+                    Dest.nPathDirection = GetPathDirection(ThePaths.GetPathNode(Dest.resultNodes[0])->GetNodeCoors(), FindPlayerCentreOfWorld_NoInteriorShift(0), ThePaths.GetPathNode(Dest.resultNodes[1])->GetNodeCoors());
                     bShowGPS = true;
                 }
             }

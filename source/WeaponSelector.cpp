@@ -11,6 +11,7 @@
 #include "TextNew.h"
 #include "CellPhone.h"
 #include "Audio.h"
+#include "MenuPanels.h"
 
 #include "CGeneral.h"
 #include "CWorld.h"
@@ -272,6 +273,11 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
 
     return
         playa
+        && !playa->m_nPedFlags.bInVehicle
+        && !playa->PedIsInvolvedInConversation()
+        && playa->m_nPedState != PEDSTATE_MAKE_PHONECALL
+        && playa->m_nPedState != PEDSTATE_ANSWER_MOBILE
+        && playa->m_nPedState != PEDSTATE_PAUSE
         && playa->IsPedShootable()
         && playa->m_nPedState != PEDSTATE_FACE_PHONE
         && !playa->m_nPedFlags.bIsInTheAir
@@ -289,13 +295,16 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
         && !playa->m_nPedFlags.bFallenDown
         && !playa->m_pIntelligence->GetUsingParachute()
         && !playa->m_pIntelligence->IsInACarOrEnteringOne()
-        && !CHud::bDrawingVitalStats;
+        && !CHud::bDrawingVitalStats
+        && !CMenuPanels::bActive
+        && !CHudNew::m_bShowWastedBusted
+        && !CHudNew::m_bShowSuccessFailed;
 }
 
 void CWeaponSelector::ProcessWeaponSelector() {
     UpdateCursorPos();
 
-    if (IsAbleToSwitchWeapon()) {
+    if (IsAbleToSwitchWeapon() && !CHudNew::IsAimingWeapon()) {
         if (nTimeSinceClosed < CTimer::m_snTimeInMilliseconds) {
             if (!bShowWeaponWheel && CPadNew::GetPad(0)->GetShowWeaponWheel(350)) {
                 OpenWeaponWheel(true);

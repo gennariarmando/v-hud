@@ -112,6 +112,7 @@ enum eMenuEntries {
     MENUENTRY_GAMMA,
     MENUENTRY_SHOWHUD,
     MENUENTRY_SHOWRADAR,
+    MENUENTRY_WEAPONTARGET,
     MENUENTRY_GPSROUTE,
     MENUENTRY_SAFEZONESIZE,
     MENUENTRY_MEASUREMENTSYS,
@@ -313,6 +314,7 @@ public:
     int language;
     bool showHUD;
     bool showRadar;
+    int weaponTarget;
     bool savePhotos;
     bool gpsRoute;
     double safeZoneSize;
@@ -456,6 +458,7 @@ public:
     bool bLoadingTuneStarted;
 
     unsigned short PreviousPlayerControls;
+    unsigned short CurrentPlayerControls;
 
     int nTimePassedSinceLastKeyBind;
 

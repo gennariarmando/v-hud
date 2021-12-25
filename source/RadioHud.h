@@ -18,6 +18,7 @@ public:
     CRadioHud();
 
     static void Init();
+    static void Clear();
     static bool CanRetuneRadioStation();
     static void Process();
     static void Draw();

@@ -962,6 +962,9 @@ bool CPadNew::GetMenuShowHideLegendJustDown() {
 }
 
 bool CPadNew::GetPhoneShowJustDown() {
+    if (DisablePlayerControls)
+        return false;
+
     if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadUp && !OldState.DPadUp;
 
@@ -969,6 +972,9 @@ bool CPadNew::GetPhoneShowJustDown() {
 }
 
 bool CPadNew::GetPhoneHideJustDown() {
+    if (DisablePlayerControls)
+        return false;
+
     if (HAS_PAD_IN_HANDS(Id))
         return NewState.ButtonCircle && !OldState.ButtonCircle;
 
@@ -976,6 +982,9 @@ bool CPadNew::GetPhoneHideJustDown() {
 }
 
 bool CPadNew::GetPhoneUpJustDown() {
+    if (DisablePlayerControls)
+        return false;
+
     if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadUp && !OldState.DPadUp;
 
@@ -983,6 +992,9 @@ bool CPadNew::GetPhoneUpJustDown() {
 }
 
 bool CPadNew::GetPhoneDownJustDown() {
+    if (DisablePlayerControls)
+        return false;
+
     if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadDown && !OldState.DPadDown;
 
@@ -990,6 +1002,9 @@ bool CPadNew::GetPhoneDownJustDown() {
 }
 
 bool CPadNew::GetPhoneLeftJustDown() {
+    if (DisablePlayerControls)
+        return false;
+
     if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadLeft && !OldState.DPadLeft;
 
@@ -997,6 +1012,9 @@ bool CPadNew::GetPhoneLeftJustDown() {
 }
 
 bool CPadNew::GetPhoneRightJustDown() {
+    if (DisablePlayerControls)
+        return false;
+
     if (HAS_PAD_IN_HANDS(Id))
         return NewState.DPadRight && !OldState.DPadRight;
 
@@ -1004,6 +1022,9 @@ bool CPadNew::GetPhoneRightJustDown() {
 }
 
 bool CPadNew::GetPhoneEnterJustDown() {
+    if (DisablePlayerControls)
+        return false;
+
     if (HAS_PAD_IN_HANDS(Id))
         return NewState.ButtonCross && !OldState.ButtonCross;
 
@@ -1053,6 +1074,9 @@ bool CPadNew::GetShowWeaponWheel(int time) {
 }
 
 bool CPadNew::GetWeaponWheelCycleLeft() {
+    if (DisablePlayerControls || bDisablePlayerCycleWeapon)
+        return false;
+
     if (HAS_PAD_IN_HANDS(Id)) {
         switch (Mode) {
         case 0:
@@ -1066,6 +1090,9 @@ bool CPadNew::GetWeaponWheelCycleLeft() {
 }
 
 bool CPadNew::GetWeaponWheelCycleRight() {
+    if (DisablePlayerControls || bDisablePlayerCycleWeapon)
+        return false;
+
     if (HAS_PAD_IN_HANDS(Id)) {
         switch (Mode) {
         case 0:

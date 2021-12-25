@@ -87,6 +87,7 @@ struct CRadarLegend {
     int id;
     unsigned int col;
     bool friendly;
+    int sprite;
 };
 
 class CRadarNew {
@@ -112,11 +113,13 @@ public:
     static bool m_bCopPursuit;
     static bool m_b3dRadar;
     static int m_nRadarRangeExtendTime;
+    static bool m_bRemoveBlipsLimit;
 
 public:
     CRadarNew();
     static void Init();
     static void Shutdown();
+    static void Clear();
     static void ReadBlipsFromFile();
     static void CreateCamera();
     static void DestroyCamera();
@@ -134,6 +137,7 @@ public:
     static void LimitPoint(float& x1, float& y1, float x2, float y2, float x3, float y3, float x4, float y4);
     static float LimitRadarPoint(CVector2D& point);
     static void DrawRadarSprite(unsigned short id, float x, float y, unsigned char alpha);
+    static bool DisplayThisBlip(int spriteId, char priority);
     static void LimitToMap(float* x, float* y);
     static void AddAnyBlipNoLegend(CSprite2d* sprite, CVector posn, float width, float height, float angle, bool vcone, CRGBA const& col, bool limit);
     static void AddAnyBlip(unsigned short id, CEntity e, float width, float height, float angle, bool vcone, CRGBA const& col, bool limit);

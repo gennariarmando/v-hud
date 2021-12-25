@@ -59,8 +59,11 @@ unsigned int CRadarNew::m_nActualTraceIdToPass;
 bool CRadarNew::m_bCopPursuit;
 bool CRadarNew::m_b3dRadar;
 int CRadarNew::m_nRadarRangeExtendTime;
+bool CRadarNew::m_bRemoveBlipsLimit;
 
 bool bShowWeaponPickupsOnRadar = false;
+
+const float World = 6000.0f;
 
 void* radar_gps_alpha_mask_fxc;
 void* multi_alpha_mask_fxc;
@@ -114,8 +117,6 @@ CRadarNew::CRadarNew() {
     patch::RedirectJump(0x583670, CalculateCachedSinCos);
 
     patch::RedirectJump(0x584770, GetRadarTraceColour);
-
-
 }
 
 void CRadarNew::Init() {
@@ -194,6 +195,13 @@ void CRadarNew::Shutdown() {
     DestroyCamera();
 
     m_bInitialised = false;
+}
+
+void CRadarNew::Clear() {
+    m_bCopPursuit = false;
+    m_b3dRadar = false;
+    m_nRadarRangeExtendTime = 0;
+    m_bRemoveBlipsLimit = false;
 }
 
 void CRadarNew::ReadBlipsFromFile() {
@@ -317,14 +325,14 @@ void CRadarNew::DrawBlips() {
         switch (trace[i].m_nBlipType) {
         case BLIP_COORD:
         case BLIP_CONTACTPOINT:
-            if (LOBYTE(trace[i].m_nBlipSprite) == RADAR_SPRITE_WAYPOINT || CRadar::DisplayThisBlip(HIBYTE(trace[i].m_nBlipSprite), i) || LOBYTE(trace[i].m_nBlipSprite) != RADAR_SPRITE_NONE)
+            if (LOBYTE(trace[i].m_nBlipSprite) == RADAR_SPRITE_WAYPOINT || DisplayThisBlip(HIBYTE(trace[i].m_nBlipSprite), i) || LOBYTE(trace[i].m_nBlipSprite) != RADAR_SPRITE_NONE)
                 DrawCoordBlip(i, trace[i].m_nBlipSprite != RADAR_SPRITE_NONE);
             break;
         case BLIP_CAR:
         case BLIP_CHAR:
         case BLIP_OBJECT:
         case BLIP_PICKUP:
-            if (CRadar::DisplayThisBlip(HIBYTE(trace[i].m_nBlipSprite), i) || LOBYTE(trace[i].m_nBlipSprite) != RADAR_SPRITE_NONE)
+            if (DisplayThisBlip(HIBYTE(trace[i].m_nBlipSprite), i) || LOBYTE(trace[i].m_nBlipSprite) != RADAR_SPRITE_NONE)
                 DrawEntityBlip(i, trace[i].m_nBlipSprite != RADAR_SPRITE_NONE);
             break;
         case BLIP_SPOTLIGHT:
@@ -551,13 +559,12 @@ void CRadarNew::DrawRadarCop() {
         }
     }
 }
-const float world = 6000.0f;
 
 void CRadarNew::TransformRadarPointToRealWorldSpace(CVector2D& out, CVector2D& in) {
     if (MenuNew.bDrawMenuMap) {
-        float w = (world / 2) / world;
-        out.x = (in.x - w) * world;
-        out.y = (w + in.y) * world;
+        float w = (World / 2) / World;
+        out.x = (in.x - w) * World;
+        out.y = (w + in.y) * World;
     }
     else {
         float s = -CRadar::cachedSin;
@@ -573,8 +580,8 @@ void CRadarNew::TransformRadarPointToRealWorldSpace(CVector2D& out, CVector2D& i
 
 void CRadarNew::TransformRealWorldPointToRadarSpace(CVector2D& out, CVector2D& in) {
     if (MenuNew.bDrawMenuMap) {
-        out.x = (in.x + world / 2) / world;
-        out.y = ((world / 2) - in.y) / world;
+        out.x = (in.x + World / 2) / World;
+        out.y = ((World / 2) - in.y) / World;
     }
     else {
         float s = CRadar::cachedSin;
@@ -800,6 +807,9 @@ float CRadarNew::LimitRadarPoint(CVector2D& point) {
     float v42;
     CPed* playa = FindPlayerPed(0);
 
+    if (m_bRemoveBlipsLimit)
+        return 0.0f;
+
     if (MenuNew.bDrawMenuMap) {
         return point.Magnitude();
     }
@@ -913,10 +923,14 @@ void CRadarNew::DrawRadarSprite(unsigned short id, float x, float y, unsigned ch
         }
     }
 
-    if (CRadar::DisplayThisBlip(id, -99)) {
+    if (DisplayThisBlip(id, -99)) {
         m_BlipsSprites[id]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), CRGBA(m_BlipsList[id].color.r, m_BlipsList[id].color.g, m_BlipsList[id].color.b, alpha));
         AddBlipToLegendList(false, id);
     }
+}
+
+bool CRadarNew::DisplayThisBlip(int spriteId, char priority) {
+    return true;
 }
 
 void CRadarNew::LimitToMap(float* x, float* y) {
@@ -972,7 +986,7 @@ void CRadarNew::AddAnyBlip(unsigned short id, CVector posn, float width, float h
     x = out.x;
     y = out.y;
 
-    if (CRadar::DisplayThisBlip(id, -99)) {
+    if (DisplayThisBlip(id, -99)) {
         DrawRotatingRadarSprite(m_BlipsSprites[id], x, y, angle, w, h, col);
         AddBlipToLegendList(false, id);
     }
@@ -1013,7 +1027,7 @@ void CRadarNew::AddAnyBlip(unsigned short id, CEntity e, float width, float heig
     x = out.x;
     y = out.y;
 
-    if (CRadar::DisplayThisBlip(id, -99)) {
+    if (DisplayThisBlip(id, -99)) {
         if (vcone) {
             float a1 = e.GetHeading();
             float a2 = TheCamera.GetHeading();
