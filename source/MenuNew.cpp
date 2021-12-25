@@ -1601,8 +1601,9 @@ char** CMenuNew::GetVideoModeList() {
         RwVideoMode vm;
         RwEngineGetVideoModeInfo(&vm, i);
 
-        char tmp[32] = { NULL };
-        if (vm.width >= 640 && vm.height >= 480 && vm.depth == 32) {
+        char tmp[100] = { NULL };
+        if ((vm.flags & rwVIDEOMODEEXCLUSIVE)
+            && vm.width >= 640 && vm.height >= 480 && vm.depth == 32) {
             sprintf(tmp, "%dx%d", vm.width, vm.height);
         }
 
@@ -1690,7 +1691,7 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
                     if (TempSettings.videoMode < 0)
                         TempSettings.videoMode = NumVideoModes;
 
-                    if (modes[TempSettings.videoMode])
+                    if (modes[TempSettings.videoMode][0])
                         break;
                 }
                 ApplyChanges();
@@ -1701,7 +1702,7 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
                     if (TempSettings.videoMode > NumVideoModes)
                         TempSettings.videoMode = 0;
 
-                    if (modes[TempSettings.videoMode])
+                    if (modes[TempSettings.videoMode][0])
                         break;
                 }
                 ApplyChanges();
