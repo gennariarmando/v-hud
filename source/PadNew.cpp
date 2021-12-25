@@ -795,6 +795,10 @@ void CPadNew::GInputRelease() {
     GInput_Release();
 }
 
+bool CPadNew::HasPadInHands(int id) {
+    return GInputPad[id] ? GInputPad[id]->HasPadInHands() : false;
+}
+
 bool CPadNew::GetOpenCloseMenuJustDown() {
     if (HAS_PAD_IN_HANDS(Id))
         return (NewState.Start && !OldState.Start);

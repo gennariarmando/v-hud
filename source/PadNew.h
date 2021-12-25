@@ -1,5 +1,5 @@
 #pragma once
-#define HAS_PAD_IN_HANDS(id) GInputPad[id]->HasPadInHands()
+#define HAS_PAD_IN_HANDS(id) CPadNew::HasPadInHands(id)
 
 #include "CPad.h"
 #include "CControllerConfigManager.h"
@@ -123,6 +123,7 @@ public:
     static CPadNew* GetPad(int padNumber);
     static void GInputUpdate();
     static void GInputRelease();
+    static bool HasPadInHands(int id);
 
     bool GetKeyDown(int key);
     bool GetKeyJustDown(int key);
