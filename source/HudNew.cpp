@@ -589,7 +589,7 @@ ForcedFPSView:
                             latestTargetDied = true;
                         }
 
-                        if (playa->m_pPlayerTargettedPed || haveTargetSelected)
+                        if (playa->m_pPlayerTargettedPed && playa->OurPedCanSeeThisEntity(playa->m_pPlayerTargettedPed, true) || haveTargetSelected)
                             alphaTime = CTimer::m_snTimeInMilliseconds + 50;
 
                         if (alphaTime > CTimer::m_snTimeInMilliseconds) {
