@@ -100,6 +100,8 @@ void CMenuPanels::Draw(unsigned char panelId) {
 
     if (active) {
         CHud::m_pHelpMessage[0] = NULL;
+        MenuNew.AppendHelpText("HP_BAC");
+        MenuNew.AppendHelpText("HP_SEL");
 
         CRect rect = { 0.0f, 0.0f, 0.0f, 0.0f };
         tMenuPanel* panel = MenuNumber[panelId];
@@ -161,6 +163,8 @@ void CMenuPanels::Draw(unsigned char panelId) {
 
         bool selectedRectDrawn = false;
         int iconTypeToDraw = iconType;
+        static bool iconDrawn = false;
+
         for (int i = 0; i < panel->m_nNumColumns; i++) {
             for (int j = 0; j < panel->m_nNumRows; j++) {
                 char* title = panel->m_aaacRowTitles[i][j];
@@ -198,16 +202,25 @@ void CMenuPanels::Draw(unsigned char panelId) {
 
                     if (panel->m_abRowAlreadyBought[j] || !panel->m_abRowSelectable[j]) {
                         MenuNew.MenuSprites[iconTypeToDraw]->Draw(HUD_X(rect.right - 36.0f), HUD_Y(y - 3.0f), SCREEN_COORD(32.0f), SCREEN_COORD(32.0f), CRGBA(255, 255, 255, 255));
+                        iconDrawn = true;
                     }
 
-                    CFontNew::SetColor(textCol);
-                    CFontNew::PrintString(HUD_X(x), HUD_Y(y), gString);
+                    if (i > 0 && iconDrawn) {
+
+                    }
+                    else {
+                        CFontNew::SetColor(textCol);
+                        CFontNew::PrintString(HUD_X(x), HUD_Y(y), gString);
+                    }
 
                     y += 38.0f;
                     iconTypeToDraw = iconType;
+                    iconDrawn = false;
                 }
             }
             y = rect.top + 6.0f;
         }
+
+        MenuNew.DrawControlsHelper();
     }
 }

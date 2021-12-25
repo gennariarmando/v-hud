@@ -86,7 +86,7 @@ enum eControlsActions {
     PHONE_SHOW,
     PHONE_HIDE,
     PHONE_UP,
-    PHONE_DOWN, 
+    PHONE_DOWN,
     PHONE_LEFT,
     PHONE_RIGHT,
     PHONE_ENTER,

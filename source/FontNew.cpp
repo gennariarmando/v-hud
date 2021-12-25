@@ -306,6 +306,13 @@ float CFontNew::GetCharacterSize(char c) {
     float n = 0.0f;
     char cs = c + ' ';
 
+    CSprite2d* sprite = PS2Symbol;
+    if (sprite && sprite->m_pTexture) {
+        PS2SymbolScale.x = clamp(sprite->m_pTexture->raster->width, 0, 128);
+        PS2SymbolScale.y = clamp(sprite->m_pTexture->raster->height, 0, 128);
+        return Details.scale.y * (PS2SymbolScale.x / 3);
+    }
+
     switch (cs) {
     case '~':
         return n;
@@ -320,9 +327,11 @@ float CFontNew::GetStringWidth(const char* s, bool spaces) {
     w = 0.0f;
     for (; (*s != ' ' || spaces) && *s != '\0'; s++) {
         if (*s == '~')
-            s = ParseToken(false, s);
+            s = ParseToken(true, s);
 
         w += GetCharacterSize(*s - ' ');
+        PS2Symbol = NULL;
+        bNewLine = false;
     }
     return w;
 }
@@ -806,8 +815,6 @@ void CFontNew::DrawButton(float& x, float y, CSprite2d* sprite) {
     rect.top = y + SCREEN_COORD(1.0f);
     rect.right = rect.left + (w);
     rect.bottom = rect.top + (h);
-
-    x += w;
 
     int savedAlpha;
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);

@@ -183,16 +183,6 @@ enum eMenuAlerts {
     MENUALERT_PENDINGCHANGES,
 };
 
-enum eHelpTextType {
-    HELP_TEXT_NONE,
-    HELP_TEXT_SELECT,
-    HELP_TEXT_BACK,
-    HELP_TEXT_APPLYCHANGES,
-    HELP_TEXT_WAYPOINT,
-    HELP_TEXT_LEGEND,
-    HELP_TEXT_DELETE,
-};
-
 enum {
     GALLERY_COLUMNS = 6,
     GALLERY_ROWS = 4,
@@ -424,12 +414,11 @@ public:
     char nSaveSlots[9][64];
     char nSaveSlotsDate[9][32];
 
-    bool bHelpText;
-    int nHelpTextCount;
+    int nControlsHelperCount;
 
     struct {
-        char type;
-    } nHelpTextType[MAX_HELP_TEXT];
+        char* text;
+    } nControlsHelper[MAX_HELP_TEXT];
 
     bool bSavePage;
 
@@ -519,7 +508,8 @@ public:
     void CheckSliderMovement(double value);
     void DrawPauseMenuExtraText();
     void Draw();
-    void AppendHelpText(int type);
+    void DrawControlsHelper();
+    void AppendHelpText(const char* text);
     void SetMenuMessage(int type);
     void UnSetMenuMessage();
     bool IsLoading();

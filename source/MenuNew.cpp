@@ -306,12 +306,7 @@ void CMenuNew::Clear() {
         nSaveSlotsDate[i][0] = NULL;
     }
 
-    bHelpText = true;
-    nHelpTextCount = 0;
-
-    for (int i = 0; i < MAX_HELP_TEXT; i++) {
-        nHelpTextType[i].type = HELP_TEXT_NONE;
-    }
+    nControlsHelperCount = 0;
 
     bSavePage = false;
     bRequestMenuClose = false;
@@ -812,6 +807,7 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
         //pad->ClearKeyBoardHistory();
         pad->ClearMouseHistory();
         CurrentPlayerControls = PreviousPlayerControls;
+        pad->DisablePlayerControls = PreviousPlayerControls;
 
         Clear();
         SetInputTypeAndClear(MENUINPUT_BAR);
@@ -932,7 +928,6 @@ void CMenuNew::Process() {
 
     // Input
     CPadNew* pad = CPadNew::GetPad(0);
-    pad->DisablePlayerControls = CurrentPlayerControls;
 
     bool Up = false;
     bool Down = false;
@@ -1007,6 +1002,8 @@ void CMenuNew::Process() {
         bDrawMouse = false;
 
     if (bMenuActive) {
+        pad->DisablePlayerControls = CurrentPlayerControls;
+
         if (HAS_PAD_IN_HANDS(0))
             OpenClose |= pad->GetMenuBackJustDown();
 
@@ -1406,26 +1403,26 @@ void CMenuNew::Process() {
                 break;
             case MENUSCREEN_MAP:
                 if (!bShowMenu) {
-                    AppendHelpText(HELP_TEXT_LEGEND);
-                    AppendHelpText(HELP_TEXT_BACK);
-                    AppendHelpText(HELP_TEXT_WAYPOINT);
+                    AppendHelpText("H_LG");
+                    AppendHelpText("H_BAC");
+                    AppendHelpText("H_WAYP");
                     break;
                 }
                 [[fallthrough]];
             case MENUSCREEN_GAME:
                 if (nCurrentInputType == MENUINPUT_ENTRY && MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type == MENUENTRY_POPULATESAVESLOT) {
-                    AppendHelpText(HELP_TEXT_DELETE);
+                    AppendHelpText("H_DEL");
                 }
                 [[fallthrough]];
             case MENUSCREEN_SETTINGS:
                 if (nMenuAlert == MENUALERT_PENDINGCHANGES) {
-                    AppendHelpText(HELP_TEXT_APPLYCHANGES);
+                    AppendHelpText("H_APCH");
 
                 }
                 [[fallthrough]];
             default:
-                AppendHelpText(HELP_TEXT_BACK);
-                AppendHelpText(HELP_TEXT_SELECT);
+                AppendHelpText("H_BAC");
+                AppendHelpText("H_SEL");
                 break;
             }
         }
@@ -1434,8 +1431,8 @@ void CMenuNew::Process() {
             case MENUMESSAGE_NONE:
                 break;
             default:
-                AppendHelpText(HELP_TEXT_BACK);
-                AppendHelpText(HELP_TEXT_SELECT);
+                AppendHelpText("H_BAC");
+                AppendHelpText("H_SEL");
                 break;
             }
         }
@@ -2395,67 +2392,7 @@ void CMenuNew::Draw() {
         }
     }
 
-    if (bHelpText) {
-        CRect r;
-        r.left = HUD_RIGHT(96.0f);
-        r.right = SCREEN_COORD(32.0f);
-        r.top = HUD_BOTTOM(90.0f);
-        r.bottom = SCREEN_COORD(36.0f);
-
-        static float x = 0.0f;
-        CSprite2d::DrawRect(CRect(x, r.top, r.left, r.top + r.bottom), CRGBA(0, 0, 0, 150));
-        x = r.left;
-
-        CFontNew::SetBackground(false);
-        CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
-        CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
-        CFontNew::SetWrapX(SCREEN_COORD(980.0f));
-        CFontNew::SetFontStyle(CFontNew::FONT_1);
-        CFontNew::SetDropShadow(0.0f);
-        CFontNew::SetOutline(0.0f);
-        CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
-        CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
-        CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
-
-        float spacing = SCREEN_COORD(42.0f);
-        float offset = SCREEN_COORD(32.0f);
-        for (int i = nHelpTextCount; i >= 0; i--) {
-            char* str = NULL;
-
-            switch (nHelpTextType[i].type) {
-            case HELP_TEXT_SELECT:
-                str = "H_SEL";
-                break;
-            case HELP_TEXT_BACK:
-                str = "H_BAC";
-                break;
-            case HELP_TEXT_APPLYCHANGES:
-                str = "H_APCH";
-                break;
-            case HELP_TEXT_WAYPOINT:
-                str = "H_WAYP";
-                break;
-            case HELP_TEXT_LEGEND:
-                str = "H_LG";
-                break;
-            case HELP_TEXT_DELETE:
-                str = "H_DEL";
-                break;
-            default:
-                continue;
-            }
-
-            if (str) {
-                str = TextNew.GetText(str).text;
-                CFontNew::PrintString(x - offset, r.top + SCREEN_COORD(4.0f), str);
-                x -= CFontNew::GetStringWidth(str, true);
-                x -= spacing;
-            }
-
-            nHelpTextType[i].type = HELP_TEXT_NONE;
-        }
-        nHelpTextCount = 0;
-    }
+    DrawControlsHelper();
 
     if (bDrawMouse) {
         if (nMouseType <= MOUSE_HAND) {
@@ -2466,9 +2403,48 @@ void CMenuNew::Draw() {
     }
 }
 
-void CMenuNew::AppendHelpText(int type) {
-    nHelpTextType[nHelpTextCount].type = type;
-    nHelpTextCount++;
+void CMenuNew::DrawControlsHelper() {
+    CRect r;
+    r.left = HUD_RIGHT(96.0f);
+    r.right = SCREEN_COORD(32.0f);
+    r.top = HUD_BOTTOM(90.0f);
+    r.bottom = SCREEN_COORD(36.0f);
+
+    static float x = 0.0f;
+    CSprite2d::DrawRect(CRect(x, r.top, r.left, r.top + r.bottom), CRGBA(0, 0, 0, 150));
+    x = r.left;
+
+    CFontNew::SetBackground(false);
+    CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+    CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
+    CFontNew::SetWrapX(SCREEN_COORD(980.0f));
+    CFontNew::SetFontStyle(CFontNew::FONT_1);
+    CFontNew::SetDropShadow(0.0f);
+    CFontNew::SetOutline(0.0f);
+    CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+    CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
+    CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
+
+    float spacing = SCREEN_COORD(24.0f);
+    float offset = SCREEN_COORD(10.0f);
+    for (int i = nControlsHelperCount; i >= 0; i--) {
+        char* str = nControlsHelper[i].text;
+
+        if (str) {
+            str = TextNew.GetText(str).text;
+            CFontNew::PrintString(x - offset, r.top + SCREEN_COORD(4.0f), str);
+            x -= CFontNew::GetStringWidth(str, true);
+            x -= spacing;
+        }
+
+        nControlsHelper[i].text = NULL;
+    }
+    nControlsHelperCount = 0;
+}
+
+void CMenuNew::AppendHelpText(const char* text) {
+    nControlsHelper[nControlsHelperCount].text = (char*)text;
+    nControlsHelperCount++;
 }
 
 void CMenuNew::SetMenuMessage(int type) {
