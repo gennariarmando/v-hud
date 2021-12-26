@@ -40,28 +40,43 @@ inline int OpenConsole(bool console) {
 HANDLE thread = NULL;
 bool rwInitialized = false;
 bool rwQuit = false;
+int& gGameState = *(int*)0xC8D4C0;
 
 bool SAMP = false;
 
 VHud::VHud() {
-    //OpenConsole(AllocConsole());
+#ifdef DEBUG
+    OpenConsole(AllocConsole());
+#endif
 
     if (!IsSupportedGameVersion())
         Error("This version of GTA: San Andreas is not supported by this plugin.");
 
     auto VHudLoop = []() {
         while (!rwQuit) {
-            if (rwInitialized) {
-                float f = CTimer::GetCurrentTimeInCycles() / (float)CTimer::GetCyclesPerMillisecond();
-                if (1000.0f / (float)RsGlobal.frameLimit < f) {
+            CheckForMP();
 
+            if (rwInitialized) {
+                if (gGameState && !SAMP) {
+                    switch (gGameState) {
+                    case 7:
+                        if (MenuNew.ProcessMenuToGameSwitch(false)) {
+                            gGameState = 8;
+                        }
+                        break;
+                    case 8:
+                        MenuNew.fLoadingPercentage = 100.0f;
+                        gGameState = 9;
+                        break;
+                    case 9:
+                        MenuNew.ProcessMenuToGameSwitch(true);
+                        break;
+                    }
                 }
 
                 Audio.Update();
                 CPadNew::GInputUpdate();
             }
-
-            CheckForMP();
         }
         CPadNew::GInputRelease();
 

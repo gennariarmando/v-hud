@@ -9,5 +9,6 @@ public:
 
 };
 
+extern int& gGameState;
 extern bool SAMP;
 extern void CheckForMP();

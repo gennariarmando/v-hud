@@ -329,7 +329,7 @@ void CHudNew::Draw() {
         CFontNew::SetClipX(SCREEN_WIDTH);
         CFontNew::SetWrapX(SCREEN_WIDTH);
 
-        if (!TheCamera.m_bWideScreenOn) {
+        if (!TheCamera.m_bWideScreenOn && TheCamera.GetScreenFadeStatus() != 2) {
             CWeaponSelector::ProcessWeaponSelector();
             CWeaponSelector::DrawWheel();
             DrawCrosshairs();

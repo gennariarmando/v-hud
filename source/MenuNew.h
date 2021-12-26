@@ -6,6 +6,8 @@
 #define MENU_MAP_ZOOM_MIN (1.1f)
 #define MENU_MAP_ZOOM_MAX (32.0f)
 
+#define FAKE_LOADING_WAIT_TIME 25
+
 #include "PadNew.h"
 #include "CSprite2d.h"
 
@@ -75,6 +77,7 @@ enum eMenuScreens {
     MENUSCREEN_LANDING,
     MENUSCREEN_SAVE,
     MENUSCREEN_KEYBIND,
+    MENUSCREEN_LOADING,
     NUM_MENUSCREENS
 };
 
@@ -451,6 +454,12 @@ public:
 
     int nTimePassedSinceLastKeyBind;
 
+    bool bLoadingPage;
+    float fLoadingPercentage;
+    int nLoadingTimeInMs;
+    bool bLoad;
+    int nSlot;
+
 public:
     CMenuNew();
     void Init();
@@ -462,6 +471,7 @@ public:
     void DrawBackground();
 
     void SetLandingPageBehaviour();
+    void SetLoadingPageBehaviour();
     void PlayLoadingTune();
     void StopLoadingTune();
     void DoFadeTune();
@@ -478,7 +488,7 @@ public:
     CMenuEntry* GetMenuEntry(CMenuTab* t, char* name);
     CMenuEntry* GetMenuEntry(CMenuTab* t, int i);
 
-    void SetInputTypeAndClear(int input, int n);
+    void SetInputTypeAndClear(int input, int n = 0);
     int GetLastMenuBarItem();
     int GetLastMenuScreenTab();
     int GetFirstMenuScreenEntry();
@@ -498,6 +508,7 @@ public:
     void ProcessTabStuff();
     void DoSettingsBeforeStartingAGame(bool load, int slot = -1);
     void DoStuffBeforeSavingAGame(int slot);
+    bool ProcessMenuToGameSwitch(bool force);
     void ProcessMessagesStuff(int enter, int esc, int space, int input);
     void ProcessAlertStuff();
     char** GetVideoModeList();
@@ -522,6 +533,9 @@ public:
     void DrawTabNumSaveGames();
     void DrawTabKeyBindings();
     void DrawLandingPage();
+    void DrawInfoBox();
+    void DrawLoadingPage();
+    void DrawLoadingBar(char* str);
     void DrawSliderRightAlign(float x, float y, float progress);
     void DrawTabRadioIcons(float x, float y);
     void DrawSpinningWheel(float x, float y, float w, float h);
@@ -532,6 +546,7 @@ public:
     float GetMenuMapWholeSize();
     void PrintBrief();
     void PrintStats();
+    void DrawScreenUnavailableOnline();
     CVector2D GetMapBaseDefault();
     void DrawLegend();
     void DrawMap();
