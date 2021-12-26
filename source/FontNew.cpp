@@ -664,8 +664,10 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
     PrepareSymbolScale();
 
     if (!print) {
-        PS2Symbol.Symbol = NULL;
-        PS2Symbol.NoPrint = true;
+        if (PS2Symbol.Symbol) {
+            PS2Symbol.NoPrint = true;
+            PS2Symbol.Symbol = NULL;
+        }
         bNewLine = false;
     }
 

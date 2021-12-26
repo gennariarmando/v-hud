@@ -31,12 +31,12 @@ CRadioHud::CRadioHud() {
     patch::Nop(0x4EB751, 36);
 
     // No retune delay
-    patch::Set(0x4EB81C + 3, 5);
-    patch::Nop(0x4EB7E4, 19);
-    patch::Nop(0x4EB829, 2);
-
-    patch::Set(0x4EB961 + 3, 5);
-    patch::Nop(0x4EB946, 19);
+    //patch::Set(0x4EB81C + 3, 5);
+    //patch::Nop(0x4EB7E4, 19);
+    //patch::Nop(0x4EB829, 2);
+    //
+    //patch::Set(0x4EB961 + 3, 5);
+    //patch::Nop(0x4EB946, 19);
 }
 
 void CRadioHud::Init() {
