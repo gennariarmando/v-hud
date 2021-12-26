@@ -2726,6 +2726,7 @@ void CMenuNew::DrawDefault() {
             MenuSprites[MENU_SELECTOR]->Draw(s, CRGBA(255, 255, 255, 255));
         }
 
+        static bool doubleCheckHover = false;
         for (int i = 0; i < MAX_MENU_ENTRIES; i++) {
             bool insideMenuBoundaries = true;
             CRect boundaries = GetMenuEntryRect();
@@ -2782,7 +2783,7 @@ void CMenuNew::DrawDefault() {
                     bb += (menuEntry.bottom + GetMenuHorSpacing()) * MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].y;
                 }
 
-                if (bDrawMouse && CheckHover(menuEntry.left, menuEntry.left + menuEntry.right, menuEntry.top, menuEntry.top + menuEntry.bottom)) {
+                if (bDrawMouse && CheckHover(menuEntry.left, menuEntry.left + menuEntry.right, menuEntry.top, menuEntry.top + menuEntry.bottom) && !doubleCheckHover) {
                     nCurrentEntryItemHover = i;
 
                     if (pad->GetLeftMouseJustUp()) {
@@ -3011,12 +3012,15 @@ void CMenuNew::DrawDefault() {
                         float arrowScale = SCREEN_COORD(24.0f);
                         MenuSprites[MENU_ARROW_LEFT]->Draw(arrowX, arrowY, arrowScale, arrowScale, CRGBA(0, 0, 0, 255));
 
+                        doubleCheckHover = false;
                         if (CheckHover(arrowX - arrowScale, arrowX + arrowScale, arrowY, arrowY + arrowScale)) {
                             if (pad->GetLeftMouseJustUp()) {
                                 Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
 
                                 ProcessEntryStuff(0, -1);
                             }
+
+                            doubleCheckHover = true;
                         }
 
                         arrowX = menuEntry.left + menuEntry.right + SCREEN_COORD(-28.0f);
@@ -3028,6 +3032,7 @@ void CMenuNew::DrawDefault() {
 
                                 ProcessEntryStuff(0, 1);
                             }
+                            doubleCheckHover = true;
                         }
                     }
                 }
@@ -3536,8 +3541,6 @@ void CMenuNew::DrawSliderRightAlign(float x, float y, float progress) {
     }
 
     if (point) {
-        Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
-
         CheckSliderMovement(value);
         ApplyChanges();
     }
