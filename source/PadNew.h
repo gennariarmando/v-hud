@@ -1,4 +1,5 @@
 #pragma once
+#define MOUSE_CUSTOM_OFFSET (2000)
 #define HAS_PAD_IN_HANDS(id) CPadNew::HasPadInHands(id)
 
 #include "CPad.h"

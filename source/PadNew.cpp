@@ -16,7 +16,6 @@ bool GINPUT = false;
 
 char* ControlsFileName = "VHud\\ufiles\\controls.xml";
  
-#define MOUSE_CUSTOM_OFFSET (2000)
 #define MOUSE(x) x + MOUSE_CUSTOM_OFFSET
 #define KEY(x) x
 CControls Controls[NUM_CONTROL_ACTIONS] = {

@@ -687,20 +687,25 @@ CSprite2d* CFontNew::GetActionSprite(int key) {
             sprite = ButtonSprite[key + 1];
     }
     else {
-        if ((key >= 'A' && key <= 'Z'))
-            sprite = ButtonSprite[(key - 'A') + BUTTON_PC_A];
+        if (key > MOUSE_CUSTOM_OFFSET) {
+            sprite = ButtonSprite[(key - MOUSE_CUSTOM_OFFSET) + BUTTON_PC_NULL];
+        }
+        else {
+            if ((key >= 'A' && key <= 'Z'))
+                sprite = ButtonSprite[(key - 'A') + BUTTON_PC_A];
 
-        if (key >= 'a' && key <= 'z')
-            sprite = ButtonSprite[(key - 'a') + BUTTON_PC_A];
+            if (key >= 'a' && key <= 'z')
+                sprite = ButtonSprite[(key - 'a') + BUTTON_PC_A];
 
-        if (key >= '0' && key <= '9')
-            sprite = ButtonSprite[(key - '9') + BUTTON_PC_0];
+            if (key >= '0' && key <= '9')
+                sprite = ButtonSprite[(key - '9') + BUTTON_PC_0];
 
-        if (key == rsSPACE)
-            sprite = ButtonSprite[BUTTON_PC_SPACEBAR];
+            if (key == rsSPACE)
+                sprite = ButtonSprite[BUTTON_PC_SPACEBAR];
 
-        if (key >= rsESC && key < rsNULL)
-            sprite = ButtonSprite[(key - rsESC) + BUTTON_PC_ESC];
+            if (key >= rsESC && key < rsNULL)
+                sprite = ButtonSprite[(key - rsESC) + BUTTON_PC_ESC];
+        }
     }
 
     return sprite;
