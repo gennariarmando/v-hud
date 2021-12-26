@@ -204,21 +204,14 @@ void CGPS::DrawPathLine() {
                 Dest.bDestFound = true;
             }
             else {
-                for (int i = 0; i < 175; i++) {
-                    tRadarTrace trace = CRadar::ms_RadarTrace[i];
-                    if (!trace.m_bTrackingBlip)
-                        continue;
+                for (int i = 0; i < CRadarNew::m_nMapLegendBlipCount; i++) {
+                    CRadarLegend l = CRadarNew::m_MapLegendBlipList[i];
 
-                    if (CTheScripts::IsPlayerOnAMission() && trace.m_dwColour == BLIP_COLOUR_DESTINATION) {
-                        switch (trace.m_nBlipType) {
-                        case BLIP_COORD:
-                        case BLIP_CONTACTPOINT:
-                            if (CRadarNew::DisplayThisBlip(HIBYTE(trace.m_nBlipSprite), i) || LOBYTE(trace.m_nBlipSprite) != RADAR_SPRITE_NONE) {
-                                Dest.pathColor = CRadarNew::GetRadarTraceColour(trace.m_dwColour, trace.m_bBright, trace.m_bFriendly);
-                                Dest.vecDest = trace.m_vPosition;
-                                Dest.bDestFound = true;
-                                break;
-                            }
+                    if (CTheScripts::IsPlayerOnAMission()) {
+                        if (l.id == RADAR_LEVEL_DESTINATION) {
+                            Dest.pathColor = CRadarNew::GetRadarTraceColour(l.col, false, l.friendly);
+                            Dest.vecDest = l.pos;
+                            Dest.bDestFound = true;
                         }
                     }
                 }

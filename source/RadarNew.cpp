@@ -1225,6 +1225,10 @@ void CRadarNew::DrawMap() {
 
     float radarRange = 80.0f;
     float radarShift = 25.0f;
+    CPed* playa = FindPlayerPed(-1);
+
+    if (playa->m_nAreaCode)
+        radarRange = 30.0f;
 
     if (m_b3dRadar) {
         radarRange += 50.0f;
@@ -1635,6 +1639,7 @@ void CRadarNew::ShowRadarTraceWithHeight(float x, float y, unsigned int size, un
 void CRadarNew::AddBlipToLegendList(bool trace, int id) {
     unsigned int c = TRACE_COLOUR_WHITE;
     bool friendly = true;
+    CVector pos = {};
 
     if (trace && m_nActualTraceIdToPass != -1) {
         tRadarTrace t = CRadar::ms_RadarTrace[m_nActualTraceIdToPass];
@@ -1663,6 +1668,7 @@ void CRadarNew::AddBlipToLegendList(bool trace, int id) {
 
             c = t.m_dwColour;
             friendly = t.m_bFriendly;
+            pos = t.m_vPosition;
             break;
         }
 
@@ -1677,6 +1683,8 @@ void CRadarNew::AddBlipToLegendList(bool trace, int id) {
     m_MapLegendBlipList[m_nMapLegendBlipCount].friendly = friendly;
     m_MapLegendBlipList[m_nMapLegendBlipCount].col = c;
     m_MapLegendBlipList[m_nMapLegendBlipCount].id = id;
+    m_MapLegendBlipList[m_nMapLegendBlipCount].pos = pos;
+
     ++m_nMapLegendBlipCount;
 }
 

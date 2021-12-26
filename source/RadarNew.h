@@ -88,6 +88,7 @@ struct CRadarLegend {
     unsigned int col;
     bool friendly;
     int sprite;
+    CVector pos;
 };
 
 class CRadarNew {
