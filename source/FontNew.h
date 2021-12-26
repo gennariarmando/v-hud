@@ -2,6 +2,13 @@
 
 class CSprite2d;
 
+class CtrlSprite {
+public:
+	bool NoPrint;
+	CSprite2d* Symbol;
+	CVector PS2SymbolScale;
+};
+
 struct CFontDetailsNew {
 	CRGBA color;
 	CRGBA dropColor;
@@ -187,8 +194,7 @@ public:
 	static CFontDetailsNew Details;
 	static char Size[NUM_FONTS][160];
 	static bool bNewLine;
-	static CSprite2d* PS2Symbol;
-	static CVector PS2SymbolScale;
+	static CtrlSprite PS2Symbol;
 	static CSprite2d* ButtonSprite[NUM_BUTTONS];
 
 public:
@@ -197,6 +203,7 @@ public:
 	static void ReadValuesFromFile();
 	static void Clear();
 	static void Shutdown();
+	static void PrepareSymbolScale();
 	static float GetCharacterSize(char c);
 	static float GetStringWidth(const char* s, bool spaces = false);
 	static const char* GetNextSpace(const char* s);

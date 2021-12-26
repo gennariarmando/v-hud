@@ -18,8 +18,7 @@ CSprite2d* CFontNew::Sprite[NUM_FONTS];
 CFontDetailsNew CFontNew::Details;
 char CFontNew::Size[NUM_FONTS][160];
 bool CFontNew::bNewLine;
-CSprite2d* CFontNew::PS2Symbol;
-CVector CFontNew::PS2SymbolScale;
+CtrlSprite CFontNew::PS2Symbol;
 CSprite2d* CFontNew::ButtonSprite[NUM_BUTTONS];
 
 char* ButtonFileName[] = {
@@ -277,7 +276,7 @@ void CFontNew::Clear() {
     SetDropColor(CRGBA(0, 0, 0, 255));
     SetScale(1.0f, 1.0f);
     bNewLine = false;
-    PS2Symbol = NULL;
+    PS2Symbol.Symbol = NULL;
     SetTokenToIgnore(NULL, NULL);
 }
 
@@ -302,15 +301,21 @@ void CFontNew::Shutdown() {
     bInitialised = false;
 }
 
+void CFontNew::PrepareSymbolScale() {
+    CSprite2d* sprite = PS2Symbol.Symbol;
+    if (sprite && sprite->m_pTexture) {
+        PS2Symbol.PS2SymbolScale.x = clamp(sprite->m_pTexture->raster->width, 0, 128);
+        PS2Symbol.PS2SymbolScale.y = clamp(sprite->m_pTexture->raster->height, 0, 128);
+    }
+}
+
 float CFontNew::GetCharacterSize(char c) {
     float n = 0.0f;
     char cs = c + ' ';
 
-    CSprite2d* sprite = PS2Symbol;
-    if (sprite && sprite->m_pTexture) {
-        PS2SymbolScale.x = clamp(sprite->m_pTexture->raster->width, 0, 128);
-        PS2SymbolScale.y = clamp(sprite->m_pTexture->raster->height, 0, 128);
-        return Details.scale.y * (PS2SymbolScale.x / 3);
+    if (PS2Symbol.NoPrint) {
+        PS2Symbol.NoPrint = false;
+        return Details.scale.y * (PS2Symbol.PS2SymbolScale.x / 3);
     }
 
     switch (cs) {
@@ -327,11 +332,9 @@ float CFontNew::GetStringWidth(const char* s, bool spaces) {
     w = 0.0f;
     for (; (*s != ' ' || spaces) && *s != '\0'; s++) {
         if (*s == '~')
-            s = ParseToken(true, s);
+            s = ParseToken(false, s);
 
         w += GetCharacterSize(*s - ' ');
-        PS2Symbol = NULL;
-        bNewLine = false;
     }
     return w;
 }
@@ -461,7 +464,8 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, const char*
 
         letterCount++;
         x += GetCharacterSize(c);
-        PS2Symbol = NULL;
+        PS2Symbol.Symbol = NULL;
+        PS2Symbol.NoPrint = false;
     }
 
     return n;
@@ -486,7 +490,8 @@ void CFontNew::PrintString(bool print, float x, float y, const char* start, cons
         if (c == 0)
             x += spwidth;
 
-        PS2Symbol = NULL;
+        PS2Symbol.Symbol = NULL;
+        PS2Symbol.NoPrint = false;
     }
 }
 
@@ -497,14 +502,14 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
     if (Details.ignoreTokens[0] != *c && Details.ignoreTokens[1] != *c) {
         switch (*c) {
         case '<':
-            PS2Symbol = ButtonSprite[BUTTON_LEFT];
+            PS2Symbol.Symbol = ButtonSprite[BUTTON_LEFT];
             break;
         case '>':
-            PS2Symbol = ButtonSprite[BUTTON_RIGHT];
+            PS2Symbol.Symbol = ButtonSprite[BUTTON_RIGHT];
             break;
         case 'A':
         case 'a':
-            PS2Symbol = ButtonSprite[BUTTON_L3];
+            PS2Symbol.Symbol = ButtonSprite[BUTTON_L3];
             break;
         case 'B':
         case 'b':
@@ -512,11 +517,11 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
             break;
         case 'C':
         case 'c':
-            PS2Symbol = ButtonSprite[BUTTON_R3];
+            PS2Symbol.Symbol = ButtonSprite[BUTTON_R3];
             break;
         case 'D':
         case 'd':
-            PS2Symbol = ButtonSprite[BUTTON_DOWN];
+            PS2Symbol.Symbol = ButtonSprite[BUTTON_DOWN];
             break;
         case 'G':
         case 'g':
@@ -528,16 +533,16 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
             break;
         case 'J':
         case 'j':
-            PS2Symbol = ButtonSprite[BUTTON_R1];
+            PS2Symbol.Symbol = ButtonSprite[BUTTON_R1];
             break;
         case 'K':
         case 'k':
             c += 3;
-            PS2Symbol = GetActionSprite(ParseCustomActions(c));
+            PS2Symbol.Symbol = GetActionSprite(ParseCustomActions(c));
             break;
         case 'M':
         case 'm':
-            PS2Symbol = ButtonSprite[BUTTON_L2];
+            PS2Symbol.Symbol = ButtonSprite[BUTTON_L2];
             break;
         case 'N':
         case 'n':
@@ -545,7 +550,7 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
             break;
         case 'O':
         case 'o':
-            PS2Symbol = ButtonSprite[BUTTON_CIRCLE];
+            PS2Symbol.Symbol = ButtonSprite[BUTTON_CIRCLE];
             break;
         case 'P':
         case 'p':
@@ -553,7 +558,7 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
             break;
         case 'Q':
         case 'q':
-            PS2Symbol = ButtonSprite[BUTTON_SQUARE];
+            PS2Symbol.Symbol = ButtonSprite[BUTTON_SQUARE];
             break;
         case 'R':
         case 'r':
@@ -565,20 +570,20 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
             break;
         case 'T':
         case 't':
-            PS2Symbol = ButtonSprite[BUTTON_TRIANGLE];
+            PS2Symbol.Symbol = ButtonSprite[BUTTON_TRIANGLE];
             break;
         case 'U':
         case 'u':
             if (c[1] == 'd' || c[1] == 'D') {
-                PS2Symbol = ButtonSprite[BUTTON_UPDOWN];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_UPDOWN];
                 c++;
             }
             else
-                PS2Symbol = ButtonSprite[BUTTON_UP];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_UP];
             break;
         case 'V':
         case 'v':
-            PS2Symbol = ButtonSprite[BUTTON_R2];
+            PS2Symbol.Symbol = ButtonSprite[BUTTON_R2];
             break;
         case 'W':
         case 'w':
@@ -586,7 +591,7 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
             break;
         case 'X':
         case 'x':
-            PS2Symbol = ButtonSprite[BUTTON_CROSS];
+            PS2Symbol.Symbol = ButtonSprite[BUTTON_CROSS];
             break;
         case 'Y':
         case 'y':
@@ -598,25 +603,25 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
         case '[':
             switch (c[1]) {
             case '~':
-                PS2Symbol = ButtonSprite[BUTTON_THUMBL];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_THUMBL];
                 break;
             case 'x':
-                PS2Symbol = ButtonSprite[BUTTON_THUMBLX];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_THUMBLX];
                 break;
             case 'y':
-                PS2Symbol = ButtonSprite[BUTTON_THUMBLY];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_THUMBLY];
                 break;
             case '<':
-                PS2Symbol = ButtonSprite[BUTTON_THUMBLXL];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_THUMBLXL];
                 break;
             case '>':
-                PS2Symbol = ButtonSprite[BUTTON_THUMBLXR];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_THUMBLXR];
                 break;
             case 'u':
-                PS2Symbol = ButtonSprite[BUTTON_THUMBLYU];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_THUMBLYU];
                 break;
             case 'd':
-                PS2Symbol = ButtonSprite[BUTTON_THUMBLYD];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_THUMBLYD];
                 break;
             }
             c++;
@@ -624,25 +629,25 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
         case ']':
             switch (*(++c)) {
             case '~':
-                PS2Symbol = ButtonSprite[BUTTON_THUMBR];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_THUMBR];
                 break;
             case 'x':
-                PS2Symbol = ButtonSprite[BUTTON_THUMBRX];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_THUMBRX];
                 break;
             case 'y':
-                PS2Symbol = ButtonSprite[BUTTON_THUMBRY];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_THUMBRY];
                 break;
             case '<':
-                PS2Symbol = ButtonSprite[BUTTON_THUMBRXL];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_THUMBRXL];
                 break;
             case '>':
-                PS2Symbol = ButtonSprite[BUTTON_THUMBRXR];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_THUMBRXR];
                 break;
             case 'u':
-                PS2Symbol = ButtonSprite[BUTTON_THUMBRYU];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_THUMBRYU];
                 break;
             case 'd':
-                PS2Symbol = ButtonSprite[BUTTON_THUMBRYD];
+                PS2Symbol.Symbol = ButtonSprite[BUTTON_THUMBRYD];
                 break;
             }
             break;
@@ -650,14 +655,17 @@ const char* CFontNew::ParseToken(bool print, const char* s) {
             if (HAS_PAD_IN_HANDS(0))
                 ParseGInputActions(++c);
             else
-                PS2Symbol = GetActionSprite(CPadNew::StringToKey(++c));
+                PS2Symbol.Symbol = GetActionSprite(CPadNew::StringToKey(++c));
             c++;
             break;
         }
     }
 
+    PrepareSymbolScale();
+
     if (!print) {
-        PS2Symbol = false;
+        PS2Symbol.Symbol = NULL;
+        PS2Symbol.NoPrint = true;
         bNewLine = false;
     }
 
@@ -727,67 +735,67 @@ bool CFontNew::ParseGInputActions(const char* s) {
         if (astrcmp(s, CustomGInputActions[i])) {
             switch (i) {
             case ACTION_PED_MOVE:
-                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBR] : ButtonSprite[BUTTON_THUMBL];
+                PS2Symbol.Symbol = southPaw ? ButtonSprite[BUTTON_THUMBR] : ButtonSprite[BUTTON_THUMBL];
                 break;
             case ACTION_BMX_HANDBRAKE:
                 switch (mode) {
                 case 0:
-                    PS2Symbol = ButtonSprite[BUTTON_R1];
+                    PS2Symbol.Symbol = ButtonSprite[BUTTON_R1];
                     break;
                 case 1:
-                    PS2Symbol = ButtonSprite[BUTTON_R2];
+                    PS2Symbol.Symbol = ButtonSprite[BUTTON_R2];
                     break;
                 }
                 break;
             case ACTION_BMX_BUNNYHOP:
                 switch (mode) {
                 case 0:
-                    PS2Symbol = ButtonSprite[BUTTON_L1];
+                    PS2Symbol.Symbol = ButtonSprite[BUTTON_L1];
                     break;
                 case 1:
-                    PS2Symbol = ButtonSprite[BUTTON_SQUARE];
+                    PS2Symbol.Symbol = ButtonSprite[BUTTON_SQUARE];
                     break;
                 }
                 break;
             case ACTION_CAMERA_LEFT_RIGHT:
-                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBLX] : ButtonSprite[BUTTON_THUMBRX];
+                PS2Symbol.Symbol = southPaw ? ButtonSprite[BUTTON_THUMBLX] : ButtonSprite[BUTTON_THUMBRX];
                 break;
             case ACTION_CAMERA_UP_DOWN:
-                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBLY] : ButtonSprite[BUTTON_THUMBRY];
+                PS2Symbol.Symbol = southPaw ? ButtonSprite[BUTTON_THUMBLY] : ButtonSprite[BUTTON_THUMBRY];
                 break;
             case ACTION_VEHICLE_CHANGE_RADIO_STATION:
                 switch (mode) {
                 case 0:
-                    PS2Symbol = ButtonSprite[BUTTON_UPDOWN];
+                    PS2Symbol.Symbol = ButtonSprite[BUTTON_UPDOWN];
                     break;
                 case 1:
-                    PS2Symbol = ButtonSprite[BUTTON_LEFTRIGHT];
+                    PS2Symbol.Symbol = ButtonSprite[BUTTON_LEFTRIGHT];
                     break;
                 }
                 break;
             case ACTION_GO_LEFTRIGHT:
-                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBRX] : ButtonSprite[BUTTON_THUMBLX];
+                PS2Symbol.Symbol = southPaw ? ButtonSprite[BUTTON_THUMBRX] : ButtonSprite[BUTTON_THUMBLX];
                 break;
             case ACTION_GO_UPDOWN:
-                PS2Symbol = southPaw ? ButtonSprite[BUTTON_THUMBRY] : ButtonSprite[BUTTON_THUMBLY];
+                PS2Symbol.Symbol = southPaw ? ButtonSprite[BUTTON_THUMBRY] : ButtonSprite[BUTTON_THUMBLY];
                 break;
             case ACTION_SNATCH_PACKAGE:
                 switch (mode) {
                 case 0:
-                    PS2Symbol = ButtonSprite[BUTTON_L1];
+                    PS2Symbol.Symbol = ButtonSprite[BUTTON_L1];
                     break;
                 case 1:
-                    PS2Symbol = ButtonSprite[BUTTON_CIRCLE];
+                    PS2Symbol.Symbol = ButtonSprite[BUTTON_CIRCLE];
                     break;
                 }
                 break;
             case ACTION_HYDRA_TARGET:
                 switch (mode) {
                 case 0:
-                    PS2Symbol = ButtonSprite[BUTTON_R1];
+                    PS2Symbol.Symbol = ButtonSprite[BUTTON_R1];
                     break;
                 case 1:
-                    PS2Symbol = ButtonSprite[BUTTON_SQUARE];
+                    PS2Symbol.Symbol = ButtonSprite[BUTTON_SQUARE];
                     break;
                 }
                 break;
@@ -806,15 +814,15 @@ void CFontNew::DrawButton(float& x, float y, CSprite2d* sprite) {
 
     CRect rect = { };
 
-    PS2SymbolScale.x = clamp(sprite->m_pTexture->raster->width, 0, 128);
-    PS2SymbolScale.y = clamp(sprite->m_pTexture->raster->height, 0, 128);
-    float w = Details.scale.y * (PS2SymbolScale.x / 3);
-    float h = Details.scale.y * (PS2SymbolScale.y / 3);
+    float w = Details.scale.y * (PS2Symbol.PS2SymbolScale.x / 3);
+    float h = Details.scale.y * (PS2Symbol.PS2SymbolScale.y / 3);
 
     rect.left = x;
     rect.top = y + SCREEN_COORD(1.0f);
     rect.right = rect.left + (w);
     rect.bottom = rect.top + (h);
+
+    x += w;
 
     int savedAlpha;
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
@@ -840,7 +848,7 @@ void CFontNew::PrintChar(float& x, float y, char c) {
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
     RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSWRAP);
 
-    DrawButton(x, y, PS2Symbol);
+    DrawButton(x, y, PS2Symbol.Symbol);
 
     // Text shadow
     if (Details.shadow > 0.0f) {
