@@ -537,7 +537,7 @@ void CRadarNew::DrawRadarCop() {
             || ped->m_nModelIndex == MODEL_ARMY
             || ped->m_nModelIndex == MODEL_DSHER) {
 
-            CRGBA color = CTimer::m_snTimeInMillisecondsPauseMode % 800 < 400 ? HudColourNew.GetRGB("HUD_COLOUR_REDDARK", 255) : HudColourNew.GetRGB("HUD_COLOUR_BLUEDARK", 255);
+            CRGBA color = CTimer::m_snTimeInMillisecondsPauseMode % 800 < 400 ? HudColourNew.GetRGB(HUD_COLOUR_REDDARK, 255) : HudColourNew.GetRGB(HUD_COLOUR_BLUEDARK, 255);
             AddAnyBlip(RADAR_SPRITE_COP, *(CEntity*)ped, SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_COP_SIZE).w), SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_COP_SIZE).h), 0.0f, !m_bCopPursuit, color, false);
         }
     }
@@ -554,7 +554,7 @@ void CRadarNew::DrawRadarCop() {
             angle += 0.02f * (M_PI * 1.5f);
             angle = CGeneral::LimitRadianAngle(angle);
 
-            CRGBA color = CTimer::m_snTimeInMillisecondsPauseMode % 800 < 400 ? HudColourNew.GetRGB("HUD_COLOUR_REDDARK", 255) : HudColourNew.GetRGB("HUD_COLOUR_BLUEDARK", 255);
+            CRGBA color = CTimer::m_snTimeInMillisecondsPauseMode % 800 < 400 ? HudColourNew.GetRGB(HUD_COLOUR_REDDARK, 255) : HudColourNew.GetRGB(HUD_COLOUR_BLUEDARK, 255);
             AddAnyBlip(RADAR_SPRITE_COP_HELI, *(CEntity*)veh, SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_COP_HELI_SIZE).w), SCREEN_COORD(GET_SETTING(HUD_RADAR_BLIPS_COP_HELI_SIZE).h), angle, !m_bCopPursuit, color, false);
         }
     }
@@ -1032,7 +1032,7 @@ void CRadarNew::AddAnyBlip(unsigned short id, CEntity e, float width, float heig
             float a1 = e.GetHeading();
             float a2 = TheCamera.GetHeading();
             float angle = a1 - (M_PI + a2);
-            DrawRotatingRadarSprite(m_BlipsSprites[RADAR_SPRITE_VCONE], x, y, angle, SCREEN_COORD(96.0f), SCREEN_COORD(96.0f), HudColourNew.GetRGB("HUD_COLOUR_BLUEDARK", 60));
+            DrawRotatingRadarSprite(m_BlipsSprites[RADAR_SPRITE_VCONE], x, y, angle, SCREEN_COORD(96.0f), SCREEN_COORD(96.0f), HudColourNew.GetRGB(HUD_COLOUR_BLUEDARK, 60));
         }
 
         DrawRotatingRadarSprite(m_BlipsSprites[id], x, y, angle, w, h, col);
@@ -1099,7 +1099,7 @@ void CRadarNew::DrawRadarRectangle() {
         if (CHud::m_ItemToFlash != 4 || CTimer::m_FrameCounter & 8) {
             progress = playa.m_pPed->m_fHealth / static_cast<float>(playa.m_nMaxHealth);
             DrawProgressBar(HUD_X(GET_SETTING(HUD_HEALTH_BAR).x), HUD_BOTTOM(GET_SETTING(HUD_HEALTH_BAR).y), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR).w), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR).h), progress,
-                (playa.m_pPed->m_fHealth <= 20.0f && CTimer::m_FrameCounter & 8) ? HudColourNew.GetRGB("HUD_COLOUR_RED", col.a) : col);
+                (playa.m_pPed->m_fHealth <= 20.0f && CTimer::m_FrameCounter & 8) ? HudColourNew.GetRGB(HUD_COLOUR_RED, col.a) : col);
         }
 
         // Armour bar
@@ -1128,7 +1128,7 @@ void CRadarNew::DrawRadarRectangle() {
             if (CHud::m_ItemToFlash != 4 || CTimer::m_FrameCounter & 8) {
                 progress = playa2.m_pPed->m_fHealth / static_cast<float>(playa2.m_nMaxHealth);
                 DrawProgressBar(HUD_X(GET_SETTING(HUD_HEALTH_BAR_P2).x), HUD_BOTTOM(GET_SETTING(HUD_HEALTH_BAR_P2).y), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR_P2).w), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR_P2).h), progress,
-                    (playa2.m_pPed->m_fHealth <= 20.0f && CTimer::m_FrameCounter & 8) ? HudColourNew.GetRGB("HUD_COLOUR_RED", col.a) : col);
+                    (playa2.m_pPed->m_fHealth <= 20.0f && CTimer::m_FrameCounter & 8) ? HudColourNew.GetRGB(HUD_COLOUR_RED, col.a) : col);
             }
 
             // Armour bar
@@ -1244,7 +1244,7 @@ void CRadarNew::DrawMap() {
         CHudNew::m_nLevelNameState = 1; 
     }
 
-    CRadar::m_radarRange = interpF(CRadar::m_radarRange, radarRange, 0.05f * CTimer::ms_fTimeStep);
+    CRadar::m_radarRange = interpF(CRadar::m_radarRange, radarRange, 0.1f * CTimer::ms_fTimeStep);
 
     static bool previousState = m_b3dRadar;
 
@@ -1326,7 +1326,7 @@ void CRadarNew::DrawRadarSection(int x, int y) {
     CRGBA wcol = { 56, 73, 80, col.a };
 
     if (FindPlayerWanted(-1)->m_nWantedLevel > 0 && m_bCopPursuit) {
-        col = CTimer::m_snTimeInMilliseconds % (1000) < 500 ? HudColourNew.GetRGB("HUD_COLOUR_REDLIGHT", col.a) : HudColourNew.GetRGB("HUD_COLOUR_BLUE", col.a);
+        col = CTimer::m_snTimeInMilliseconds % (1000) < 500 ? HudColourNew.GetRGB(HUD_COLOUR_REDLIGHT, col.a) : HudColourNew.GetRGB(HUD_COLOUR_BLUE, col.a);
         wcol = col;
     }
 
@@ -1497,12 +1497,12 @@ void CRadarNew::DrawRadarMap(int x, int y) {
         _rhw[1] = CSprite2d::RecipNearClip;
     }
 
-    Anim.u3 = interpF(Anim.u3, _u3, 0.8f * CTimer::ms_fTimeStep);
-    Anim.u4 = interpF(Anim.u4, _u4, 0.8f * CTimer::ms_fTimeStep);
-    Anim.rhw[0] = interpF(Anim.rhw[0], _rhw[0], 0.8f * CTimer::ms_fTimeStep);
-    Anim.rhw[1] = interpF(Anim.rhw[1], _rhw[0], 0.8f * CTimer::ms_fTimeStep);
-    Anim.rhw[2] = interpF(Anim.rhw[2], _rhw[1], 0.8f * CTimer::ms_fTimeStep);
-    Anim.rhw[3] = interpF(Anim.rhw[3], _rhw[1], 0.8f * CTimer::ms_fTimeStep);
+    Anim.u3 = _u3;
+    Anim.u4 = _u4;
+    Anim.rhw[0] = _rhw[0];
+    Anim.rhw[1] = _rhw[0];
+    Anim.rhw[2] = _rhw[1];
+    Anim.rhw[3] = _rhw[1];
 
     RwRasterPushContext(m_pFrameBuffer3);
     RwRasterRenderFast(m_pFrameBuffer1, 0, 0);
