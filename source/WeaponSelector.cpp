@@ -356,7 +356,7 @@ void CWeaponSelector::ProcessWeaponSelector() {
             };
 
             if (bSlowCycle) {
-                CVector2D centre = { SCREEN_COORD_CENTER_X + GET_SETTING("HUD_WEAPON_WHEEL").x, SCREEN_COORD_CENTER_Y + (GET_SETTING("HUD_WEAPON_WHEEL").y) };
+                CVector2D centre = { SCREEN_COORD_CENTER_X + GET_SETTING(HUD_WEAPON_WHEEL).x, SCREEN_COORD_CENTER_Y + (GET_SETTING(HUD_WEAPON_WHEEL).y) };
 
                 CVector2D pos = LimitMousePosition(vMousePos);
                 float a = atan2f(pos.y - centre.y, pos.x - centre.x) * (180.0f / M_PI);
@@ -397,7 +397,7 @@ void CWeaponSelector::ProcessWeaponSelector() {
                 }
 
                 // Debug line                 
-                CSprite2d::Draw2DPolygon(vMousePos.x, vMousePos.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + vMousePos.x, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + vMousePos.y, centre.x, centre.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + centre.x, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").w + centre.y, GET_SETTING("HUD_WEAPON_WHEEL_MOUSE_LINE").col);
+                CSprite2d::Draw2DPolygon(vMousePos.x, vMousePos.y, GET_SETTING(HUD_WEAPON_WHEEL_MOUSE_LINE).w + vMousePos.x, GET_SETTING(HUD_WEAPON_WHEEL_MOUSE_LINE).w + vMousePos.y, centre.x, centre.y, GET_SETTING(HUD_WEAPON_WHEEL_MOUSE_LINE).w + centre.x, GET_SETTING(HUD_WEAPON_WHEEL_MOUSE_LINE).w + centre.y, GET_SETTING(HUD_WEAPON_WHEEL_MOUSE_LINE).col);
             
                 if (previousSlot != nSelectedSlot) {
                     Audio.PlayChunk(CHUNK_WHEEL_MOVE, 1.0f);
@@ -415,7 +415,7 @@ void CWeaponSelector::ProcessWeaponSelector() {
 }
 
 void CWeaponSelector::CenterCursor() {
-    CVector2D centre = { SCREEN_COORD_CENTER_X + GET_SETTING("HUD_WEAPON_WHEEL").x, SCREEN_COORD_CENTER_Y + (GET_SETTING("HUD_WEAPON_WHEEL").y) };
+    CVector2D centre = { SCREEN_COORD_CENTER_X + GET_SETTING(HUD_WEAPON_WHEEL).x, SCREEN_COORD_CENTER_Y + (GET_SETTING(HUD_WEAPON_WHEEL).y) };
 
     vMousePos.x = centre.x;
     vMousePos.y = centre.y;
@@ -449,7 +449,7 @@ void CWeaponSelector::UpdateCursorPos() {
 CVector2D CWeaponSelector::LimitMousePosition(CVector2D& pos) {
     float radius = 50.0f;
 
-    CVector2D centerPosition = { SCREEN_COORD_CENTER_X + GET_SETTING("HUD_WEAPON_WHEEL").x, SCREEN_COORD_CENTER_Y + (GET_SETTING("HUD_WEAPON_WHEEL").y) };
+    CVector2D centerPosition = { SCREEN_COORD_CENTER_X + GET_SETTING(HUD_WEAPON_WHEEL).x, SCREEN_COORD_CENTER_Y + (GET_SETTING(HUD_WEAPON_WHEEL).y) };
     float dist = (pos - centerPosition).Magnitude();
 
     if (dist > radius) {
@@ -778,10 +778,10 @@ void CWeaponSelector::DrawWheel() {
         if (!bSlowCycle && nWeaponWheelOpenTime < CTimer::m_snTimeInMilliseconds)
             CloseWeaponWheel(true);
 
-        float x = GET_SETTING("HUD_WEAPON_WHEEL").x;
-        float y = GET_SETTING("HUD_WEAPON_WHEEL").y;
-        float w = GET_SETTING("HUD_WEAPON_WHEEL").w;
-        float h = GET_SETTING("HUD_WEAPON_WHEEL").h;
+        float x = GET_SETTING(HUD_WEAPON_WHEEL).x;
+        float y = GET_SETTING(HUD_WEAPON_WHEEL).y;
+        float w = GET_SETTING(HUD_WEAPON_WHEEL).w;
+        float h = GET_SETTING(HUD_WEAPON_WHEEL).h;
         CRGBA col = CRGBA(255, 255, 255, 255);
 
         for (int i = 0; i < 8; i++) {
@@ -909,10 +909,10 @@ void CWeaponSelector::DrawWheel() {
                     CFontNew::SetScale(SCREEN_MULTIPLIER(0.54f), SCREEN_MULTIPLIER(1.32f));
 
                     if (str_ammo && str_clip) {
-                        CFontNew::SetColor(HudColourNew.GetRGB("HUD_COLOUR_WHITE", 255));
+                        CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
                         CFontNew::PrintString(SCREEN_COORD_CENTER_X + SCREEN_COORD(ax) - (CFontNew::GetStringWidth(str_clip, true) * 0.5f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(ay), str_ammo);
 
-                        CFontNew::SetColor(HudColourNew.GetRGB("HUD_COLOUR_GREY", 255));
+                        CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_GREY, 255));
                         CFontNew::PrintString(SCREEN_COORD_CENTER_X + SCREEN_COORD(ax) + (CFontNew::GetStringWidth(str_ammo, true) * 0.5f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(ay), str_clip);
                     }
                 }
@@ -942,7 +942,7 @@ void CWeaponSelector::DrawWheel() {
             CFontNew::SetFontStyle(CFontNew::FONT_4);
             CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
             CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
-            CFontNew::SetColor(HudColourNew.GetRGB("HUD_COLOUR_WHITE", 255));
+            CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
             CFontNew::SetDropShadow(0.0f);
             CFontNew::SetOutline(SCREEN_COORD(1.5f));
 
@@ -994,16 +994,16 @@ float CWeaponSelector::GetShiftOffsetForStatsBox() {
     float y = SCREEN_COORD(8.0f);
 
     if (FindPlayerWanted(-1)->m_nWantedLevel > 0)
-        y += SCREEN_COORD(8.0f) + SCREEN_COORD(GET_SETTING("HUD_WANTED_STARS").h);
+        y += SCREEN_COORD(8.0f) + SCREEN_COORD(GET_SETTING(HUD_WANTED_STARS).h);
 
     if (CHudNew::IsMoneyCounterDisplaying())
-        y += SCREEN_COORD(8.0f) + CFontNew::GetHeightScale(SCREEN_MULTIPLIER(GET_SETTING("HUD_CASH").h));
+        y += SCREEN_COORD(8.0f) + CFontNew::GetHeightScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_CASH).h));
 
     if (CHudNew::IsMoneyDifferenceDisplaying())
-        y += SCREEN_COORD(8.0f) + CFontNew::GetHeightScale(SCREEN_MULTIPLIER(GET_SETTING("HUD_CASH").h));
+        y += SCREEN_COORD(8.0f) + CFontNew::GetHeightScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_CASH).h));
 
     if (CHudNew::IsAmmoCounterDisplaying())
-        y += SCREEN_COORD(8.0f) + CFontNew::GetHeightScale(SCREEN_MULTIPLIER(GET_SETTING("HUD_AMMO").h));
+        y += SCREEN_COORD(8.0f) + CFontNew::GetHeightScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_AMMO).h));
 
     return y;
 }
@@ -1024,10 +1024,10 @@ void CWeaponSelector::DrawStats(int active_id, int selected_id) {
     heightLerp = interpF(heightLerp, GetShiftOffsetForStatsBox(), 0.8f * CTimer::ms_fTimeStep);
     CHudNew::DrawSimpleRect(CRect(HUD_RIGHT(x), HUD_Y(y) + heightLerp, HUD_RIGHT(x) + SCREEN_COORD(w), HUD_Y(y) + heightLerp + SCREEN_COORD(h)), col);
 
-    x = x - GET_SETTING("HUD_WEAPON_STATS_BAR").x;
-    y = y + GET_SETTING("HUD_WEAPON_STATS_BAR").y;
-    w = GET_SETTING("HUD_WEAPON_STATS_BAR").w;
-    h = GET_SETTING("HUD_WEAPON_STATS_BAR").h;
+    x = x - GET_SETTING(HUD_WEAPON_STATS_BAR).x;
+    y = y + GET_SETTING(HUD_WEAPON_STATS_BAR).y;
+    w = GET_SETTING(HUD_WEAPON_STATS_BAR).w;
+    h = GET_SETTING(HUD_WEAPON_STATS_BAR).h;
 
     CFontNew::SetBackground(false);
     CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
@@ -1036,7 +1036,7 @@ void CWeaponSelector::DrawStats(int active_id, int selected_id) {
     CFontNew::SetFontStyle(CFontNew::FONT_4);
     CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
     CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
-    CFontNew::SetColor(HudColourNew.GetRGB("HUD_COLOUR_WHITE", 255));
+    CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
     CFontNew::SetDropShadow(0.0f);
     CFontNew::SetOutline(0.0f);
     CFontNew::SetScale(SCREEN_MULTIPLIER(0.52f), SCREEN_MULTIPLIER(1.24f));
@@ -1111,11 +1111,11 @@ void CWeaponSelector::DrawStats(int active_id, int selected_id) {
         }
 
         if (fStatsDiff[i] > 0.0f)
-            col = HudColourNew.GetRGB("HUD_COLOUR_BLUE", 255);
+            col = HudColourNew.GetRGB(HUD_COLOUR_BLUE, 255);
         else
-            col = HudColourNew.GetRGB("HUD_COLOUR_RED", 255);
+            col = HudColourNew.GetRGB(HUD_COLOUR_RED, 255);
 
-        DrawProgressBarWithProgressDifference(HUD_RIGHT(x), HUD_Y(spacing + y) + heightLerp, SCREEN_COORD(w), SCREEN_COORD(h), fStatsProgress[i], GET_SETTING("HUD_WEAPON_STATS_BAR").col, fStatsDiff[i], col);
+        DrawProgressBarWithProgressDifference(HUD_RIGHT(x), HUD_Y(spacing + y) + heightLerp, SCREEN_COORD(w), SCREEN_COORD(h), fStatsProgress[i], GET_SETTING(HUD_WEAPON_STATS_BAR).col, fStatsDiff[i], col);
         CFontNew::PrintString(HUD_RIGHT(x), HUD_Y(spacing + (y - 28.0f)) + heightLerp, TextNew.GetText(statName[i]).text);
         spacing += 42.0f;
     }

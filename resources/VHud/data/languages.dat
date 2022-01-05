@@ -1,0 +1,9 @@
+# LANGUAGES.DAT
+# Set up languages the game will be able to load.
+
+# NAME INI GXT
+ENGLISH english american
+FRENCH french french
+GERMAN german german
+ITALIAN italian italian
+SPANISH spanish spanish

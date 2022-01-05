@@ -415,6 +415,7 @@ void CMenuNew::BuildMenuScreen() {
             AddNewEntry(display, MENUENTRY_SAFEZONESIZE, "FE_SAFE", 0, 0);
             AddNewEntry(display, MENUENTRY_SUBTITLES, "FE_SUB", 0, 0);
             AddNewEntry(display, MENUENTRY_MEASUREMENTSYS, "FE_MSYS", 0, 0);
+            AddNewEntry(display, MENUENTRY_LANGUAGE, "FE_LANG", 0, 0);
             AddNewEntry(display, MENUENTRY_RESTOREDEFAULTS, "FE_RDEF", 0, 0);
         }
 
@@ -2003,6 +2004,21 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
     case MENUENTRY_REDEFINEKEY:
         SetInputTypeAndClear(MENUINPUT_REDEFINEKEY);
         break;
+    case MENUENTRY_LANGUAGE:
+        if (input < 0) {
+            TempSettings.language--;
+
+            if (TempSettings.language < 0)
+                TempSettings.language = TextNew.TextSwitch.count;
+        }
+        else if (input > 0) {
+            TempSettings.language++;
+
+            if (TempSettings.language > TextNew.TextSwitch.count)
+                TempSettings.language = 0;
+        }
+        ApplyChanges();
+        break;
     
         // Sliders
     case MENUENTRY_DRAWDISTANCE:
@@ -2669,7 +2685,7 @@ void CMenuNew::DrawDefault() {
         CFontNew::SetBackground(false);
         CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
         CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
-        CFontNew::SetWrapX(SCREEN_COORD(640.0f));
+        CFontNew::SetWrapX(SCREEN_COORD(720.0f));
         CFontNew::SetFontStyle(CFontNew::FONT_1);
         CFontNew::SetDropShadow(0.0f);
         CFontNew::SetOutline(0.0f);
@@ -2970,6 +2986,10 @@ void CMenuNew::DrawDefault() {
                     break;
                 case MENUENTRY_LANDINGPAGE:
                     rightText = TextNew.GetText(TempSettings.landingPage ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_LANGUAGE:
+                    sprintf(rightTextTmp, "LANG_%d", TempSettings.language);
+                    rightText = TextNew.GetText(rightTextTmp).text;
                     break;
 
                     // Sliders
@@ -3666,7 +3686,7 @@ void CMenuNew::PrintBrief() {
                 brief.m_nNumber[4], brief.m_nNumber[5], gString);
             CMessages::InsertStringInString(gString, brief.m_pString);
 
-            CFontNew::SetTokenToIgnore('N', 'n');
+            //CFontNew::SetTokenToIgnore('N', 'n');
             CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
             CFontNew::PrintString(mask.left + SCREEN_COORD(8.0f), mask.top + SCREEN_COORD(4.0f), gString);
             mask.top += SCREEN_COORD(24.0f);
@@ -3674,7 +3694,7 @@ void CMenuNew::PrintBrief() {
             noBrief = false;
         }
     }
-    CFontNew::SetTokenToIgnore(NULL, NULL);
+    //CFontNew::SetTokenToIgnore(NULL, NULL);
 
     if (noBrief) {
         char* str = TextNew.GetText("FE_BRF").text;
@@ -3874,7 +3894,7 @@ void CMenuNew::DrawLegend() {
             break;
         case RADAR_SPRITE_COP:
         case RADAR_SPRITE_COP_HELI:
-            col = CTimer::m_snTimeInMillisecondsPauseMode % 800 < 400 ? HudColourNew.GetRGB("HUD_COLOUR_REDDARK", 255) : HudColourNew.GetRGB("HUD_COLOUR_BLUEDARK", 255);
+            col = CTimer::m_snTimeInMillisecondsPauseMode % 800 < 400 ? HudColourNew.GetRGB(HUD_COLOUR_REDDARK, 255) : HudColourNew.GetRGB(HUD_COLOUR_BLUEDARK, 255);
             break;
         }
         CRadarNew::m_MapLegendBlipList[i].sprite = id;
@@ -4331,7 +4351,6 @@ void CMenuNew::PassSettingsToCurrentGame(const CMenuSettings* s) {
         }
         else {
             m.m_bLanguageChanged = true;
-            TheText.Load();
             m.m_bReinitLanguageSettings = true;
             m.InitialiseChangedLanguageSettings(0);
         }

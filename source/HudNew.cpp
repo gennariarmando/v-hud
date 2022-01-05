@@ -663,7 +663,7 @@ ForcedFPSView:
                         w = GET_SETTING(HUD_CROSSHAIR_CROSS).w;
                         h = GET_SETTING(HUD_CROSSHAIR_CROSS).h;
 
-                        CRGBA crossCol = HudColourNew.GetRGB("HUD_COLOUR_WHITE", 255);
+                        CRGBA crossCol = HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255);
 
                         if (nTargettedEntityDeathTime < CTimer::m_snTimeInMilliseconds + 400)
                             crossCol = GET_SETTING(HUD_CROSSHAIR_CROSS).col;
@@ -730,11 +730,11 @@ void CHudNew::DrawMoneyCounter() {
 
     if (m_nDiffMoney > 0) {
         sprintf_s(str, "+$%d", ABS(m_nDiffMoney));
-        CFontNew::SetColor(HudColourNew.GetRGB("HUD_COLOUR_GREEN", 255));
+        CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_GREEN, 255));
     }
     else if (m_nDiffMoney < 0) {
         sprintf_s(str, "-$%d", ABS(m_nDiffMoney));
-        CFontNew::SetColor(HudColourNew.GetRGB("HUD_COLOUR_RED", 255));
+        CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_RED, 255));
     }
 
     CFontNew::Details.color.a = nMoneyDifferenceFadeAlpha;
@@ -825,10 +825,10 @@ void CHudNew::DrawAmmo() {
         bShowAmmo = false;
     }
     else {
-        CFontNew::SetColor(HudColourNew.GetRGB("HUD_COLOUR_WHITE", nAmmoFadeAlpha));
+        CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, nAmmoFadeAlpha));
         CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_AMMO).x + 6.0f) - CFontNew::GetStringWidth(str_clip, false), HUD_Y(GET_SETTING(HUD_AMMO).y) + heightLerp, str_ammo);
 
-        CFontNew::SetColor(HudColourNew.GetRGB("HUD_COLOUR_GREY", nAmmoFadeAlpha));
+        CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_GREY, nAmmoFadeAlpha));
         CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_AMMO).x), HUD_Y(GET_SETTING(HUD_AMMO).y) + heightLerp, str_clip);
     }
 
@@ -1025,7 +1025,11 @@ void CHudNew::DrawStats() {
 
     static int prevTimeScale = CTimer::ms_fTimeScale;
     static bool bJustClosed = false;
-    if (CPadNew::GetPad(0)->GetShowPlayerInfo(500) && !IsAimingWeapon()) {
+    if (CPadNew::GetPad(0)->GetShowPlayerInfo(500)
+        && !IsAimingWeapon()
+        && !CMenuPanels::bActive
+        && !CHudNew::m_bShowWastedBusted
+        && !CHudNew::m_bShowSuccessFailed) {
         if (!CHud::bDrawingVitalStats) {
             Audio.PlayChunk(CHUNK_WHEEL_OPEN_CLOSE, 1.0f);
 
@@ -1633,7 +1637,9 @@ void CHudNew::PrintSmallHelpText(int alpha) {
         c = GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).col;
         CFontNew::SetColor(CRGBA(c.r, c.g, c.b, clamp(alpha, 0, c.a)));
         CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).h));
+        
         CFontNew::PrintStringFromBottom(HUD_X(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).x), HUD_BOTTOM(GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).y), CHud::m_pHelpMessageToPrint);
+
         CFontNew::SetGradBackground(false);
     }
 }

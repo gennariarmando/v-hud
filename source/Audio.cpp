@@ -38,13 +38,16 @@ void CAudio::Init() {
 
         if (BASS_ErrorGetCode() != BASS_ERROR_ALREADY)
             return;
+        else
+            printf("[BASS] Device has already been initialized. \n");
+    }
+    else {
+        printf("[BASS] Initialized \n");
     }
 
     for (int i = 0; i < NUM_CHUNKS; i++) {
         Chunks[i] = LoadChunkFile(PLUGIN_PATH("VHud\\audio\\frontend"), ChunksFileNames[i]);   
     }
-
-    printf("Initialised BASS Audio. \n");
 
     bInitialised = true;
 }
@@ -59,7 +62,7 @@ void CAudio::Shutdown() {
 
     BASS_Free();
 
-    printf("Shutdown BASS Audio. \n");
+    printf("[BASS] Shutdown. \n");
 
     bInitialised = false;
 }
@@ -82,11 +85,7 @@ void CAudio::SetLoop(bool on) {
 unsigned long CAudio::LoadChunkFile(const char* path, const char* name) {
     char file[512];
 
-    strcpy_s(file, path);
-    strcat_s(file, "\\");
-    strcat_s(file, name);
-    strcat_s(file, AudioFileFormat);
-    puts(file);
+    sprintf(file, "%s\\%s.wav", path, name);
 
     return BASS_SampleLoad(FALSE, file, 0, 0, 3, 0);
 }

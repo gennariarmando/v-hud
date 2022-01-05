@@ -137,6 +137,7 @@ enum eMenuEntries {
     MENUENTRY_SHOWPICTURE,
     MENUENTRY_REDEFINEKEY,
     MENUENTRY_KEYBINDING,
+    MENUENTRY_LANGUAGE,
 };
 
 enum eMenuMessages {

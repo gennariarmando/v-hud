@@ -20,10 +20,7 @@ void CTextureMgr::Shutdown() {
 RwTexture* CTextureMgr::LoadDDSTextureCB(const char* path, const char* name) {
 	char file[512];
 
-	strcpy_s(file, path);
-	strcat_s(file, "\\");
-	strcat_s(file, name);
-	puts(file);
+	sprintf(file, "%s\\%s", path, name);
 
 	return RwD3D9DDSTextureRead(file, NULL);
 }
@@ -33,11 +30,7 @@ RwTexture* CTextureMgr::LoadBMPTextureCB(const char* path, const char* name) {
 	char file[512];
 	RwTexture* texture = NULL;
 
-	strcpy_s(file, path);
-	strcat_s(file, "\\");
-	strcat_s(file, name);
-	strcat_s(file, ".bmp");
-	puts(file);
+	sprintf(file, "%s\\%s.bmp", path, name);
 
 	if (file && FileCheck(file)) {
 		if (RwImage* img = RtBMPImageRead(file)) {
@@ -70,11 +63,7 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char* path, const char* name) {
 	char file[512];
 	RwTexture* texture = NULL;
 
-	strcpy_s(file, path);
-	strcat_s(file, "\\");
-	strcat_s(file, name);
-	strcat_s(file, ".png");
-	puts(file);
+	sprintf(file, "%s\\%s.png", path, name);
 
 	if (file && FileCheck(file)) {
 		if (RwImage* img = RtPNGImageRead(file)) {
@@ -106,20 +95,10 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name, con
 	int w, h, d, f;
 	char file[512];
 	char maskFile[512];
-	char colFile[512];
 	RwTexture* texture = NULL;
 
-	strcpy_s(file, path);
-	strcat_s(file, "\\");
-	strcat_s(file, name);
-	strcat_s(file, ".png");
-	puts(file);
-
-	strcpy_s(maskFile, path);
-	strcat_s(maskFile, "\\");
-	strcat_s(maskFile, namea);
-	strcat_s(maskFile, ".png");
-	puts(maskFile);
+	sprintf(file, "%s\\%s.png", path, name);
+	sprintf(maskFile, "%s\\%s.png", path, namea);
 
 	if (file && FileCheck(file)) {
 		if (RwImage* img = RtPNGImageRead(file)) {
@@ -159,23 +138,9 @@ RwTexture* CTextureMgr::LoadPNGTextureCB(const char *path, const char* name, con
 	char colFile[512];
 	RwTexture* texture = NULL;
 
-	strcpy_s(file, path);
-	strcat_s(file, "\\");
-	strcat_s(file, name);
-	strcat_s(file, ".png");
-	puts(file);
-
-	strcpy_s(maskFile, path);
-	strcat_s(maskFile, "\\");
-	strcat_s(maskFile, namea);
-	strcat_s(maskFile, ".png");
-	puts(maskFile);
-
-	strcpy_s(colFile, path);
-	strcat_s(colFile, "\\");
-	strcat_s(colFile, namec);
-	strcat_s(colFile, ".png");
-	puts(colFile);
+	sprintf(file, "%s\\%s.png", path, name);
+	sprintf(maskFile, "%s\\%s.png", path, namea);
+	sprintf(colFile, "%s\\%s.png", path, namec);
 
 	if (file && FileCheck(file)
 		&& maskFile && FileCheck(maskFile)

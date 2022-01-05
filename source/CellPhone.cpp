@@ -204,7 +204,7 @@ void CCellPhone::ShowHidePhone(bool on, bool force) {
 
 void CCellPhone::Process() {
     CPadNew* pad = CPadNew::GetPad(0);
-    
+
     if (bRequestPhoneClose) {
         bRequestPhoneClose = false;
         if (bActive)
@@ -228,54 +228,56 @@ void CCellPhone::Process() {
     if (!bActive)
         return;
 
-    bool Up = pad->GetPhoneUpJustDown();
-    bool Down = pad->GetPhoneDownJustDown();
+    if (bShowOrHideAnimation) {
+        bool Up = pad->GetPhoneUpJustDown();
+        bool Down = pad->GetPhoneDownJustDown();
 
-    bool Left = pad->GetPhoneLeftJustDown();
-    bool Right = pad->GetPhoneRightJustDown();
+        bool Left = pad->GetPhoneLeftJustDown();
+        bool Right = pad->GetPhoneRightJustDown();
 
-    bool Enter = pad->GetPhoneEnterJustDown();
+        bool Enter = pad->GetPhoneEnterJustDown();
 
-    if (Up) {
-        if (nCurrentItem - 3 >= 0 && Apps[nCurrentItem - 3].name[0] != '\0') {
-            nPreviousItem = nCurrentItem;
-            nCurrentItem -= 3;
-        }
-    }
-    else if (Down) {
-        if (nCurrentItem + 3 <= GetLastAppOnScreen() && Apps[nCurrentItem + 3].name[0] != '\0') {
-            nPreviousItem = nCurrentItem;
-            nCurrentItem += 3;
-        }
-    }
-    else if (Left) {
-        while (true) {
-            nPreviousItem = nCurrentItem;
-            nCurrentItem--;
-
-            if (nCurrentItem < 0) {
-                nCurrentItem = GetLastAppOnScreen();
+        if (Up) {
+            if (nCurrentItem - 3 >= 0 && Apps[nCurrentItem - 3].name[0] != '\0') {
+                nPreviousItem = nCurrentItem;
+                nCurrentItem -= 3;
             }
-
-            if (Apps[nCurrentItem].name[0] != '\0')
-                break;
         }
-    }
-    else if (Right) {
-        while (true) {
-            nPreviousItem = nCurrentItem;
-            nCurrentItem++;
-
-            if (nCurrentItem > GetLastAppOnScreen()) {
-                nCurrentItem = 0;
+        else if (Down) {
+            if (nCurrentItem + 3 <= GetLastAppOnScreen() && Apps[nCurrentItem + 3].name[0] != '\0') {
+                nPreviousItem = nCurrentItem;
+                nCurrentItem += 3;
             }
-
-            if (Apps[nCurrentItem].name[0] != '\0')
-                break;
         }
-    }
-    else if (Enter) {
-        ProcessPhoneApp();
+        else if (Left) {
+            while (true) {
+                nPreviousItem = nCurrentItem;
+                nCurrentItem--;
+
+                if (nCurrentItem < 0) {
+                    nCurrentItem = GetLastAppOnScreen();
+                }
+
+                if (Apps[nCurrentItem].name[0] != '\0')
+                    break;
+            }
+        }
+        else if (Right) {
+            while (true) {
+                nPreviousItem = nCurrentItem;
+                nCurrentItem++;
+
+                if (nCurrentItem > GetLastAppOnScreen()) {
+                    nCurrentItem = 0;
+                }
+
+                if (Apps[nCurrentItem].name[0] != '\0')
+                    break;
+            }
+        }
+        else if (Enter) {
+            ProcessPhoneApp();
+        }
     }
 }
 

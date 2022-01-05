@@ -62,6 +62,7 @@ VHud::VHud() {
                     case 7:
                         if (MenuNew.ProcessMenuToGameSwitch(false)) {
                             gGameState = 8;
+                            MenuNew.OpenCloseMenu(false, true);
                         }
                         break;
                     case 8:
@@ -69,7 +70,9 @@ VHud::VHud() {
                         gGameState = 9;
                         break;
                     case 9:
-                        MenuNew.ProcessMenuToGameSwitch(true);
+                        if (MenuNew.ProcessMenuToGameSwitch(true)) {
+                            MenuNew.OpenCloseMenu(false, true);
+                        }
                         break;
                     }
                 }
