@@ -14,6 +14,7 @@
 #include "TextureMgr.h"
 #include "Utility.h"
 #include "WeaponSelector.h"
+#include "3dMarkersNew.h"
 
 #include "VHudAPI.h"
 
@@ -97,6 +98,7 @@ VHud::VHud() {
         MenuNew.Init();
         CRadioHud::Init();
         COverlayLayer::Init();
+        MarkersNew.Init();
 
         rwInitialized = true;
     };
@@ -118,6 +120,7 @@ VHud::VHud() {
     CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void()> beforeFading;
     beforeFading += [] {
         CHudNew::Draw();
+        MarkersNew.DrawArrows();
     };
 
     CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> afterFading;
@@ -137,6 +140,7 @@ VHud::VHud() {
         CWeaponSelector::Shutdown();
         CMenuPanels::Shutdown();
         Audio.Shutdown();
+        MarkersNew.Shutdown();
 
         rwQuit = true;
     };
