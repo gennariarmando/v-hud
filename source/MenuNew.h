@@ -11,6 +11,8 @@
 #include "PadNew.h"
 #include "CSprite2d.h"
 
+typedef void (*funcCall)();
+
 enum eMouseType : char {
     MOUSE_ARROW,
     MOUSE_FUCKU,
@@ -372,6 +374,7 @@ public:
     int nCurrentBarItemHover;
     int nPreviousBarItemHover;
 
+    int tabItemBeforeScreenChange;
     int nCurrentTabItem;
     int nPreviousTabItem;
     int nCurrentTabItemHover;
@@ -422,6 +425,8 @@ public:
 
     struct {
         char* text;
+        bool hasFunc;
+        funcCall func;
     } nControlsHelper[MAX_HELP_TEXT];
 
     bool bSavePage;
@@ -502,6 +507,8 @@ public:
     void CenterCursor();
     void DoMapZoomInOut(bool out);
     void RemoveUnusedControllerSettings();
+    void ProcessGoThrough(int input);
+    void ProcessGoBack(int input);
     void Process();
     void ScanGalleryPictures(bool force);
     unsigned int GetTimeInMillisecondsRight();
@@ -521,7 +528,7 @@ public:
     void DrawPauseMenuExtraText();
     void Draw();
     void DrawControlsHelper();
-    void AppendHelpText(const char* text);
+    void AppendHelpText(const char* text, funcCall func);
     void SetMenuMessage(int type);
     void UnSetMenuMessage();
     bool IsLoading();

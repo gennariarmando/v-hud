@@ -100,8 +100,8 @@ void CMenuPanels::Draw(unsigned char panelId) {
 
     if (active) {
         CHud::m_pHelpMessage[0] = NULL;
-        MenuNew.AppendHelpText("HP_BAC");
-        MenuNew.AppendHelpText("HP_SEL");
+        MenuNew.AppendHelpText("HP_BAC", NULL);
+        MenuNew.AppendHelpText("HP_SEL", NULL);
 
         CRect rect = { 0.0f, 0.0f, 0.0f, 0.0f };
         tMenuPanel* panel = MenuNumber[panelId];

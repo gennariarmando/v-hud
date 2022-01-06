@@ -103,6 +103,14 @@ bool bSaveScreenHasBeenOpened = false;
 char* gGxtString = (char*)0xC1B100;
 char* gGxtString2 = (char*)0xC1AED8;
 
+// Help text actions
+auto HelpText_GoThrough = []() { MenuNew.ProcessGoThrough(-99); };
+auto HelpText_GoBack = []() { MenuNew.ProcessGoBack(-99); };
+auto HelpText_SetWaypoint = []() { MenuNew.SetWaypoint(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2); Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f); };
+auto HelpText_ShowHideLegend = []() { MenuNew.bShowLegend = MenuNew.bShowLegend == false; Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f); };
+auto HelpText_DeleteSave = []() { MenuNew.SetMenuMessage(MENUMESSAGE_DELETE_GAME); Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f); };
+auto HelpText_ApplyChanges = []() { if (MenuNew.nMenuAlert == MENUALERT_PENDINGCHANGES) MenuNew.ApplyGraphicsChanges(); Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f); };
+
 CMenuNew::CMenuNew() {
     patch::Set<BYTE>(0x53E797, 0xEB);
     patch::Nop(0x53EB85, 2);
@@ -941,6 +949,107 @@ void CMenuNew::RemoveUnusedControllerSettings() {
     }
 }
 
+void CMenuNew::ProcessGoThrough(int input) {
+    if (input == -99)
+        input = nCurrentInputType;
+
+    switch (input) {
+    case MENUINPUT_BAR:
+        if (GetLastMenuBarItem() > 0)
+            Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
+        SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
+        break;
+    case MENUINPUT_TAB:
+        if (GetLastMenuScreenTab() > 0)
+            Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
+        ProcessTabStuff();
+        break;
+    case MENUINPUT_ENTRY:
+        ProcessEntryStuff(true, 0);
+        Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+        break;
+    case MENUINPUT_MESSAGE:
+        Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+        ProcessMessagesStuff(true, false, false, false);
+        break;
+    case MENUINPUT_GALLERYPIC:
+        break;
+    }
+}
+
+void CMenuNew::ProcessGoBack(int input) {
+    if (input == -99)
+        input = nCurrentInputType;
+
+    switch (input) {
+    case MENUINPUT_BAR:
+        Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
+        OpenCloseMenu(false, false);
+        break;
+    case MENUINPUT_TAB:
+        if (nCurrentScreen != MENUSCREEN_LANDING && nCurrentScreen != MENUSCREEN_LOADING) {
+            Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
+        }
+
+        switch (nCurrentScreen) {
+        case MENUSCREEN_KEYBIND:
+            if (int p = nPreviousScreen) {
+                nPreviousScreen = nCurrentScreen;
+                nCurrentScreen = p;
+                bRequestScreenUpdate = true;
+                SetInputTypeAndClear(nCurrentInputType, tabItemBeforeScreenChange);
+            }
+            break;
+        case MENUSCREEN_LANDING:
+            break;
+        case MENUSCREEN_LOADING:
+            break;
+        case MENUSCREEN_SAVE:
+            bRequestMenuClose = true;
+            bRequestScreenUpdate = true;
+            break;
+        case MENUSCREEN_SETTINGS:
+            if (bLandingPage) {
+                bShowMenu = false;
+                bShowMenuBar = false;
+                bInvertInput = true;
+                OpenMenuScreen(MENUSCREEN_LANDING);
+                SetInputTypeAndClear(MENUINPUT_TAB, 1);
+                break;
+            }
+            [[fallthrough]];
+        default:
+        def:
+            SetInputTypeAndClear(MENUINPUT_BAR, nCurrentBarItem);
+            break;
+        }
+        break;
+    case MENUINPUT_ENTRY:
+        Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
+
+        if (nMenuAlert == MENUALERT_NONE) {
+            SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
+            SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
+        }
+        else {
+            ProcessAlertStuff();
+        }
+        break;
+    case MENUINPUT_MESSAGE:
+        Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
+        ProcessMessagesStuff(false, true, false, false);
+        break;
+    case MENUINPUT_GALLERYPIC:
+        Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
+
+        SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
+        SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
+        break;
+    }
+}
+
 void CMenuNew::Process() {
     if (nTimePassedSinceLastKeyBind > CTimer::m_snTimeInMillisecondsPauseMode)
         return;
@@ -1073,7 +1182,7 @@ void CMenuNew::Process() {
             bSaveSlotsPopulated = false;
         }
 
-        static int tabItemBeforeScreenChange = nCurrentTabItem;
+        tabItemBeforeScreenChange = nCurrentTabItem;
 
         switch (nCurrentInputType) {
         case MENUINPUT_BAR:
@@ -1111,15 +1220,10 @@ void CMenuNew::Process() {
                     bRequestScreenUpdate = true;
                 }
                 else if (Enter) {
-                    if (GetLastMenuBarItem() > 0)
-                        Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
-
-                    SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
+                    ProcessGoThrough(-99);
                 }
                 else if (OpenClose) {
-                    Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
-
-                    OpenCloseMenu(false, false);
+                    ProcessGoBack(-99);
                     return;
                 }
 
@@ -1180,47 +1284,10 @@ void CMenuNew::Process() {
                     SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
                 }
                 else if (Enter) {
-                    if (GetLastMenuScreenTab() > 0)
-                        Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
-                    ProcessTabStuff();
+                    ProcessGoThrough(-99);
                 }
                 else if (Back) {
-                    if (nCurrentScreen != MENUSCREEN_LANDING && nCurrentScreen != MENUSCREEN_LOADING) {
-                        Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
-                    }
-
-                    switch (nCurrentScreen) {
-                    case MENUSCREEN_KEYBIND:
-                        if (int p = nPreviousScreen) {
-                            nPreviousScreen = nCurrentScreen;
-                            nCurrentScreen = p;
-                            bRequestScreenUpdate = true;
-                            SetInputTypeAndClear(nCurrentInputType, tabItemBeforeScreenChange);
-                        }
-                        break;
-                    case MENUSCREEN_LANDING:
-                        break;
-                    case MENUSCREEN_LOADING:
-                        break;
-                    case MENUSCREEN_SAVE:
-                        bRequestMenuClose = true;
-                        bRequestScreenUpdate = true;
-                        break;
-                    case MENUSCREEN_SETTINGS:
-                        if (bLandingPage) {
-                            bShowMenu = false;
-                            bShowMenuBar = false;
-                            bInvertInput = true;
-                            OpenMenuScreen(MENUSCREEN_LANDING);
-                            SetInputTypeAndClear(MENUINPUT_TAB, 1);
-                            break;
-                        }
-                        [[fallthrough]];
-                    default:
-                    def:
-                        SetInputTypeAndClear(MENUINPUT_BAR, nCurrentBarItem);
-                        break;
-                    }
+                    ProcessGoBack(-99);
                 }
 
                 if (!bShowMenu) {
@@ -1264,6 +1331,8 @@ void CMenuNew::Process() {
                             }
 
                             if (Enter) {
+                                Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f);
+
                                 SetWaypoint(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
                             }
 
@@ -1333,15 +1402,7 @@ void CMenuNew::Process() {
                     }
                 }
                 else if (Back) {
-                    Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
-
-                    if (nMenuAlert == MENUALERT_NONE) {
-                        SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
-                        SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
-                    }
-                    else {
-                        ProcessAlertStuff();
-                    }
+                    ProcessGoBack(-99);
                 }
 
                 if (Enter || Left || Right) {
@@ -1374,10 +1435,7 @@ void CMenuNew::Process() {
             break;
         case MENUINPUT_GALLERYPIC:
             if (Back) {
-                Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
-
-                SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
-                SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
+                ProcessGoBack(-99);
             }
             break;
         case MENUINPUT_REDEFINEKEY:
@@ -1453,26 +1511,25 @@ void CMenuNew::Process() {
                 break;
             case MENUSCREEN_MAP:
                 if (!bShowMenu) {
-                    AppendHelpText("H_LG");
-                    AppendHelpText("H_BAC");
-                    AppendHelpText("H_WAYP");
+                    AppendHelpText("H_LG", HelpText_ShowHideLegend);
+                    AppendHelpText("H_BAC", HelpText_GoBack);
+                    AppendHelpText("H_WAYP", HelpText_SetWaypoint);
                     break;
                 }
                 [[fallthrough]];
             case MENUSCREEN_GAME:
                 if (nCurrentInputType == MENUINPUT_ENTRY && MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].type == MENUENTRY_POPULATESAVESLOT) {
-                    AppendHelpText("H_DEL");
+                    AppendHelpText("H_DEL", HelpText_DeleteSave);
                 }
                 [[fallthrough]];
             case MENUSCREEN_SETTINGS:
                 if (nMenuAlert == MENUALERT_PENDINGCHANGES) {
-                    AppendHelpText("H_APCH");
-
+                    AppendHelpText("H_APCH", HelpText_ApplyChanges);
                 }
                 [[fallthrough]];
             default:
-                AppendHelpText("H_BAC");
-                AppendHelpText("H_SEL");
+                AppendHelpText("H_BAC", HelpText_GoBack);
+                AppendHelpText("H_SEL", HelpText_GoThrough);
                 break;
             }
         }
@@ -1481,8 +1538,8 @@ void CMenuNew::Process() {
             case MENUMESSAGE_NONE:
                 break;
             default:
-                AppendHelpText("H_BAC");
-                AppendHelpText("H_SEL");
+                AppendHelpText("H_BAC", HelpText_GoBack);
+                AppendHelpText("H_SEL", HelpText_GoThrough);
                 break;
             }
         }
@@ -2515,23 +2572,42 @@ void CMenuNew::DrawControlsHelper() {
 
     float spacing = SCREEN_COORD(24.0f);
     float offset = SCREEN_COORD(10.0f);
+    float ro = SCREEN_COORD(6.0f);
     for (int i = nControlsHelperCount; i >= 0; i--) {
         char* str = nControlsHelper[i].text;
 
         if (str) {
             str = TextNew.GetText(str).text;
+
+            CPadNew* pad = CPadNew::GetPad(0);
+            if (bDrawMouse && CheckHover((x - offset - ro) - CFontNew::GetStringWidth(str, true), (x - offset + ro), r.top, r.top + r.bottom)) {
+                CSprite2d::DrawRect(CRect(x - offset - ro - CFontNew::GetStringWidth(str, true), r.top, (x - offset + ro), r.top + r.bottom), CRGBA(150, 150, 150, 150));
+
+                if (pad->GetLeftMouseJustUp()) {
+                    if (nControlsHelper[i].hasFunc)
+                        nControlsHelper[i].func();
+                }
+            }
+
             CFontNew::PrintString(x - offset, r.top + SCREEN_COORD(4.0f), str);
             x -= CFontNew::GetStringWidth(str, true);
             x -= spacing;
         }
 
         nControlsHelper[i].text = NULL;
+        nControlsHelper[i].hasFunc = false;
+        nControlsHelper[i].func = NULL;
     }
     nControlsHelperCount = 0;
 }
 
-void CMenuNew::AppendHelpText(const char* text) {
+void CMenuNew::AppendHelpText(const char* text, funcCall func) {
     nControlsHelper[nControlsHelperCount].text = (char*)text;
+
+    if (func) {
+        nControlsHelper[nControlsHelperCount].hasFunc = true;
+        nControlsHelper[nControlsHelperCount].func = func;
+    }
     nControlsHelperCount++;
 }
 
@@ -3511,10 +3587,10 @@ void CMenuNew::DrawLoadingBar(char* str) {
 
     static float x = 0.0f;
     static float y = 0.0f;
-    static float s = SCREEN_COORD(16.0f);
+    static float s = SCREEN_COORD(20.0f);
     CSprite2d::DrawRect(CRect(x, r.top, r.left, r.top + r.bottom), CRGBA(0, 0, 0, 150));
     x = r.left;
-    y = r.top + SCREEN_COORD(16.0f);
+    y = r.top + SCREEN_COORD(17.0f);
 
     CFontNew::SetBackground(false);
     CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
@@ -3529,7 +3605,7 @@ void CMenuNew::DrawLoadingBar(char* str) {
 
     x -= s;
     DrawSpinningWheel(x, y, s, s);
-    x -= s;
+    x -= s + SCREEN_COORD(8.0f);
 
     if (str) {
         str = TextNew.GetText(str).text;
@@ -3686,7 +3762,7 @@ void CMenuNew::PrintBrief() {
                 brief.m_nNumber[4], brief.m_nNumber[5], gString);
             CMessages::InsertStringInString(gString, brief.m_pString);
 
-            //CFontNew::SetTokenToIgnore('N', 'n');
+            CFontNew::SetTokenToIgnore('N', 'n');
             CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
             CFontNew::PrintString(mask.left + SCREEN_COORD(8.0f), mask.top + SCREEN_COORD(4.0f), gString);
             mask.top += SCREEN_COORD(24.0f);
@@ -3694,7 +3770,7 @@ void CMenuNew::PrintBrief() {
             noBrief = false;
         }
     }
-    //CFontNew::SetTokenToIgnore(NULL, NULL);
+    CFontNew::SetTokenToIgnore(NULL, NULL);
 
     if (noBrief) {
         char* str = TextNew.GetText("FE_BRF").text;
