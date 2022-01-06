@@ -53,6 +53,8 @@ VHud::VHud() {
         Error("This version of GTA: San Andreas is not supported by this plugin.");
 
     auto VHudLoop = []() {
+        CPadNew::Init();
+
         while (!rwQuit) {
             CheckForMP();
 

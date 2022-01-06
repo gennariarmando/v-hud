@@ -97,6 +97,7 @@ enum eControlsActions {
     MENU_APPLY_CHANGES,
     MENU_BACK,
     MENU_SELECT,
+    MENU_UNSETKEY,
     NUM_CONTROL_ACTIONS
 };
 
@@ -114,8 +115,10 @@ public:
 
 public:
     CPadNew();
+    static void Init();
     static void SaveSettings();
     static void LoadSettings();
+    static void Copy(CControls* dst, const CControls* src);
     static int StringToKey(const char* str);
     static const char* KeyToString(int key);
     static void PassControlsToCurrentGame(const CControls* c);
@@ -202,6 +205,7 @@ public:
     bool CheckForMouseInput();
 };
 
+extern CControls DefaultControls[NUM_CONTROL_ACTIONS];
 extern CControls Controls[NUM_CONTROL_ACTIONS];
 
 extern const char* controlKeysStrings[62];

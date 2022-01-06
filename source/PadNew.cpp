@@ -18,6 +18,8 @@ char* ControlsFileName = "VHud\\ufiles\\controls.xml";
  
 #define MOUSE(x) x + MOUSE_CUSTOM_OFFSET
 #define KEY(x) x
+
+CControls DefaultControls[NUM_CONTROL_ACTIONS];
 CControls Controls[NUM_CONTROL_ACTIONS] = {
     { "PED_FIREWEAPON", MOUSE(rsMOUSELEFTBUTTON), GAMEPAD_CIRCLE },
     { "PED_FIREWEAPON_ALT", KEY(rsNULL), GAMEPAD_LEFTSHOULDER1 },
@@ -58,9 +60,9 @@ CControls Controls[NUM_CONTROL_ACTIONS] = {
     { "VEHICLE_LOOKBEHIND", KEY('C'), GAMEPAD_THUMBR },
     { "VEHICLE_MOUSELOOK",  KEY(rsNULL), GAMEPAD_NONE },
     { "VEHICLE_TURRETLEFT",  KEY(rsPADLEFT), GAMEPAD_THUMBRXL },
-    { "VEHICLE_TURRETRIGHT",  KEY(rsPAD5), GAMEPAD_THUMBRXR },
-    { "VEHICLE_TURRETUP", KEY(rsPADPGUP), GAMEPAD_THUMBRYU },
-    { "VEHICLE_TURRETDOWN", KEY(rsPADRIGHT), GAMEPAD_THUMBRYD },
+    { "VEHICLE_TURRETRIGHT",  KEY(rsPADRIGHT), GAMEPAD_THUMBRXR },
+    { "VEHICLE_TURRETUP", KEY(rsPADUP), GAMEPAD_THUMBRYU },
+    { "VEHICLE_TURRETDOWN", KEY(rsPADDOWN), GAMEPAD_THUMBRYD },
     { "PED_CYCLE_TARGET_LEFT", KEY('Q'), GAMEPAD_LEFTSHOULDER2 },
     { "PED_CYCLE_TARGET_RIGHT", KEY('E'), GAMEPAD_RIGHTSHOULDER2 },
     { "PED_CENTER_CAMERA_BEHIND_PLAYER", KEY(rsNULL), GAMEPAD_NONE },
@@ -92,7 +94,8 @@ CControls Controls[NUM_CONTROL_ACTIONS] = {
     { "MENU_DELETE_SAVE", KEY(' '), GAMEPAD_SQUARE },
     { "MENU_APPLY_CHANGES", KEY(' '), GAMEPAD_SQUARE },
     { "MENU_BACK", KEY(rsESC), GAMEPAD_CIRCLE },
-    { "MENU_SELECT", KEY(rsENTER), GAMEPAD_CROSS }
+    { "MENU_SELECT", KEY(rsENTER), GAMEPAD_CROSS },
+    { "MENU_UNSETKEY", KEY(' '), GAMEPAD_SQUARE }
 };
 
 const char* controlKeysStrings[62] = {
@@ -167,6 +170,12 @@ CPadNew::CPadNew() {
     DisablePlayerAim = false;
 }
 
+void CPadNew::Init() {
+    for (int i = 0; i < NUM_CONTROL_ACTIONS; i++) {
+        Copy(&DefaultControls[i], &Controls[i]);
+    }
+}
+
 void CPadNew::SaveSettings() {
     pugi::xml_document doc;
 
@@ -204,11 +213,19 @@ void CPadNew::LoadSettings() {
         for (int i = 0; i < NUM_CONTROL_ACTIONS; i++) {
             char tmp[16];
             sprintf(tmp, "%s", controls.child(Controls[i].action).attribute("value").as_string());
-            Controls[i].key = StringToKey(tmp);
+
+            if (tmp[0])
+                Controls[i].key = StringToKey(tmp);         
         }
     }
 
     PassControlsToCurrentGame(Controls);
+}
+
+void CPadNew::Copy(CControls* dst, const CControls* src) {
+    strcpy(dst->action, src->action);
+    dst->key = src->key;
+    dst->button = src->button;
 }
 
 int CPadNew::StringToKey(const char* str) {

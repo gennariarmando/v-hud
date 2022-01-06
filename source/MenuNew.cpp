@@ -110,6 +110,7 @@ auto HelpText_SetWaypoint = []() { MenuNew.SetWaypoint(SCREEN_WIDTH / 2, SCREEN_
 auto HelpText_ShowHideLegend = []() { MenuNew.bShowLegend = MenuNew.bShowLegend == false; Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f); };
 auto HelpText_DeleteSave = []() { MenuNew.SetMenuMessage(MENUMESSAGE_DELETE_GAME); Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f); };
 auto HelpText_ApplyChanges = []() { if (MenuNew.nMenuAlert == MENUALERT_PENDINGCHANGES) MenuNew.ApplyGraphicsChanges(); Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f); };
+auto HelpText_UnSetKey = []() { MenuNew.SetMenuMessage(MENUMESSAGE_SETKEYTONULL); Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f); };
 
 CMenuNew::CMenuNew() {
     patch::Set<BYTE>(0x53E797, 0xEB);
@@ -496,6 +497,9 @@ void CMenuNew::BuildMenuScreen() {
             for (int i = 0; i < PHONE_ENTER; i++) {
                 AddNewEntry(foot, MENUENTRY_REDEFINEKEY, "BLANK", 0, i == 0 ? 1 : 0);
             }
+        }
+        if (auto foot = AddNewTab(key, MENUENTRY_RESTOREDEFAULTS, "FE_RDEF", NULL, false)) {
+
         }
     }
 }
@@ -1417,8 +1421,11 @@ void CMenuNew::Process() {
                         if (nMenuAlert == MENUALERT_PENDINGCHANGES)
                             ApplyGraphicsChanges();
                     }
-                    if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_LGAM")) {
+                    else if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_LGAM")) {
                         SetMenuMessage(MENUMESSAGE_DELETE_GAME);
+                    }
+                    else if (MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[nCurrentEntryItem].type == MENUENTRY_REDEFINEKEY) {
+                        SetMenuMessage(MENUMESSAGE_SETKEYTONULL);
                     }
                 }
             }
@@ -1509,6 +1516,11 @@ void CMenuNew::Process() {
                 break;
             case MENUSCREEN_LOADING:
                 break;
+            case MENUSCREEN_KEYBIND:
+                if (nCurrentInputType == MENUINPUT_ENTRY && MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[nCurrentEntryItem].type == MENUENTRY_REDEFINEKEY) {
+                    AppendHelpText("H_NOKEY", HelpText_UnSetKey);
+                }
+                [[fallthrough]];
             case MENUSCREEN_MAP:
                 if (!bShowMenu) {
                     AppendHelpText("H_LG", HelpText_ShowHideLegend);
@@ -1729,6 +1741,29 @@ void CMenuNew::ProcessMessagesStuff(int enter, int esc, int space, int input) {
         }
         else if (esc) {
             RestorePreviousSettings();
+            UnSetMenuMessage();
+        }
+        break;
+    case MENUMESSAGE_RESTOREDEFAULTKEYS:
+        if (enter) {
+            RestoreDefaults(&TempSettings, SETTINGS_REDEFINEKEY);
+            ApplyChanges();
+
+            UnSetMenuMessage();
+            SetInputTypeAndClear(nCurrentInputType);
+        }
+        else if (esc) {
+            UnSetMenuMessage();
+        }
+        break;
+    case MENUMESSAGE_SETKEYTONULL:
+        if (enter) {
+            Controls[nCurrentEntryItem].key = rsNULL;
+            ApplyChanges();
+
+            UnSetMenuMessage();
+        }
+        else if (esc) {
             UnSetMenuMessage();
         }
         break;
@@ -2044,6 +2079,8 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
                 RestoreDefaults(&TempSettings, SETTINGS_DISPLAY);
             else if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_GFX"))
                 RestoreDefaults(&TempSettings, SETTINGS_GRAPHICS);
+            else if (!faststrcmp(MenuScreen[nCurrentScreen].screenName, "FE_KBIN"))
+                SetMenuMessage(MENUMESSAGE_RESTOREDEFAULTKEYS);
             ApplyChanges();
         }
         break;
@@ -2497,6 +2534,14 @@ void CMenuNew::Draw() {
             header = "FE_ALERT";
             msg = "FE_PENDSET";
             break;
+        case MENUMESSAGE_RESTOREDEFAULTKEYS:
+            header = "FE_ALERT";
+            msg = "FE_DEFCTRL";
+            break;
+        case MENUMESSAGE_SETKEYTONULL:
+            header = "FE_ALERT";
+            msg = "FE_NOKEY";
+            break;
         }
 
         CSprite2d::DrawRect(CRect(-5.0f, -5.0f, SCREEN_WIDTH + 5.0f, SCREEN_HEIGHT + 5.0f), CRGBA(0, 0, 0, 255));
@@ -2856,8 +2901,10 @@ void CMenuNew::DrawDefault() {
                         rightText = rightTextTmp;
                 }
                 else {
-                    if (Controls[i].key != rsNULL)
-                        rightText = (char*)CPadNew::KeyToString(Controls[i].key);
+                    if (Controls[i].key != rsNULL) {
+                        sprintf(rightTextTmp, "~k~~%s~", Controls[i].action);
+                        rightText = rightTextTmp;
+                    }
                     else {
                         sprintf(rightTextTmp, "???");
                         rightText = rightTextTmp;
@@ -2899,7 +2946,7 @@ void CMenuNew::DrawDefault() {
             }
 
             if (i == nCurrentEntryItem) {
-                if (nCurrentInputType == MENUINPUT_ENTRY) {
+                if (nCurrentInputType == MENUINPUT_ENTRY || nCurrentInputType == MENUINPUT_REDEFINEKEY) {
                     menuEntryColor = { 255, 255, 255, FadeIn(255) };
                     menuEntryTextColor = HudColourNew.GetRGB(HUD_COLOUR_BLACK, FadeIn(255));
                     shiftText = 16.0f;
@@ -3445,7 +3492,7 @@ void CMenuNew::DrawTabKeyBindings() {
     CFontNew::SetDropShadow(0.0f);
     CFontNew::SetOutline(0.0f);
     CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
-    CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(105)));
+    CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(255)));
     CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
 
     char* str = NULL;
@@ -4616,6 +4663,11 @@ void CMenuNew::RestoreDefaults(CMenuSettings* ts, int index) {
         break;
     case SETTINGS_SAVINGANDSTARTUP:
         ts->landingPage = true;
+        break;
+    case SETTINGS_REDEFINEKEY:
+        for (int i = 0; i < NUM_CONTROL_ACTIONS; i++) {
+            CPadNew::Copy(&Controls[i], &DefaultControls[i]);
+        }
         break;
     }
 }
