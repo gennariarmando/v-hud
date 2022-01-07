@@ -480,12 +480,21 @@ void CHudNew::DrawCrosshairs() {
     unsigned int savedShade;
     unsigned int savedAlpha;
     unsigned int savedFilter;
+    unsigned int savedAddr;
+    unsigned int savedSrc;
+    unsigned int savedDest;
     RwRenderStateGet(rwRENDERSTATESHADEMODE, &savedShade);
     RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)rwSHADEMODEFLAT);
     RwRenderStateGet(rwRENDERSTATEVERTEXALPHAENABLE, &savedAlpha);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
     RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, &savedFilter);
     RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERMIPLINEAR);
+    RwRenderStateGet(rwRENDERSTATETEXTUREADDRESS, &savedAddr);
+    RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
+    RwRenderStateGet(rwRENDERSTATESRCBLEND, (void*)&savedSrc);
+    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+    RwRenderStateGet(rwRENDERSTATEDESTBLEND, (void*)&savedDest);
+    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
 
     if (!crosshairName)
         return;
@@ -681,7 +690,9 @@ ForcedFPSView:
     RwRenderStateSet(rwRENDERSTATESHADEMODE, (void*)savedShade);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)savedAlpha);
     RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
-
+    RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)savedAddr);
+    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)savedSrc);
+    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)savedDest);
 }
 
 void CHudNew::DrawPlayerInfo() {
