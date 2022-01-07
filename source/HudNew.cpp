@@ -27,6 +27,7 @@
 #include "CSprite.h"
 #include "CWeaponEffects.h"
 
+#include "3dMarkersNew.h"
 #include "Audio.h"
 #include "CellPhone.h"
 #include "PedNew.h"
@@ -329,6 +330,11 @@ void CHudNew::Draw() {
         CFontNew::SetClipX(SCREEN_WIDTH);
         CFontNew::SetWrapX(SCREEN_WIDTH);
 
+        if (CHud::m_bDraw3dMarkers && !TheCamera.m_bWideScreenOn) {
+            CRadar::Draw3dMarkers();
+            MarkersNew.DrawArrows();
+        }
+
         if (!TheCamera.m_bWideScreenOn && TheCamera.GetScreenFadeStatus() != 2) {
             CWeaponSelector::ProcessWeaponSelector();
             CWeaponSelector::DrawWheel();
@@ -389,9 +395,6 @@ void CHudNew::Draw() {
         DrawOddJobMessage(1);
         DrawSuccessFailedMessage();
         DrawWastedBustedText();
-
-        if (CHud::m_bDraw3dMarkers && !TheCamera.m_bWideScreenOn)
-            CRadar::Draw3dMarkers();
 
         CMenuPanels::Process(-99);
 

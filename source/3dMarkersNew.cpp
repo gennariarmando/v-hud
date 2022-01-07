@@ -4,14 +4,15 @@
 #include "HudColoursNew.h"
 #include "Utility.h"
 #include "FontNew.h"
+#include "PadNew.h"
 
+#include "CDraw.h"
 #include "CSprite.h"
 #include "C3dMarker.h"
 #include "C3dMarkers.h"
 #include "CCamera.h"
 #include "CWorld.h"
 #include "CTimer.h"
-#include "PadNew.h"
 
 using namespace plugin;
 
@@ -29,6 +30,7 @@ C3dMarkersNew::C3dMarkersNew() {
     patch::RedirectCall(0x725BF0, (void(__cdecl*)(unsigned int, unsigned short, CVector&, float, unsigned char red, unsigned char, unsigned char, unsigned char, unsigned short, float, short, float, float, float, bool))placeMarker);
     patch::Nop(0x70CDBC, 5);
     patch::Nop(0x70CD6C, 5);
+    patch::Nop(0x725657, 6);
 
     auto placeEntryExitMarker = [](unsigned int id, CVector& posn, float size, unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha, int unused1, unsigned short pulsePeriod, float pulseFraction, float unused2, bool unused3) {
         MarkersNew.Markers[MarkersNew.MarkersCount].used = true;
@@ -46,6 +48,9 @@ void C3dMarkersNew::Init() {
 
     Sprite = new CSprite2d();
     Sprite->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\markers\\"), "arrow");
+
+    SpriteAlpha = new CSprite2d();
+    SpriteAlpha->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\markers\\"), "arrow", "arrowa");
     bInitialised = true;
 }
 
@@ -65,21 +70,16 @@ void C3dMarkersNew::DrawArrows() {
 
     RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)rwRENDERSTATENARENDERSTATE);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
-    RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDINVDESTCOLOR);
-    RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
     RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)TRUE);
-    RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(Sprite->m_pTexture));
 
     for (int i = 0; i < MarkersCount; i++) {
         const int type = Markers[i].type;
-
         CVector vin = { Markers[i].pos.x, Markers[i].pos.y, Markers[i].pos.z };
-        vin.z = CWorld::FindGroundZFor3DCoord(vin.x, vin.y, vin.z, NULL, NULL);
-
-        if (type == 0)
-            vin.z += 2.0f;
+        
+        if (type == 1)
+            vin.z = CWorld::FindGroundZFor3DCoord(vin.x, vin.y, vin.z, NULL, NULL) + 1.0f;
         else
-            vin.z += 1.0f;
+            vin.z -= 1.0f;
 
         const int pulse = 512;
         float s = sinf(M_PI * ((pulse - 1) & CTimer::m_snTimeInMilliseconds) / pulse);
@@ -90,8 +90,21 @@ void C3dMarkersNew::DrawArrows() {
         CRGBA col = Markers[i].col;
         bool used = Markers[i].used;
         float w, h;
+
         if (used && CSprite::CalcScreenCoors(in, &out, &w, &h, true, true)) {
-            CSprite::RenderOneXLUSprite(out.x, out.y, out.z, SCREEN_COORD(w * 0.15f), SCREEN_COORD(h * 0.3f), col.r, col.g, col.b, col.a, 1.0f / in.z, 255, 0, 0);
+            const float recip = 1.0f / out.z;
+            w = 1.0f * (recip * ((4.0f / 3.0f) / CDraw::ms_fAspectRatio)) * SCREEN_WIDTH;
+            h = 1.0f * recip * SCREEN_HEIGHT;
+
+            RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
+            RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDINVSRCALPHA);
+            RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(SpriteAlpha->m_pTexture));
+            CSprite::RenderOneXLUSprite(out.x, out.y, out.z, w * 0.18f, h * 0.2f, 0, 0, 0, 0, recip, 150, 0, 0);
+
+            RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDONE);
+            RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)rwBLENDONE);
+            RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(Sprite->m_pTexture));
+            CSprite::RenderOneXLUSprite(out.x, out.y, out.z, w * 0.18f, h * 0.2f, col.r, col.g, col.b, col.a, recip, 255, 0, 0);
         }
         Markers[i].Clear();
     }
@@ -112,6 +125,11 @@ void C3dMarkersNew::Shutdown() {
     if (Sprite) {
         Sprite->Delete();
         delete Sprite;
+    }
+
+    if (SpriteAlpha) {
+        SpriteAlpha->Delete();
+        delete SpriteAlpha;
     }
 
     bInitialised = false;

@@ -22,13 +22,12 @@ class C3dMarkersNew {
 public:
     bool bInitialised;
     CSprite2d* Sprite;
+    CSprite2d* SpriteAlpha;
     CMarkerSettings Markers[2048];
     int MarkersCount;
 
 public:
-    C3dMarkersNew();
-    
-
+    C3dMarkersNew();  
     void Init();
     void Shutdown();
     void DrawArrows();

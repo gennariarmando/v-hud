@@ -120,7 +120,6 @@ VHud::VHud() {
     CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void()> beforeFading;
     beforeFading += [] {
         CHudNew::Draw();
-        MarkersNew.DrawArrows();
     };
 
     CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> afterFading;
