@@ -418,6 +418,7 @@ void CMenuNew::BuildMenuScreen() {
             AddNewEntry(display, MENUENTRY_SHOWRADAR, "FE_RAD", 0, 0);
             AddNewEntry(display, MENUENTRY_SHOWHUD, "FE_HUD", 0, 0);
             AddNewEntry(display, MENUENTRY_WEAPONTARGET, "FE_TAR", 0, 0);
+            AddNewEntry(display, MENUENTRY_SIMPLERETICULESIZE, "FE_SRZ", 0, 0);
             AddNewEntry(display, MENUENTRY_GPSROUTE, "FE_GPS", 0, 0);
             AddNewEntry(display, MENUENTRY_BRIGHTNESS, "FE_BRI", 0, 0);
             AddNewEntry(display, MENUENTRY_GAMMA, "FE_GMA", 0, 0);
@@ -2122,6 +2123,7 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
     case MENUENTRY_MOUSESENSITIVITY:
     case MENUENTRY_GAMMA:
     case MENUENTRY_SAFEZONESIZE:
+    case MENUENTRY_SIMPLERETICULESIZE:
         CheckSliderMovement(input);
         ApplyChanges();
         break;
@@ -2209,6 +2211,10 @@ void CMenuNew::CheckSliderMovement(double value) {
         ts.mouseSensitivity = clamp(ts.mouseSensitivity, 1.0 / 3200.0, 1.0 / 200.0);
         TheCamera.m_fMouseAccelHorzntl = (float)ts.mouseSensitivity;
         TheCamera.m_fMouseAccelVertical = (float)ts.mouseSensitivity;
+        break;
+    case MENUENTRY_SIMPLERETICULESIZE:
+        ts.simpleReticuleSize += double(value * 1.0);
+        ts.simpleReticuleSize = clamp(ts.simpleReticuleSize, 0, 1.0);
         break;
     }
 }
@@ -3136,6 +3142,9 @@ void CMenuNew::DrawDefault() {
                     break;
                 case MENUENTRY_MOUSESENSITIVITY:
                     DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.mouseSensitivity * 200.0f);
+                    break;
+                case MENUENTRY_SIMPLERETICULESIZE:
+                    DrawSliderRightAlign(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f), menuEntry.top + SCREEN_COORD(14.0f), TempSettings.simpleReticuleSize / 1.0f);
                     break;
                 default:
                     arrows = false;
@@ -4644,6 +4653,8 @@ void CMenuNew::RestoreDefaults(CMenuSettings* ts, int index) {
         ts->language = 0;
         ts->showHUD = true;
         ts->showRadar = true;
+        ts->weaponTarget = 0;
+        ts->simpleReticuleSize = 0.0;
         ts->savePhotos = true;
         ts->gpsRoute = true;
         ts->safeZoneSize = 32.0;
@@ -4771,6 +4782,7 @@ void CMenuSettings::Load() {
                 showHUD = display.child("ShowHUD").attribute("value").as_bool();
                 showRadar = display.child("ShowRadar").attribute("value").as_bool();
                 weaponTarget = display.child("WeaponTarget").attribute("value").as_int();
+                simpleReticuleSize = display.child("SimpleReticuleSize").attribute("value").as_double();
                 savePhotos = display.child("SavePhotos").attribute("value").as_bool();
                 gpsRoute = display.child("GpsRoute").attribute("value").as_bool();
                 safeZoneSize = display.child("SafeZoneSize").attribute("value").as_double();
@@ -4861,6 +4873,7 @@ void CMenuSettings::Save() {
     display.append_child("ShowHUD").append_attribute("value").set_value(showHUD);
     display.append_child("ShowRadar").append_attribute("value").set_value(showRadar);
     display.append_child("WeaponTarget").append_attribute("value").set_value(weaponTarget);
+    display.append_child("SimpleReticuleSize").append_attribute("value").set_value(simpleReticuleSize);
     display.append_child("SavePhotos").append_attribute("value").set_value(savePhotos);
     display.append_child("GpsRoute").append_attribute("value").set_value(gpsRoute);
     display.append_child("SafeZoneSize").append_attribute("value").set_value(safeZoneSize);

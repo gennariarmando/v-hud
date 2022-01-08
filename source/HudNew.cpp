@@ -636,8 +636,10 @@ ForcedFPSView:
                     col.a = dotAlpha;
                     int crosshairType = CROSSHAIR_DOT;
                     bool withDot = true;
-                     
+                    float simplereticuleSize = (MenuNew.Settings.simpleReticuleSize * 0.8f) + 1.0f;
+
                     if (MenuNew.Settings.weaponTarget) {
+                        simplereticuleSize = 1.0f;
                         radius = clamp(radius, 1.0f, 4.0f);
 
                         if (!faststrcmp(crosshairName, "assault")) {
@@ -666,8 +668,8 @@ ForcedFPSView:
                     }
                     
                     if (withDot) {
-                        w = GET_SETTING(HUD_CROSSHAIR_DOT).w;
-                        h = GET_SETTING(HUD_CROSSHAIR_DOT).h;
+                        w = GET_SETTING(HUD_CROSSHAIR_DOT).w * simplereticuleSize;
+                        h = GET_SETTING(HUD_CROSSHAIR_DOT).h * simplereticuleSize;
                         CrosshairsSprites[CROSSHAIR_DOT]->Draw(CRect(x - SCREEN_COORD(w), y - SCREEN_COORD(h), x + SCREEN_COORD(w), y + SCREEN_COORD(h)), col);
                     }
 

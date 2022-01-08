@@ -118,6 +118,7 @@ enum eMenuEntries {
     MENUENTRY_SHOWHUD,
     MENUENTRY_SHOWRADAR,
     MENUENTRY_WEAPONTARGET,
+    MENUENTRY_SIMPLERETICULESIZE,
     MENUENTRY_GPSROUTE,
     MENUENTRY_SAFEZONESIZE,
     MENUENTRY_MEASUREMENTSYS,
@@ -314,6 +315,7 @@ public:
     bool showHUD;
     bool showRadar;
     int weaponTarget;
+    double simpleReticuleSize;
     bool savePhotos;
     bool gpsRoute;
     double safeZoneSize;
