@@ -261,8 +261,7 @@ const char* CPadNew::KeyToString(int key) {
         if (c == ' ')
             return "SPACEBAR";
 
-        char* buff = new char[2]{};
-        sprintf(buff, "%c", c);
+        char buff[2]{ c };
         return buff;
     }
 }

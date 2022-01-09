@@ -1,4 +1,10 @@
 #pragma once
+#define FONT_WIDTH_MULT 0.064f
+#define FONT_HEIGHT_MULT 0.074f
+#define MAX_FONTS 16
+
+#include "D3DSprite.h"
+#include <d3dx9.h>
 
 class CSprite2d;
 
@@ -7,6 +13,17 @@ public:
 	bool NoPrint;
 	CSprite2d* Symbol;
 	CVector PS2SymbolScale;
+};
+
+class CFontTT {
+public:
+	char fontName[128];
+	char fileName[128];
+	int charSet;
+	int width;
+	int height;
+	int spaceWidth;
+	int quality;
 };
 
 struct CFontDetailsNew {
@@ -37,12 +54,13 @@ public:
 		ALIGN_CENTER,
 		ALIGN_RIGHT,
 	};
+
 	enum {
 		FONT_1,
 		FONT_2,
 		FONT_3,
 		FONT_4,
-		NUM_FONTS
+		NUM_FONTS = MAX_FONTS
 	};
 
 	enum eButtonSprites {
@@ -190,19 +208,26 @@ public:
 	};
 
 	static bool bInitialised;
-    static CSprite2d* Sprite[NUM_FONTS];
 	static CFontDetailsNew Details;
-	static char Size[NUM_FONTS][160];
 	static bool bNewLine;
 	static CtrlSprite PS2Symbol;
 	static CSprite2d* ButtonSprite[NUM_BUTTONS];
+
+	static CD3DSprite* m_pSprite;
+	static ID3DXFont* m_pFont[NUM_FONTS];
+
+	static int TrueTypeFontCount;
+	static CFontTT TTF[NUM_FONTS];
 
 public:
 	CFontNew();
 	static void Init();
 	static void ReadValuesFromFile();
 	static void Clear();
+	static long AddFont(CFontTT t, LPD3DXFONT* font);
 	static void Shutdown();
+	static void Reset();
+	static void Lost();
 	static void PrepareSymbolScale();
 	static float GetCharacterSize(char c);
 	static float GetStringWidth(const char* s, bool spaces = false);
@@ -216,7 +241,8 @@ public:
 	static void DrawButton(float& x, float y, CSprite2d* sprite);
 	static int PrintString(float x, float y, const char* s);
 	static void PrintString(bool print, float x, float y, const char* start, const char* end, float spwidth);
-	static void PrintChar(float& x, float y, char c);
+	static float PrintChar(float& x, float y, char c);
+	static float DrawChar(bool print, bool calc, float x, float y, char c, int style, CRGBA const& col);
 	static void PrintStringFromBottom(float x, float y, const char* s);
 	static float GetHeightScale(float h);
 	static void GetTextRect(CRect* rect, float xstart, float ystart, const char* s);

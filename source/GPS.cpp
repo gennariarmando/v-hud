@@ -54,6 +54,8 @@ void CGPS::DrawDistanceFromWaypoint() {
 
         CSprite2d::DrawRect(CRect(x, y, w, h), GET_SETTING(HUD_RADAR_GPS_RECT).col);
 
+        CFontNew::SetClipX(SCREEN_WIDTH);
+        CFontNew::SetWrapX(SCREEN_WIDTH);
         CFontNew::SetBackground(false);
         CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
         CFontNew::SetFontStyle(CFontNew::FONT_4);

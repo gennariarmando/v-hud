@@ -1311,6 +1311,7 @@ void CHudNew::DrawVehicleName() {
                 CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
                 CFontNew::SetWrapX(SCREEN_COORD(640.0f));
                 CFontNew::SetFontStyle(CFontNew::FONT_2);
+                CFontNew::SetOutline(0.0f);
                 CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
                 CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
 
@@ -1857,6 +1858,7 @@ void CHudNew::DrawZoneName() {
             CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
             CFontNew::SetWrapX(SCREEN_COORD(640.0f));
             CFontNew::SetFontStyle(CFontNew::FONT_2);
+            CFontNew::SetOutline(0.0f);
             CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
             CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
 
@@ -1911,6 +1913,7 @@ void CHudNew::DrawLevelName() {
         CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
         CFontNew::SetWrapX(SCREEN_COORD(640.0f));
         CFontNew::SetFontStyle(CFontNew::FONT_2);
+        CFontNew::SetOutline(0.0f);
         CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
         CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
 
@@ -2038,6 +2041,7 @@ void CHudNew::DrawMissionTitle() {
         CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
         CFontNew::SetWrapX(SCREEN_COORD(640.0f));
         CFontNew::SetFontStyle(CFontNew::FONT_2);
+        CFontNew::SetOutline(0.0f);
         CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
         CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
 

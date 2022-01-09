@@ -127,6 +127,14 @@ VHud::VHud() {
         CHudNew::DrawAfterFade();
     };
 
+    Events::d3dLostEvent += [] {
+        CFontNew::Lost();
+    };
+
+    Events::d3dResetEvent += [] {
+        CFontNew::Reset();
+    };
+
     Events::shutdownRwEvent += [] {
         MenuNew.Shutdown();
         CGPS::Shutdown();

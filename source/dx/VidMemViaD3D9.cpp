@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <d3d9.h>
+#include "plugin.h"
 
 
 //-----------------------------------------------------------------------------
@@ -59,7 +60,10 @@ HRESULT GetVideoMemoryViaD3D9(HMONITOR hMonitor, UINT* pdwAvailableTextureMem) {
             pp.FullScreen_RefreshRateInHz = 0;
             pp.PresentationInterval = D3DPRESENT_INTERVAL_DEFAULT;
 
-            hr = pD3D9->CreateDevice(iAdapter, D3DDEVTYPE_HAL, hWnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &pp, &pd3dDevice);
+            if (pd3dDevice = GetD3DDevice()) {
+                hr = true;
+                //pD3D9->CreateDevice(iAdapter, D3DDEVTYPE_HAL, hWnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &pp, &pd3dDevice);
+            }
 
             if (SUCCEEDED(hr)) {
                 *pdwAvailableTextureMem = pd3dDevice->GetAvailableTextureMem();

@@ -1,4 +1,4 @@
-#include "VHud.h"
+﻿#include "VHud.h"
 #include "FontNew.h"
 #include "TextureMgr.h"
 #include "Utility.h"
@@ -9,17 +9,22 @@
 #include "CSprite2d.h"
 #include "CFont.h"
 
+#include "pugixml.hpp"
+
 using namespace plugin;
+using namespace pugi;
 
 CFontNew FontNew;
 
 bool CFontNew::bInitialised;
-CSprite2d* CFontNew::Sprite[NUM_FONTS];
 CFontDetailsNew CFontNew::Details;
-char CFontNew::Size[NUM_FONTS][160];
 bool CFontNew::bNewLine;
 CtrlSprite CFontNew::PS2Symbol;
 CSprite2d* CFontNew::ButtonSprite[NUM_BUTTONS];
+CD3DSprite* CFontNew::m_pSprite;
+ID3DXFont* CFontNew::m_pFont[NUM_FONTS];
+int CFontNew::TrueTypeFontCount;
+CFontTT CFontNew::TTF[NUM_FONTS];
 
 char* ButtonFileName[] = {
     "none",
@@ -188,13 +193,28 @@ void CFontNew::Init() {
     if (bInitialised)
         return;
 
-    for (int i = 0; i < NUM_FONTS; i++) {
-        char str[16];
-        sprintf(str, "font%d", i + 1);
+    ReadValuesFromFile();
 
-        Sprite[i] = new CSprite2d();
-        Sprite[i]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\fonts"), str);
+    for (int i = 0; i < TrueTypeFontCount; i++) {
+        char path[1024];
+        sprintf(path, "VHud\\fonts\\%s", TTF[i].fileName);
+
+        if (AddFontResourceEx(PLUGIN_PATH(path), FR_PRIVATE, NULL)) {
+            HRESULT h = AddFont(TTF[i], &m_pFont[i]);
+
+            if (h != S_OK) {
+                printf("[CFontNew] Error initializing font");
+            }
+
+            m_pFont[i]->PreloadCharacters('!', 'z');
+            m_pFont[i]->PreloadGlyphs('!', 'z');
+            m_pFont[i]->PreloadText("!\"#$ % &'()*+,-./0123456789:;<=>?@ABDEFGILMNPRSTUZ[\]^_`abcdefghilmnoprstuwyz{|}~¡¢£¤¥¦§©ª«¬®°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿĄąĆćĘęĞğİıŁłŃńŒœŚśŞşŠšŸŹźŻżŽžƒƵƶǦǧˆ˜ΩЁАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюяё–—‘’‚“”„†‡•…‰‹›₡₩€₸₽№℠™←↑→↓∆∑∞", 307);
+        }
     }
+
+
+    m_pSprite = new CD3DSprite();
+    m_pSprite->AddRef();
 
     char* path = "VHud\\buttons\\xbox";
     for (int i = 0; i < NUM_BUTTONS; i++) {
@@ -205,7 +225,6 @@ void CFontNew::Init() {
 
         ButtonSprite[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH(path), ButtonFileName[i]);
     }
-    ReadValuesFromFile();
 
     Clear();
 
@@ -213,51 +232,30 @@ void CFontNew::Init() {
 }
 
 void CFontNew::ReadValuesFromFile() {
-    std::ifstream file(PLUGIN_PATH("VHud\\data\\fonts.dat"));
+    TrueTypeFontCount = 0;
 
-    int fontId = 0;
-    int index = 0;
-    if (file.is_open()) {
-        for (std::string line; getline(file, line);) {
-            if (!line[0] || line[0] == '#')
-                continue;
+    pugi::xml_document doc;
+    xml_parse_result file = doc.load_file(PLUGIN_PATH("VHud\\data\\fonts.xml"));
 
-            char name[64];
-            sscanf(line.c_str(), "%s", &name);
+    if (file) {
+        auto fonts = doc.child("Fonts");
 
-            if (strcmp(name, "[FONT_ID]") == 0) {
-                index = 0;
-                getline(file, line);
-                sscanf(line.c_str(), "%d", &fontId);
+        for (int i = 0; i < NUM_FONTS; i++) {
+            char buff[16];
+            sprintf(buff, "font%d", i + 1);
+
+            if (auto fontId = fonts.child(buff)) {
+                strcpy(TTF[i].fontName, fontId.child("FontName").text().as_string());
+                strcpy(TTF[i].fileName, fontId.child("FileName").text().as_string());
+                TTF[i].charSet = fontId.child("CharSet").text().as_int();
+                TTF[i].width = fontId.child("FontWidth").text().as_int();
+                TTF[i].height = fontId.child("FontHeight").text().as_int();
+                TTF[i].spaceWidth = fontId.child("SpaceWidth").text().as_int();
+                TTF[i].quality = fontId.child("Quality").text().as_int();
             }
-            else if (strcmp(name, "[PROP]") == 0) {
-                for (line; getline(file, line);) {
-                    sscanf(line.c_str(), "%s", &name);
 
-                    if (strcmp(name, "[\\PROP]") == 0) {
-                        index = 0;
-                        break;
-                    }
-
-                    int value[16];
-                    sscanf(line.c_str(), "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-                        &value[0], &value[1], &value[2], &value[3], &value[4], &value[5], &value[6], &value[7],
-                        &value[8], &value[9], &value[10], &value[11], &value[12], &value[13], &value[14], &value[15]);
-
-                    for (int i = 0; i < 16; i++) {
-                        Size[fontId][index] = value[i];
-                        index++;
-                    }
-                    if (index > 160)
-                        exit(0);
-                }
-            }
-            else if (strcmp(name, "[\\PROP]") == 0) {
-                continue;
-            }
+            TrueTypeFontCount = i;
         }
-
-        file.close();
     }
 }
 
@@ -280,16 +278,26 @@ void CFontNew::Clear() {
     SetTokenToIgnore(NULL, NULL);
 }
 
+long CFontNew::AddFont(CFontTT t, LPD3DXFONT* font) {
+    return D3DXCreateFontA(GetD3DDevice(), t.height, t.width, FW_NORMAL, 0, FALSE, t.charSet, OUT_DEFAULT_PRECIS, t.quality, DEFAULT_PITCH | FF_DONTCARE, t.fontName, font);
+}
+
 void CFontNew::Shutdown() {
     if (!bInitialised)
         return;
 
-    for (int i = 0; i < NUM_FONTS; i++) {
-        if (Sprite[i]) {
-            Sprite[i]->Delete();
-            delete Sprite[i];
+    for (int i = 0; i < TrueTypeFontCount; i++) {
+        char path[512];
+        sprintf(path, "VHud\\fonts\\%s", TTF[i].fileName);
+        RemoveFontResourceEx(PLUGIN_PATH(path), FR_PRIVATE, NULL);
+
+        if (m_pFont[i]) {
+            m_pFont[i]->Release();
+            m_pFont[i] = NULL;
         }
     }
+
+    delete m_pSprite;
 
     for (int i = 0; i < NUM_BUTTONS; i++) {
         if (ButtonSprite[i]) {
@@ -299,6 +307,28 @@ void CFontNew::Shutdown() {
     }
 
     bInitialised = false;
+}
+
+void CFontNew::Reset() {
+    for (int i = 0; i < TrueTypeFontCount; i++) {
+        if (m_pFont[i]) {
+            m_pFont[i]->OnResetDevice();
+        }
+    }
+
+    if (m_pSprite)
+        m_pSprite->OnResetDevice();
+}
+
+void CFontNew::Lost() {
+    for (int i = 0; i < TrueTypeFontCount; i++) {
+        if (m_pFont[i]) {
+            m_pFont[i]->OnLostDevice();
+        }
+    }
+
+    if (m_pSprite)
+        m_pSprite->OnLostDevice();
 }
 
 void CFontNew::PrepareSymbolScale() {
@@ -311,19 +341,18 @@ void CFontNew::PrepareSymbolScale() {
 
 float CFontNew::GetCharacterSize(char c) {
     float n = 0.0f;
-    char cs = c + ' ';
 
     if (PS2Symbol.NoPrint) {
         PS2Symbol.NoPrint = false;
         return Details.scale.y * (PS2Symbol.PS2SymbolScale.x / 3);
     }
 
-    switch (cs) {
+    switch (c) {
     case '~':
         return n;
     }
 
-    return Size[Details.style][c] * Details.scale.x;
+    return DrawChar(false, true, 0.0f, 0.0f, c, Details.style, NULL);
 }
 
 float CFontNew::GetStringWidth(const char* s, bool spaces) {
@@ -334,7 +363,7 @@ float CFontNew::GetStringWidth(const char* s, bool spaces) {
         if (*s == '~')
             s = ParseToken(false, s);
 
-        w += GetCharacterSize(*s - ' ');
+        w += GetCharacterSize(*s);
     }
     return w;
 }
@@ -392,7 +421,7 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, const char*
 
                 float w = Details.wrapX;
 
-                if (x + GetStringWidth(s) > w && !first) {
+                if ((x + GetStringWidth(s) > w || bNewLine) && !first) {
                     float cx = xstart - x / 2;
                     PrintString(print, cx, y, start, s, 0.0f);
 
@@ -415,7 +444,7 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, const char*
                     space++;
 
                 first = false;
-                x += GetStringWidth(s) + GetCharacterSize(*t - ' ');
+                x += GetStringWidth(s) + GetCharacterSize(*t);
 
                 length = x;
                 s = t + 1;
@@ -439,12 +468,9 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, const char*
     }
 
     for (s; *s != '\0'; s++) {
-        char c;
-        c = *s - ' ';
-
         float f = xstart + Details.wrapX;
 
-        if ((Details.clipXCount == -1 && (x + GetCharacterSize(c) > xstart + Details.clipX)))
+        if ((Details.clipXCount == -1 && (x + GetCharacterSize(*s) > xstart + Details.clipX)))
             break;
         else if (Details.clipXCount != -1 && letterCount >= Details.clipXCount)
             break;
@@ -460,10 +486,10 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, const char*
             s = ParseToken(print, s);
 
         if (print)
-            PrintChar(x, y, c);
+            PrintChar(x, y, *s);
 
         letterCount++;
-        x += GetCharacterSize(c);
+        x += GetCharacterSize(*s);
         PS2Symbol.Symbol = NULL;
         PS2Symbol.NoPrint = false;
     }
@@ -480,7 +506,7 @@ void CFontNew::PrintString(bool print, float x, float y, const char* start, cons
         if (*s == '~')
             s = ParseToken(print, s);
 
-        c = *s - ' ';
+        c = *s;
 
         if (print)
             PrintChar(x, y, c);
@@ -838,19 +864,7 @@ void CFontNew::DrawButton(float& x, float y, CSprite2d* sprite) {
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)savedAlpha);
 }
 
-void CFontNew::PrintChar(float& x, float y, char c) {
-    float _x = (c % 16);
-    float _y = (c / 16);
-
-    float b = 0.002f;
-    float u1 = _x / 16.0f + (b);
-    float v1 = _y / 12.8f + (b);
-    float u2 = (_x + 1.0f) / 16.0f + (-b);
-    float v2 = _y / 12.8f + (b);
-    float u3 = _x / 16.0f + (b);
-    float v3 = (_y + 1.0f) / 12.8f + (-b);
-    float u4 = (_x + 1.0f) / 16.0f + (-b);
-    float v4 = (_y + 1.0f) / 12.8f + (-b);
+float CFontNew::PrintChar(float& x, float y, char c) {
     RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERLINEARMIPLINEAR);
     RwRenderStateSet(rwRENDERSTATEVERTEXALPHAENABLE, (void*)TRUE);
     RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSWRAP);
@@ -859,9 +873,7 @@ void CFontNew::PrintChar(float& x, float y, char c) {
 
     // Text shadow
     if (Details.shadow > 0.0f) {
-        Sprite[Details.style]->Draw(CRect((x + Details.shadow), (y + Details.shadow), (x + Details.shadow) + (32.0f * Details.scale.x * 1.0f), (y + Details.shadow) + (40.0f * Details.scale.y * 0.5f)), CRGBA(Details.dropColor),
-            u1, v1, u2, v2,
-            u3, v3, u4, v4);
+        DrawChar(true, false, x + (Details.shadow), y + (Details.shadow), c, Details.style, CRGBA(Details.dropColor));
     }
     else if (Details.outline > 0.0f) { // Text outline
         float outline_x[] = {
@@ -874,7 +886,7 @@ void CFontNew::PrintChar(float& x, float y, char c) {
             Details.outline,
             -Details.outline,
         };
-
+    
         float outline_y[] = {
             0.0f,
             0.0f,
@@ -885,17 +897,51 @@ void CFontNew::PrintChar(float& x, float y, char c) {
             -Details.outline,
             -Details.outline,
         };
-
+    
         for (int i = 0; i < 8; i++) {
-            Sprite[Details.style]->Draw(CRect((x + (outline_x[i])), (y + (outline_y[i])), (x + (outline_x[i])) + (32.0f * Details.scale.x * 1.0f), (y + (outline_y[i])) + (40.0f * Details.scale.y * 0.5f)), CRGBA(Details.dropColor),
-                u1, v1, u2, v2,
-                u3, v3, u4, v4);
+            DrawChar(true, false, x + (outline_x[i]), y + (outline_y[i]), c, Details.style, CRGBA(Details.dropColor));
         }
     }
 
-    Sprite[Details.style]->Draw(CRect(x, y, x + (32.0f * Details.scale.x * 1.0f), y + (40.0f * Details.scale.y * 0.5f)), CRGBA(Details.color),
-        u1, v1, u2, v2,
-        u3, v3, u4, v4);
+    return DrawChar(true, true, x, y, c, Details.style, CRGBA(Details.color));
+}
+
+float CFontNew::DrawChar(bool print, bool calc, float x, float y, char c, int style, CRGBA const& col) {
+    float characterSize = 0.0f;
+    char s[2]{ c };
+
+    if (c != '~') {
+        //x += SCREEN_WIDTH * 0.002f;
+        y += SCREEN_HEIGHT * 0.002f;
+
+        float w = Details.scale.x * FONT_WIDTH_MULT;
+        float h = Details.scale.y * FONT_HEIGHT_MULT;
+        RECT d3drect = { x / w, y / h, (x + SCREEN_WIDTH) / w, (y + SCREEN_HEIGHT) / h };
+        D3DXMATRIX S, P;
+
+        if (m_pFont[Details.style && m_pSprite]) {
+            if (print) {
+                D3DXMatrixScaling(&S, w, h, 1.0f);
+                m_pSprite->GetTransform(&P);
+                m_pSprite->SetTransform(&S);
+                m_pSprite->Begin(D3DXSPRITE_ALPHABLEND | D3DXSPRITE_SORT_TEXTURE | D3DXSPRITE_DO_NOT_ADDREF_TEXTURE);
+                m_pFont[style]->DrawTextA(m_pSprite, s, -1, &d3drect, DT_LEFT | DT_TOP, D3DCOLOR_RGBA(col.r, col.g, col.b, col.a));
+                m_pSprite->SetTransform(&P);
+                m_pSprite->End();
+            }
+
+            if (calc) {
+                d3drect = { 0, 0, 0, 0 };
+                m_pFont[style]->DrawTextA(m_pSprite, s, -1, &d3drect, DT_LEFT | DT_TOP | DT_NOCLIP | DT_SINGLELINE | DT_CALCRECT, NULL);
+                characterSize = ((d3drect.right - d3drect.left) + (Details.outline * 8)) * w;
+
+                if (c == ' ')
+                    characterSize += (TTF[Details.style].spaceWidth) * w;
+            }
+        }
+    }
+
+    return characterSize;
 }
 
 void CFontNew::PrintStringFromBottom(float x, float y, const char* s) {
@@ -912,9 +958,9 @@ void PrintCharMap() {
         "PQRSTUVWXYZ[\]^_a",
         "`abcdefghijklmnoa",
         "pqrstuvwxyza",
-        "�����������������a",
-        "����������������a",
-        "����������������a"
+        "ÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓa",
+        "ÔÖÙÚÛÜßàáâãäçèéêa",
+        "ëìíîïòóôõöùúûüññ¿a"
     };
 
     CFontNew::SetBackground(false);
@@ -937,7 +983,7 @@ void PrintCharMap() {
 }
 
 float CFontNew::GetHeightScale(float h) {
-    return 32.0f * h * 0.5f + 2.0f * h;
+    return TTF[Details.style].height * (h * FONT_HEIGHT_MULT);
 }
 
 void CFontNew::GetTextRect(CRect* rect, float xstart, float ystart, const char* s) {

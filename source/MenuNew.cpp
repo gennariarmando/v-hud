@@ -286,9 +286,9 @@ void CMenuNew::Clear() {
     bRequestScreenUpdate = false;
     fScreenAlpha = 0;
 
-    nLoadingTime = 0;
+    nLoadingTime = CTimer::m_snTimeInMillisecondsPauseMode;
 
-    nOpenCloseWaitTime = 0;
+    nOpenCloseWaitTime = CTimer::m_snTimeInMillisecondsPauseMode;
 
     nUsedVidMemory = 0;
 
@@ -878,8 +878,8 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
 
 void CMenuNew::OpenMenuScreen(int screen) {
     CTimer::StartUserPause();
-    nLoadingTime = 0;
-    nOpenCloseWaitTime = 0;
+    nLoadingTime = CTimer::m_snTimeInMillisecondsPauseMode;
+    nOpenCloseWaitTime = CTimer::m_snTimeInMillisecondsPauseMode;
     bMenuActive = true;
     bRequestScreenUpdate = true;
 
@@ -1300,6 +1300,7 @@ void CMenuNew::Process() {
                         CVector2D prevMapBase = vTempMapBase;
                         static int timeLeftMousePressed = 0;
 
+                        if (bDrawMouse && CheckHover(vMapBase.x - GetMenuMapWholeSize(), vMapBase.x + GetMenuMapWholeSize(), vMapBase.y - GetMenuMapWholeSize(), vMapBase.y + GetMenuMapWholeSize()))
                         if (LeftMouseDown) {
                             if (vMousePos.x != vOldMousePos.x || vMousePos.y != vOldMousePos.y)
                                 timeLeftMousePressed = CTimer::m_snTimeInMillisecondsPauseMode + 200;
@@ -1575,7 +1576,7 @@ void CMenuNew::Process() {
             else
                 fScreenAlpha = 255.0f;
 
-            nLoadingTime = 0;
+            nLoadingTime = CTimer::m_snTimeInMillisecondsPauseMode;
 
             if (bRequestMenuClose) {
                 OpenCloseMenu(false, true);
@@ -2682,7 +2683,7 @@ bool CMenuNew::IsLoading() {
     if (nLoadingTime > GetTimeInMillisecondsRight())
         return true;
 
-    nLoadingTime = 0;
+    nLoadingTime = CTimer::m_snTimeInMillisecondsPauseMode;
     return false;
 }
 
@@ -2812,22 +2813,23 @@ void CMenuNew::DrawDefault() {
         CFontNew::SetBackground(false);
         CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
         CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
-        CFontNew::SetWrapX(SCREEN_COORD(720.0f));
+        CFontNew::SetWrapX(SCREEN_COORD(800.0f));
         CFontNew::SetFontStyle(CFontNew::FONT_1);
         CFontNew::SetDropShadow(0.0f);
         CFontNew::SetOutline(0.0f);
         CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
         CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(255)));
-        CFontNew::SetScale(SCREEN_MULTIPLIER(2.6f), SCREEN_MULTIPLIER(4.8f));
+        CFontNew::SetScale(SCREEN_MULTIPLIER(2.4f), SCREEN_MULTIPLIER(4.6f));
 
         char* h = TextNew.GetText(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName).text;
         char* a = TextNew.GetText(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].actionName).text;
+        int n = 0;
         if (h)
-            CFontNew::PrintString(rect.left + SCREEN_COORD(32.0f), rect.top + SCREEN_COORD(19.0f), h);
+            n = CFontNew::PrintString(rect.left + SCREEN_COORD(32.0f), rect.top + SCREEN_COORD(19.0f), h) - 1;
 
         if (a) {
             CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
-            CFontNew::PrintString(rect.left + SCREEN_COORD(32.0f), rect.top + SCREEN_COORD(148.0f), a);
+            CFontNew::PrintString(rect.left + SCREEN_COORD(32.0f), rect.top + SCREEN_COORD(148.0f) + (CFontNew::GetHeightScale(SCREEN_MULTIPLIER(4.8f)) * n), a);
         }
     }
     else {
@@ -3610,7 +3612,7 @@ void CMenuNew::DrawInfoBox() {
     CFontNew::SetOutline(0.0f);
     CFontNew::SetDropColor(CRGBA(0, 0, 0, FadeIn(0)));
     CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(255)));
-    CFontNew::SetScale(SCREEN_MULTIPLIER(2.6f), SCREEN_MULTIPLIER(4.8f));
+    CFontNew::SetScale(SCREEN_MULTIPLIER(2.4f), SCREEN_MULTIPLIER(4.6f));
 
     char* str = TextNew.GetText("FE_GTACUT").text;
     CFontNew::PrintString(rect.left + SCREEN_COORD(32.0f), rect.top + SCREEN_COORD(19.0f), str);
@@ -3806,7 +3808,7 @@ void CMenuNew::PrintBrief() {
     CFontNew::SetOutline(0.0f);
     CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
     CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(255)));
-    CFontNew::SetScale(SCREEN_MULTIPLIER(2.6f), SCREEN_MULTIPLIER(4.8f));
+    CFontNew::SetScale(SCREEN_MULTIPLIER(2.4f), SCREEN_MULTIPLIER(4.6f));
 
     bool noBrief = true;
     for (int i = 4; i >= 0; i--) {
@@ -3935,7 +3937,7 @@ void CMenuNew::DrawScreenUnavailableOnline() {
     CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
     CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, FadeIn(255)));
 
-    CFontNew::SetScale(SCREEN_MULTIPLIER(2.6f), SCREEN_MULTIPLIER(4.8f));
+    CFontNew::SetScale(SCREEN_MULTIPLIER(2.4f), SCREEN_MULTIPLIER(4.6f));
     char* str = TextNew.GetText("FE_NOPAGE").text;
     CFontNew::PrintString(mask.left + SCREEN_COORD(32.0f), mask.top + SCREEN_COORD(19.0f), str);
 
@@ -4402,7 +4404,7 @@ void CMenuNew::DrawGallery() {
         CFontNew::SetOutline(0.0f);
         CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
         CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
-        CFontNew::SetScale(SCREEN_MULTIPLIER(2.6f), SCREEN_MULTIPLIER(4.8f));
+        CFontNew::SetScale(SCREEN_MULTIPLIER(2.4f), SCREEN_MULTIPLIER(4.6f));
 
         char* str = TextNew.GetText("FE_NOG").text;
         CFontNew::PrintString(mask.left + SCREEN_COORD(32.0f), mask.top + SCREEN_COORD(19.0f), str);

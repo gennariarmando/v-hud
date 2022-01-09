@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Fonts>
+	<font1>
+		<FontName>Chalet-LondonNineteenSixty</FontName>
+		<FileName>Chalet-LondonNineteenSixty.ttf</FileName>
+		<CharSet>1</CharSet>
+		<FontWidth>256</FontWidth>
+		<FontHeight>256</FontHeight>
+		<SpaceWidth>214</SpaceWidth>
+		<Quality>0</Quality>
+	</font1>
+	<font2>
+		<FontName>SignPainter-HouseScript</FontName>
+		<FileName>SignPainter-HouseScript.ttf</FileName>
+		<CharSet>1</CharSet>
+		<FontWidth>256</FontWidth>
+		<FontHeight>256</FontHeight>
+		<SpaceWidth>128</SpaceWidth>
+		<Quality>0</Quality>
+	</font2>	
+	<font3>
+		<FontName>PricedownGTA</FontName>
+		<FileName>PricedownGTA.ttf</FileName>
+		<CharSet>1</CharSet>
+		<FontWidth>284</FontWidth>
+		<FontHeight>256</FontHeight>
+		<SpaceWidth>198</SpaceWidth>
+		<Quality>0</Quality>
+	</font3>
+	<font4>
+		<FontName>ChaletComprime CologneSixtyScale</FontName>
+		<FileName>ChaletComprime-CologneSixtyScale.ttf</FileName>
+		<CharSet>1</CharSet>
+		<FontWidth>300</FontWidth>
+		<FontHeight>284</FontHeight>
+		<SpaceWidth>96</SpaceWidth>
+		<Quality>0</Quality>
+	</font4>
+</Fonts>

@@ -905,7 +905,7 @@ void CWeaponSelector::DrawWheel() {
                     CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
                     CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
                     CFontNew::SetDropShadow(0.0f);
-                    CFontNew::SetOutline(SCREEN_COORD(1.5f));
+                    CFontNew::SetOutline(SCREEN_COORD(2.0f));
                     CFontNew::SetScale(SCREEN_MULTIPLIER(0.54f), SCREEN_MULTIPLIER(1.32f));
 
                     if (str_ammo && str_clip) {
@@ -944,7 +944,7 @@ void CWeaponSelector::DrawWheel() {
             CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
             CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
             CFontNew::SetDropShadow(0.0f);
-            CFontNew::SetOutline(SCREEN_COORD(1.5f));
+            CFontNew::SetOutline(SCREEN_COORD(2.0f));
 
             if (selected_wep && nSelectedWeapon[nSelectedSlot] != -1) {
                 CFontNew::SetScale(SCREEN_MULTIPLIER(0.64f), SCREEN_MULTIPLIER(1.46f));
