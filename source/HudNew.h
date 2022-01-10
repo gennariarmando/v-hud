@@ -119,6 +119,7 @@ public:
 
     static int nTargettedEntityDeathTime;
 
+    static bool m_bShowMissionText;
     static char m_LastMissionName[128];
 
     static bool m_bShowWastedBusted;

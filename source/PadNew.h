@@ -114,8 +114,12 @@ public:
     bool DisablePlayerAim;
 
 public:
+    static bool bInitialised;
+
+public:
     CPadNew();
     static void Init();
+    static void Shutdown();
     static void SaveSettings();
     static void LoadSettings();
     static void Copy(CControls* dst, const CControls* src);

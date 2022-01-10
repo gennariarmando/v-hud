@@ -18,8 +18,8 @@ HUD_RADAR_FOREGROUND           89.0  264.0     373.0  52.8     HUD_COLOUR_WHITE 
 HUD_RADAR_BACKGROUND           96.0   72.0     366.0  54.5     HUD_COLOUR_BLACK           150
 HUD_RADAR_BACKGROUND_P2        96.0  261.0     366.0 243.5     HUD_COLOUR_BLACK           150
 
-HUD_RADAR_BLIPS_SIZE            0.0    0.0      11.0  11.0     HUD_COLOUR_WHITE           255
-HUD_RADAR_BLIPS_LEVEL_SIZE      0.0    0.0       7.0   7.0     HUD_COLOUR_WHITE           255
+HUD_RADAR_BLIPS_SIZE            0.0    0.0      12.0  12.0     HUD_COLOUR_WHITE           255
+HUD_RADAR_BLIPS_LEVEL_SIZE      0.0    0.0       8.0   8.0     HUD_COLOUR_WHITE           255
 HUD_RADAR_BLIPS_COP_SIZE        0.0    0.0       8.0   8.0     HUD_COLOUR_WHITE           255
 HUD_RADAR_BLIPS_COP_HELI_SIZE   0.0    0.0      13.5  13.5     HUD_COLOUR_WHITE           255
 HUD_RADAR_BLIPS_BORDER_SIZE     0.0    0.0      24.0  12.0     HUD_COLOUR_WHITE           255
@@ -39,7 +39,7 @@ HUD_RADAR_GPS_RECT             96.0   94.0     366.0  72.0     HUD_COLOUR_BLACK 
 HUD_RADAR_GPS_DIST_TEXT       129.0  103.0       0.61  1.3     HUD_COLOUR_WHITE           200
 HUD_RADAR_GPS_DIST_ARROW      116.0   88.0      15.0  15.0     HUD_COLOUR_WHITE           200
 
-HUD_SUBTITLES                   0.0   91.0       0.94  1.90    HUD_COLOUR_WHITE           255
+HUD_SUBTITLES                   0.0   91.0       0.92  1.88    HUD_COLOUR_WHITE           255
 HUD_WANTED_STARS               96.0   54.0      32.0  33.0     HUD_COLOUR_WHITE           255
 HUD_CASH                       96.0   54.0       1.02  2.1     HUD_COLOUR_WHITE           255
 HUD_AMMO                       96.0   54.0       0.86  1.80    HUD_COLOUR_WHITE           255
@@ -49,9 +49,9 @@ HUD_WEAPON_WHEEL                0.0  -92.0       0.0   0.0     HUD_COLOUR_WHITE 
 HUD_WEAPON_STATS_BOX          284.0   48.0     188.0 184.0     HUD_COLOUR_BLACK           150
 HUD_WEAPON_STATS_BAR           12.0   36.0     164.0  10.0     HUD_COLOUR_WHITE           255
 
-HUD_VEHICLE_NAME               106.0  163.0      1.02  2.1     HUD_COLOUR_WHITE           255
-HUD_ZONE_NAME                  106.0  125.0      1.02  2.1     HUD_COLOUR_WHITE           255 
-HUD_LEVEL_NAME                 106.0   89.0      1.02  2.1     HUD_COLOUR_WHITE           255 
+HUD_VEHICLE_NAME               106.0  163.0      1.1   2.3     HUD_COLOUR_WHITE           255
+HUD_ZONE_NAME                  106.0  125.0      1.1   2.3     HUD_COLOUR_WHITE           255 
+HUD_LEVEL_NAME                 106.0   89.0      1.1   2.3     HUD_COLOUR_WHITE           255 
 
 HUD_HELP_BOX_TEXT               96.0  54.0       0.70  1.38    HUD_COLOUR_WHITE           255
 HUD_HELP_BOX_BORDER             12.0   6.0      12.0  12.0     HUD_COLOUR_BLACK           180
@@ -70,7 +70,7 @@ HUD_BUSTED_TEXT                  0.0  -78.0      3.4   6.6     HUD_COLOUR_BLUE  
 
 HUD_BIG_MESSAGE                  0.0  -78.0      2.8   6.0     HUD_COLOUR_WHITE           150
 
-HUD_MISSION_TITLE              106.0   88.0      1.02  2.1     HUD_COLOUR_WHITE           255 
+HUD_MISSION_TITLE              106.0   88.0      1.1   2.3     HUD_COLOUR_WHITE           255 
 
 HUD_MISSION_TIMERS              96.0   54.0    378.0  39.0     HUD_COLOUR_WHITE           180
 

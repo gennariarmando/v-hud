@@ -72,6 +72,7 @@ int CHudNew::m_nPreviousMoney;
 int CHudNew::m_nDiffMoney;
 int CHudNew::nTargettedEntityDeathTime;
 
+bool CHudNew::m_bShowMissionText;
 char CHudNew::m_LastMissionName[128];
 bool CHudNew::m_bShowWastedBusted;
 bool CHudNew::m_bShowSuccessFailed;
@@ -212,6 +213,8 @@ void CHudNew::ReInit() {
     m_bShowWastedBusted = false;
     m_bShowSuccessFailed = false;
 
+    m_bShowMissionText = false;
+
     for (int i = 0; i < 4; i++) {
         previousModelIndex[i] = MODEL_NULL;
     }
@@ -351,7 +354,7 @@ void CHudNew::Draw() {
                 }
 
                 if (!CHud::bDrawingVitalStats && !CellPhone.bActive) {
-                    if (!CUserDisplay::OnscnTimer.m_bDisplay) {
+                    if (!CUserDisplay::OnscnTimer.m_bDisplay && !m_bShowMissionText) {
                         if (!CHud::bScriptDontDisplayVehicleName)
                             DrawVehicleName();
 
@@ -1765,7 +1768,7 @@ void CHudNew::DrawSuccessFailedMessage() {
         CFontNew::SetFontStyle(CFontNew::FONT_1);
         CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
         CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
-        CFontNew::SetScale(SCREEN_MULTIPLIER(0.96f), SCREEN_MULTIPLIER(1.8f));
+        CFontNew::SetScale(SCREEN_MULTIPLIER(0.9f), SCREEN_MULTIPLIER(1.6f));
         CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(HUD_BIG_MESSAGE).x), SCREEN_COORD_CENTER_DOWN(offset + GET_SETTING(HUD_BIG_MESSAGE).y + 114.0f), bottomText);
     }
 
@@ -2007,28 +2010,27 @@ void CHudNew::DrawWastedBustedText() {
 }
 
 void CHudNew::DrawMissionTitle() {
-    static bool showText = false;
     static float alpha = 0.0f;
     static int time = -1;
 
     if (CHud::m_BigMessage[1][0]) {
-        if (!showText) {
+        if (!m_bShowMissionText) {
             strcpy(m_LastMissionName, CHud::m_BigMessage[1]);
 
             if (time == -1)
                 time = CTimer::m_snTimeInMilliseconds + 4000;
 
             CHud::m_BigMessage[1][0] = NULL;
-            showText = true;
+            m_bShowMissionText = true;
         }
     }
 
-    if (showText) {
+    if (m_bShowMissionText) {
         if (time < CTimer::m_snTimeInMilliseconds) {
             alpha -= CTimer::ms_fTimeStep * 0.02f * 255.0f;
 
             if (alpha <= 0.0f)
-                showText = false;
+                m_bShowMissionText = false;
         }
         else {
             alpha += CTimer::ms_fTimeStep * 0.02f * 255.0f;

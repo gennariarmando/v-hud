@@ -214,7 +214,6 @@ void CFontNew::Init() {
 
 
     m_pSprite = new CD3DSprite();
-    m_pSprite->AddRef();
 
     char* path = "VHud\\buttons\\xbox";
     for (int i = 0; i < NUM_BUTTONS; i++) {
@@ -384,6 +383,7 @@ void CFontNew::SetTokenToIgnore(char t1, char t2) {
 }
 
 int CFontNew::PrintString(float x, float y, const char* s) {
+    int n = 0;
     if (*s != '*') {
         if (Details.background) {
             CRect rect;
@@ -395,8 +395,10 @@ int CFontNew::PrintString(float x, float y, const char* s) {
             else
                 CSprite2d::DrawRect(rect, Details.backgroundColor);
         }
-        return GetNumberLines(true, x, y, s);
+        n = GetNumberLines(true, x, y, s);
     }
+
+    return n;
 }
 
 int CFontNew::GetNumberLines(bool print, float xstart, float ystart, const char* s) {
@@ -908,7 +910,8 @@ float CFontNew::PrintChar(float& x, float y, char c) {
 
 float CFontNew::DrawChar(bool print, bool calc, float x, float y, char c, int style, CRGBA const& col) {
     float characterSize = 0.0f;
-    char s[2]{ c };
+    static char s[2];
+    s[0] = c;
 
     if (c != '~') {
         //x += SCREEN_WIDTH * 0.002f;
@@ -924,7 +927,7 @@ float CFontNew::DrawChar(bool print, bool calc, float x, float y, char c, int st
                 D3DXMatrixScaling(&S, w, h, 1.0f);
                 m_pSprite->GetTransform(&P);
                 m_pSprite->SetTransform(&S);
-                m_pSprite->Begin(D3DXSPRITE_ALPHABLEND | D3DXSPRITE_SORT_TEXTURE | D3DXSPRITE_DO_NOT_ADDREF_TEXTURE);
+                m_pSprite->Begin(D3DXSPRITE_ALPHABLEND | D3DXSPRITE_SORT_TEXTURE);
                 m_pFont[style]->DrawTextA(m_pSprite, s, -1, &d3drect, DT_LEFT | DT_TOP, D3DCOLOR_RGBA(col.r, col.g, col.b, col.a));
                 m_pSprite->SetTransform(&P);
                 m_pSprite->End();

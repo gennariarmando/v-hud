@@ -10,6 +10,8 @@
 using namespace plugin;
 using namespace pugi;
 
+bool CPadNew::bInitialised;
+
 IGInputPad* GInputPad[2] = { NULL, NULL };
 GINPUT_PAD_SETTINGS GInputPadSettings[2];
 bool GINPUT = false;
@@ -171,9 +173,22 @@ CPadNew::CPadNew() {
 }
 
 void CPadNew::Init() {
+    if (bInitialised)
+        return;
+
     for (int i = 0; i < NUM_CONTROL_ACTIONS; i++) {
         Copy(&DefaultControls[i], &Controls[i]);
     }
+
+    bInitialised = true;
+}
+
+void CPadNew::Shutdown() {
+    if (!bInitialised)
+        return;
+
+
+    bInitialised = false;
 }
 
 void CPadNew::SaveSettings() {
@@ -257,12 +272,13 @@ const char* CPadNew::KeyToString(int key) {
     }
     else {
         char c = (char)key;
+        static char s[2];
+        s[0] = c;
 
         if (c == ' ')
             return "SPACEBAR";
 
-        char buff[2]{ c };
-        return buff;
+        return s;
     }
 }
 

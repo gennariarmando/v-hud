@@ -148,6 +148,7 @@ VHud::VHud() {
         CMenuPanels::Shutdown();
         Audio.Shutdown();
         MarkersNew.Shutdown();
+        CPadNew::Shutdown();
 
         rwQuit = true;
     };

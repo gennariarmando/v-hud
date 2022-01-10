@@ -61,9 +61,9 @@ void CGPS::DrawDistanceFromWaypoint() {
         CFontNew::SetFontStyle(CFontNew::FONT_4);
         CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
         CFontNew::SetColor(GET_SETTING(HUD_RADAR_GPS_DIST_TEXT).col);
-        CFontNew::SetOutline(false);
+        CFontNew::SetOutline(0.0f);
         CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
-        CFontNew::SetDropShadow(SCREEN_COORD(0.6f));
+        CFontNew::SetDropShadow(SCREEN_COORD(1.0f));
         w = GET_SETTING(HUD_RADAR_GPS_DIST_TEXT).w;
         h = GET_SETTING(HUD_RADAR_GPS_DIST_TEXT).h;
         CFontNew::SetScale(SCREEN_MULTIPLIER(w), SCREEN_MULTIPLIER(h));
