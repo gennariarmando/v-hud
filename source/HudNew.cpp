@@ -219,6 +219,10 @@ void CHudNew::ReInit() {
         previousModelIndex[i] = MODEL_NULL;
     }
 
+    bDrawingVitalStats = false;
+
+    nTimersCount = 0;
+
     CRadioHud::Clear();
     CRadarNew::Clear();
 }
@@ -557,7 +561,16 @@ void CHudNew::DrawCrosshairs() {
         {
             if (CTheScripts::bDrawCrossHair || !TheCamera.m_bTransitionState) {
                 if (!faststrcmp(crosshairName, "cam")) {
+                    const float line = 1.5f;
+                    // Vertical left line
+                    CSprite2d::DrawRect(CRect(SCREEN_COORD_CENTER_X - SCREEN_COORD(320.0f), 0.0f, SCREEN_COORD_CENTER_X - SCREEN_COORD(320.0f) + SCREEN_COORD(line), SCREEN_WIDTH), CRGBA(255, 255, 255, 255));
+                    // Vertical right line
+                    CSprite2d::DrawRect(CRect(SCREEN_COORD_CENTER_X + SCREEN_COORD(320.0f), 0.0f, SCREEN_COORD_CENTER_X + SCREEN_COORD(320.0f) + SCREEN_COORD(line), SCREEN_WIDTH), CRGBA(255, 255, 255, 255));
 
+                    // Horizontal top line
+                    CSprite2d::DrawRect(CRect(0.0f, SCREEN_COORD_CENTER_Y - SCREEN_COORD(180.0f), SCREEN_WIDTH, SCREEN_COORD_CENTER_Y - SCREEN_COORD(180.0f) + SCREEN_COORD(line)), CRGBA(255, 255, 255, 255));
+                    // Horizontal bottom line
+                    CSprite2d::DrawRect(CRect(0.0f, SCREEN_COORD_CENTER_Y + SCREEN_COORD(180.0f), SCREEN_WIDTH, SCREEN_COORD_CENTER_Y + SCREEN_COORD(180.0f) + SCREEN_COORD(line)), CRGBA(255, 255, 255, 255));
                 }
                 else if (!faststrcmp(crosshairName, "sniper")) {
                     COverlayLayer::SetEffect(EFFECT_LENS_DISTORTION);
@@ -1764,7 +1777,7 @@ void CHudNew::DrawSuccessFailedMessage() {
         CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(HUD_BIG_MESSAGE).x), SCREEN_COORD_CENTER_DOWN(offset + GET_SETTING(HUD_BIG_MESSAGE).y), mainText);
 
         CFontNew::SetDropShadow(0.0f);
-        CFontNew::SetOutline(SCREEN_COORD(1.0f));
+        CFontNew::SetOutline(0.0f);
         CFontNew::SetFontStyle(CFontNew::FONT_1);
         CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
         CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));

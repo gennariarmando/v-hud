@@ -1110,7 +1110,7 @@ void CMenuNew::Process() {
     bool MapZoomOut = false;
     bool ShowHideMapLegend = false;
 
-    bool OpenClose = false;
+    bool OpenClose = pad->GetOpenCloseMenuJustDown();
 
     if (nOpenCloseWaitTime < GetTimeInMillisecondsRight()) {
         Up = pad->GetMenuUpJustDown();
@@ -1137,8 +1137,6 @@ void CMenuNew::Process() {
         MapZoomIn = pad->GetMenuMapZoomIn();
         MapZoomOut = pad->GetMenuMapZoomOut();
         ShowHideMapLegend = pad->GetMenuShowHideLegendJustDown();
-
-        OpenClose = pad->GetOpenCloseMenuJustDown();
 
         if (bInvertInput) {
             if (nCurrentScreen == MENUSCREEN_GALLERY) {
