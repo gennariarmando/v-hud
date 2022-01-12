@@ -919,6 +919,16 @@ float CFontNew::DrawChar(bool print, bool calc, float x, float y, char c, int st
 
         if (m_pFont[Details.style] && m_pSprite) {
             if (print) {
+                DWORD savedColorWrite = NULL;
+                IDirect3DVertexDeclaration9* savedVertexDecl = NULL;
+                IDirect3DVertexShader9* savedVertexShader = NULL;
+                IDirect3DPixelShader9* savedPixelShader = NULL;
+
+                GetD3DDevice()->GetRenderState(D3DRS_COLORWRITEENABLE, &savedColorWrite);
+                GetD3DDevice()->GetVertexDeclaration(&savedVertexDecl);
+                GetD3DDevice()->GetVertexShader(&savedVertexShader);
+                GetD3DDevice()->GetPixelShader(&savedPixelShader);
+
                 D3DXMatrixScaling(&S, w, h, 1.0f);
                 m_pSprite->GetTransform(&P);
                 m_pSprite->SetTransform(&S);
@@ -926,6 +936,11 @@ float CFontNew::DrawChar(bool print, bool calc, float x, float y, char c, int st
                 m_pFont[style]->DrawTextA(m_pSprite, s, -1, &d3drect, DT_LEFT | DT_TOP, D3DCOLOR_RGBA(col.r, col.g, col.b, col.a));
                 m_pSprite->End();
                 m_pSprite->SetTransform(&P);
+
+                GetD3DDevice()->SetRenderState(D3DRS_COLORWRITEENABLE, savedColorWrite);
+                GetD3DDevice()->SetVertexDeclaration(savedVertexDecl);
+                GetD3DDevice()->SetVertexShader(savedVertexShader);
+                GetD3DDevice()->SetPixelShader(savedPixelShader);
             }
 
             if (calc) {

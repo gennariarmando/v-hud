@@ -17,8 +17,8 @@ struct CLocalization {
     float fGPSDistance;
     char nPathDirection;
     short nNodesCount;
-    CNodeAddress resultNodes[MAX_NODE_POINTS * 4];
-    CVector2D nodePoints[MAX_NODE_POINTS * 4];
+    CNodeAddress resultNodes[MAX_NODE_POINTS];
+    CVector2D nodePoints[MAX_NODE_POINTS];
     unsigned int pathColor;
 
 public:
