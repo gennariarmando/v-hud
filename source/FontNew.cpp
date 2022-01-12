@@ -205,13 +205,8 @@ void CFontNew::Init() {
             if (h != S_OK) {
                 printf("[CFontNew] Error initializing font");
             }
-
-            m_pFont[i]->PreloadCharacters('!', 'z');
-            m_pFont[i]->PreloadGlyphs('!', 'z');
-            m_pFont[i]->PreloadText("!\"#$ % &'()*+,-./0123456789:;<=>?@ABDEFGILMNPRSTUZ[\]^_`abcdefghilmnoprstuwyz{|}~¡¢£¤¥¦§©ª«¬®°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿĄąĆćĘęĞğİıŁłŃńŒœŚśŞşŠšŸŹźŻżŽžƒƵƶǦǧˆ˜ΩЁАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюяё–—‘’‚“”„†‡•…‰‹›₡₩€₸₽№℠™←↑→↓∆∑∞", 307);
         }
     }
-
 
     m_pSprite = new CD3DSprite();
 
@@ -922,21 +917,21 @@ float CFontNew::DrawChar(bool print, bool calc, float x, float y, char c, int st
         RECT d3drect = { x / w, y / h, (x + SCREEN_WIDTH) / w, (y + SCREEN_HEIGHT) / h };
         D3DXMATRIX S, P;
 
-        if (m_pFont[Details.style && m_pSprite]) {
+        if (m_pFont[Details.style] && m_pSprite) {
             if (print) {
                 D3DXMatrixScaling(&S, w, h, 1.0f);
                 m_pSprite->GetTransform(&P);
                 m_pSprite->SetTransform(&S);
-                m_pSprite->Begin(D3DXSPRITE_ALPHABLEND | D3DXSPRITE_SORT_TEXTURE);
+                m_pSprite->Begin(D3DXSPRITE_ALPHABLEND | D3DXSPRITE_SORT_TEXTURE | D3DXSPRITE_DO_NOT_ADDREF_TEXTURE);
                 m_pFont[style]->DrawTextA(m_pSprite, s, -1, &d3drect, DT_LEFT | DT_TOP, D3DCOLOR_RGBA(col.r, col.g, col.b, col.a));
-                m_pSprite->SetTransform(&P);
                 m_pSprite->End();
+                m_pSprite->SetTransform(&P);
             }
 
             if (calc) {
                 d3drect = { 0, 0, 0, 0 };
                 m_pFont[style]->DrawTextA(m_pSprite, s, -1, &d3drect, DT_LEFT | DT_TOP | DT_NOCLIP | DT_SINGLELINE | DT_CALCRECT, NULL);
-                characterSize = ((d3drect.right - d3drect.left) + (Details.outline * 8)) * w;
+                characterSize = ((d3drect.right - d3drect.left) + (Details.outline)) * w;
 
                 if (c == ' ')
                     characterSize += (TTF[Details.style].spaceWidth) * w;
@@ -951,38 +946,6 @@ void CFontNew::PrintStringFromBottom(float x, float y, const char* s) {
     y -= GetHeightScale(Details.scale.y) * (GetNumberLines(false, x, y, s) - 1);
 
     PrintString(x, y, s);
-}
-
-void PrintCharMap() {
-    char* charMap[] = {
-        "!\"#$%&'()*+,-./a",
-        "0123456789:;<=>?a",
-        "@ABCDEFGHIJKLMNOa",
-        "PQRSTUVWXYZ[\]^_a",
-        "`abcdefghijklmnoa",
-        "pqrstuvwxyza",
-        "ÀÁÂÃÄÇÈÉÊËÌÍÎÏÑÒÓa",
-        "ÔÖÙÚÛÜßàáâãäçèéêa",
-        "ëìíîïòóôõöùúûüññ¿a"
-    };
-
-    CFontNew::SetBackground(false);
-    CFontNew::SetWrapX(SCREEN_WIDTH);
-    CFontNew::SetClipX(SCREEN_WIDTH);
-    CFontNew::SetClipX(-1);
-    CFontNew::SetFontStyle(CFontNew::FONT_1);
-    CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
-    CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
-    CFontNew::SetColor(CRGBA(255, 255, 255, 255));
-    CFontNew::SetDropShadow(0.0f);
-    CFontNew::SetOutline(SCREEN_COORD(2.0f));
-    CFontNew::SetScale(SCREEN_MULTIPLIER(2.0f), SCREEN_MULTIPLIER(3.0f));
-
-    float spacing = 0.0f;
-    for (int i = 0; i < 8; i++) {
-        CFontNew::PrintString(HUD_X(0.0f), SCREEN_COORD(spacing), charMap[i]);
-        spacing += SCREEN_COORD(64.0f);
-    }
 }
 
 float CFontNew::GetHeightScale(float h) {

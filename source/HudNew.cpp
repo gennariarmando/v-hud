@@ -1936,7 +1936,7 @@ void CHudNew::DrawAfterFade() {
         DrawScriptText(0);
 
         if (!CTheScripts::bDrawSubtitlesBeforeFade)
-            CHud::DrawSubtitles();
+            DrawSubtitles();
 
         DrawMissionTitle();
         DrawOddJobMessage(0);

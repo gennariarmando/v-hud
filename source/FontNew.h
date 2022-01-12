@@ -1,6 +1,6 @@
 #pragma once
-#define FONT_WIDTH_MULT 0.064f
-#define FONT_HEIGHT_MULT 0.074f
+#define FONT_WIDTH_MULT (0.256f)
+#define FONT_HEIGHT_MULT (0.296f)
 #define MAX_FONTS 16
 
 #include "D3DSprite.h"
@@ -270,5 +270,3 @@ public:
 	static void SetDropColor(CRGBA const& col) { Details.dropColor = col; }
 	static void SetScale(float w, float h) { Details.scale = CVector2D(w, h); }
 };
-
-extern void PrintCharMap();

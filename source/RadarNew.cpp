@@ -127,12 +127,12 @@ void CRadarNew::Init() {
 
     for (int i = 0; i < NUM_RADAR_SPRITES; i++) {
         m_RadarSprites[i] = new CSprite2d();
-        m_RadarSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\radar"), RadarSpriteNames[i]);
+        m_RadarSprites[i]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\radar"), RadarSpriteNames[i]);
     }
 
     for (int i = 0; i < m_BlipsCount; i++) {
         m_BlipsSprites[i] = new CSprite2d();
-        m_BlipsSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\blips"), m_BlipsList[i].texName);
+        m_BlipsSprites[i]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\blips"), m_BlipsList[i].texName);
     }
 
     for (int i = 0; i < 12 * 12; i++) {
@@ -149,7 +149,7 @@ void CRadarNew::Init() {
 
     for (int i = 0; i < NUM_PICKUPS_BLIPS_SPRITES; i++) {
         m_PickupsSprites[i] = new CSprite2d();
-        m_PickupsSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\pickups"), PickupsBlipsFileNames[i]);
+        m_PickupsSprites[i]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\pickups"), PickupsBlipsFileNames[i]);
     }
 
     CreateCamera();
