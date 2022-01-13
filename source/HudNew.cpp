@@ -1623,9 +1623,9 @@ void CHudNew::PrintSmallHelpText(int alpha) {
 
         c = GET_SETTING(HUD_HELP_BOX_SMALL_TEXT).col;
         CFontNew::SetColor(CRGBA(c.r, c.g, c.b, clamp(alpha, 0, c.a)));
-        CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
-        CFontNew::PrintString(HUD_X(96.0f + 62.0f), HUD_BOTTOM(326.0f), string);
-        CFontNew::PrintString(HUD_X(96.0f + 62.0f), HUD_BOTTOM(306.0f), percentage);
+        CFontNew::SetScale(SCREEN_MULTIPLIER(0.58f), SCREEN_MULTIPLIER(1.14f));
+        CFontNew::PrintString(HUD_X(96.0f + 62.0f), HUD_BOTTOM(322.0f), string);
+        CFontNew::PrintString(HUD_X(96.0f + 62.0f), HUD_BOTTOM(302.0f), percentage);
 
         CheckPlayerPortrait(CWorld::PlayerInFocus);
         r.left = HUD_X(96.0f);

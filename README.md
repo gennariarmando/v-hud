@@ -1,7 +1,7 @@
 <p align="center"><img src="https://i.imgur.com/Gp5g7l2.png" width="512" height="128"></p>
 
 
-### V-HUD:
+### V-Hud:
 A work-in-progress user interface overhaul, for Grand Theft Auto: San Andreas, based on Grand Theft Auto: V.\
 Project has been made in order to replicate accurately most of the UI elements present in GTA:V.
 
@@ -33,18 +33,18 @@ Currently compatible only with GTA: San Andreas 1.0 US.
 * Easy to use API for new plugins development [WIP]
 
 ### Screenshots:
-<p align="center"><img src="https://i.imgur.com/24iXmr1.png" width="640" height="360"></p>
-<p align="center"><img src="https://i.imgur.com/3iGs0fg.png" width="640" height="360"></p>
-<p align="center"><img src="https://i.imgur.com/6pgt0VM.png" width="640" height="360"></p>
-<p align="center"><img src="https://i.imgur.com/jXxlrpe.png" width="640" height="360"></p>
-<p align="center"><img src="https://i.imgur.com/tmSJglb.png" width="640" height="360"></p>
-<p align="center"><img src="https://i.imgur.com/0pfwyCq.png" width="640" height="360"></p>
-<p align="center"><img src="https://i.imgur.com/lUgQsAr.png" width="640" height="360"></p>
-<p align="center"><img src="https://i.imgur.com/Mbpo2OI.png" width="640" height="360"></p>
-<p align="center"><img src="https://i.imgur.com/Sr9giI0.png" width="640" height="360"></p>
-<p align="center"><img src="https://i.imgur.com/1X7GatT.png" width="640" height="360"></p>
-<p align="center"><img src="https://i.imgur.com/AceFsA0.png" width="640" height="360"></p>
-
+<p align="center"><img src="https://i.imgur.com/G9fhw0E.png" width="640" height="360"></p>
+<p align="center"><img src="https://i.imgur.com/TJUiE37.png" width="640" height="360"></p>
+<p align="center"><img src="https://i.imgur.com/TV5qmcO.png" width="640" height="360"></p>
+<p align="center"><img src="https://i.imgur.com/fKxZv8I.png" width="640" height="360"></p>
+<p align="center"><img src="https://i.imgur.com/7xrzjgA.png" width="640" height="360"></p>
+<p align="center"><img src="https://i.imgur.com/JZY26Cg.png" width="640" height="360"></p>
+<p align="center"><img src="https://i.imgur.com/gGr1yzg.png" width="640" height="360"></p>
+<p align="center"><img src="https://i.imgur.com/wAjQ0tO.png" width="640" height="360"></p>
+<p align="center"><img src="https://i.imgur.com/OOgpTc7.png" width="640" height="360"></p>
+<p align="center"><img src="https://i.imgur.com/GdWLngG.png" width="640" height="360"></p>
+<p align="center"><img src="https://i.imgur.com/cjXjlXq.png" width="640" height="360"></p>
+<p align="center"><img src="https://i.imgur.com/i21vjnY.png" width="640" height="360"></p>
 
 ### Download:
 Check out the [Releases](https://github.com/gennariarmando/v-hud/releases) page.
