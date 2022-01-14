@@ -34,7 +34,7 @@ Currently compatible only with GTA: San Andreas 1.0 US.
 
 ### Screenshots:
 <p align="center"><img src="https://i.imgur.com/G9fhw0E.png" width="640" height="360"></p>
-<p align="center"><img src="https://i.imgur.com/TJUiE37.png" width="640" height="360"></p>
+<p align="center"><img src="https://i.imgur.com/ISOmF3P.png" width="640" height="360"></p>
 <p align="center"><img src="https://i.imgur.com/TV5qmcO.png" width="640" height="360"></p>
 <p align="center"><img src="https://i.imgur.com/fKxZv8I.png" width="640" height="360"></p>
 <p align="center"><img src="https://i.imgur.com/7xrzjgA.png" width="640" height="360"></p>
