@@ -2560,19 +2560,19 @@ void CMenuNew::Draw() {
         CFontNew::SetOutline(0.0f);
         CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
         CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 255));
-        CFontNew::SetScale(SCREEN_MULTIPLIER(3.2f), SCREEN_MULTIPLIER(6.3f));
+        CFontNew::SetScale(SCREEN_MULTIPLIER(3.24f), SCREEN_MULTIPLIER(6.36f));
 
         if (header) {
-            CFontNew::PrintStringFromBottom(SCREEN_COORD_CENTER_X, SCREEN_COORD_CENTER_Y + SCREEN_COORD(-116.0f), TextNew.GetText(header).text);
+            CFontNew::PrintStringFromBottom(SCREEN_COORD_CENTER_X, SCREEN_COORD_CENTER_Y + SCREEN_COORD(-108.0f), TextNew.GetText(header).text);
         }
 
         if (msg) {
             CFontNew::SetFontStyle(CFontNew::FONT_1);
             CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
-            CFontNew::SetScale(SCREEN_MULTIPLIER(0.86f), SCREEN_MULTIPLIER(1.80f));
+            CFontNew::SetScale(SCREEN_MULTIPLIER(0.82f), SCREEN_MULTIPLIER(1.76f));
 
             char* str = TextNew.GetText(msg).text;
-            int n = CFontNew::PrintString(SCREEN_COORD_CENTER_X, SCREEN_COORD_CENTER_Y + SCREEN_COORD(36.0f), str);
+            int n = CFontNew::PrintString(SCREEN_COORD_CENTER_X, SCREEN_COORD_CENTER_Y + SCREEN_COORD(38.0f), str);
 
             CRect r;
             r.left = SCREEN_COORD_CENTER_RIGHT(-64.0f) - clamp(CFontNew::GetStringWidth(str, true), 0, CFontNew::Details.wrapX) / 2;
