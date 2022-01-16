@@ -278,7 +278,6 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
         && !playa->m_nPedFlags.bInVehicle
         && !playa->PedIsInvolvedInConversation()
         && !playa->m_nPedFlags.bDontRender
-        && !playa->m_nPedFlags.bDonePositionOutOfCollision
         && playa->m_nPedState != PEDSTATE_MAKE_PHONECALL
         && playa->m_nPedState != PEDSTATE_ANSWER_MOBILE
         && playa->m_nPedState != PEDSTATE_PAUSE
@@ -288,7 +287,6 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
         && !playa->m_nPedFlags.bFiringWeapon
         && !playa->m_nPedFlags.bIsAimingGun
         && !playa->m_pPlayerData->m_bInVehicleDontAllowWeaponChange
-        && !playa->m_pPlayerData->m_bStoppedMoving
         && !playa->m_pPlayerData->m_bHaveTargetSelected
         && !CDarkel::FrenzyOnGoing()
         && !playa->m_nPhysicalFlags.bAttachedToEntity
@@ -309,8 +307,7 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
         && !playa->m_nPedFlags.bStuckUnderCar
         && !playa->m_nPedFlags.bUsingMobilePhone
         && !CPadNew::GetPad(0)->bDisablePlayerCycleWeapon
-        && playa->IsPedInControl()
-        && !playa->m_nPedFlags.bKnockedUpIntoAir;
+        && playa->IsPedInControl();
 }
 
 void CWeaponSelector::ProcessWeaponSelector() {
@@ -957,10 +954,10 @@ void CWeaponSelector::DrawWheel() {
             CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
             CFontNew::SetDropShadow(0.0f);
             CFontNew::SetOutline(SCREEN_MULTIPLIER(1.5f));
-            CFontNew::SetScale(SCREEN_MULTIPLIER(0.58f), SCREEN_MULTIPLIER(1.30f));
+            CFontNew::SetScale(SCREEN_MULTIPLIER(0.58f), SCREEN_MULTIPLIER(1.28f));
 
             if (selected_wep && nSelectedWeapon[nSelectedSlot] != -1) {
-                CFontNew::SetScale(SCREEN_MULTIPLIER(0.64f), SCREEN_MULTIPLIER(1.44f));
+                CFontNew::SetScale(SCREEN_MULTIPLIER(0.64f), SCREEN_MULTIPLIER(1.42f));
                 CFontNew::PrintString(SCREEN_COORD_CENTER_X + SCREEN_COORD(x + 2.0f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 120.0f), TextNew.GetText(selected_wep->name).text);
             }
 
@@ -982,7 +979,7 @@ void CWeaponSelector::DrawWheel() {
             CFontNew::Details.color.a = FadeIn(255);
             CFontNew::Details.dropColor.a = FadeIn(255);
             if (selectedInfo->m_nFlags.bTwinPistol) {
-                CFontNew::SetScale(SCREEN_MULTIPLIER(0.58f), SCREEN_MULTIPLIER(1.30f));
+                CFontNew::SetScale(SCREEN_MULTIPLIER(0.58f), SCREEN_MULTIPLIER(1.28f));
 
                 CFontNew::PrintString(SCREEN_COORD_CENTER_X + SCREEN_COORD(x + 2.0f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 47.0f), TextNew.GetText("DOUBLEW").text);
                 offset += 30.0f;
@@ -990,7 +987,7 @@ void CWeaponSelector::DrawWheel() {
             int slot = playa->GetWeaponSlot((eWeaponType)selected_wep->id);
             int ammo = playa->m_aWeapons[slot].m_nTotalAmmo - playa->m_aWeapons[slot].m_nAmmoInClip;
             if (ammo > 9999) {
-                CFontNew::SetScale(SCREEN_MULTIPLIER(0.58f), SCREEN_MULTIPLIER(1.30f));
+                CFontNew::SetScale(SCREEN_MULTIPLIER(0.58f), SCREEN_MULTIPLIER(1.28f));
                 CFontNew::PrintString(SCREEN_COORD_CENTER_X + SCREEN_COORD(x + 2.0f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 47.0f + offset), TextNew.GetText("UNLIMIT").text);
             }
         }

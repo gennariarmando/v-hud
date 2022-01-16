@@ -4882,82 +4882,82 @@ void CMenuSettings::Load() {
         else {
             // Keyboard & Mouse
             if (auto keyboard = settings.child("keyboard")) {
-                mouseSensitivity = keyboard.child("MouseSensitivity").attribute("value").as_double();
-                invertMouseY = keyboard.child("InvertMouseY").attribute("value").as_bool();
-                mouseSteering = keyboard.child("MouseSteering").attribute("value").as_bool();
-                mouseFlying = keyboard.child("MouseFlying").attribute("value").as_bool();
+                mouseSensitivity = keyboard.child("MouseSensitivity").attribute("value").as_double(mouseSensitivity);
+                invertMouseY = keyboard.child("InvertMouseY").attribute("value").as_bool(invertMouseY);
+                mouseSteering = keyboard.child("MouseSteering").attribute("value").as_bool(mouseSteering);
+                mouseFlying = keyboard.child("MouseFlying").attribute("value").as_bool(mouseFlying);
             }
 
             if (auto gamepad = settings.child("gamepad")) {
-                controller = gamepad.child("Controller").attribute("value").as_int();
-                invertPadX1 = gamepad.child("InvertPadX1").attribute("value").as_bool();
-                invertPadY1 = gamepad.child("InvertPadY1").attribute("value").as_bool();
-                invertPadX2 = gamepad.child("InvertPadX2").attribute("value").as_bool();
-                invertPadY2 = gamepad.child("InvertPadY2").attribute("value").as_bool();
-                swapPadAxis1 = gamepad.child("SwapPadAxis1").attribute("value").as_bool();
-                swapPadAxis2 = gamepad.child("SwapPadAxis2").attribute("value").as_bool();
+                controller = gamepad.child("Controller").attribute("value").as_int(controller);
+                invertPadX1 = gamepad.child("InvertPadX1").attribute("value").as_bool(invertPadX1);
+                invertPadY1 = gamepad.child("InvertPadY1").attribute("value").as_bool(invertPadY1);
+                invertPadX2 = gamepad.child("InvertPadX2").attribute("value").as_bool(invertPadX2);
+                invertPadY2 = gamepad.child("InvertPadY2").attribute("value").as_bool(invertPadY2);
+                swapPadAxis1 = gamepad.child("SwapPadAxis1").attribute("value").as_bool(swapPadAxis1);
+                swapPadAxis2 = gamepad.child("SwapPadAxis2").attribute("value").as_bool(swapPadAxis2);
             }
 
             // Audio
             if (auto audio = settings.child("audio")) {
-                sfxVolume = (char)audio.child("SfxVolume").attribute("value").as_int();
-                radioVolume = (char)audio.child("RadioVolume").attribute("value").as_int();
-                radioStation = audio.child("RadioStation").attribute("value").as_int();
-                radioAutoSelect = audio.child("RadioAutoSelect").attribute("value").as_bool();
-                radioEQ = audio.child("RadioEQ").attribute("value").as_bool();
-                tracksAutoScan = audio.child("TracksAutoScan").attribute("value").as_bool();
-                radioMode = audio.child("RadioMode").attribute("value").as_int();
+                sfxVolume = (char)audio.child("SfxVolume").attribute("value").as_int(sfxVolume);
+                radioVolume = (char)audio.child("RadioVolume").attribute("value").as_int(radioVolume);
+                radioStation = audio.child("RadioStation").attribute("value").as_int(radioStation);
+                radioAutoSelect = audio.child("RadioAutoSelect").attribute("value").as_bool(radioAutoSelect);
+                radioEQ = audio.child("RadioEQ").attribute("value").as_bool(radioEQ);
+                tracksAutoScan = audio.child("TracksAutoScan").attribute("value").as_bool(tracksAutoScan);
+                radioMode = audio.child("RadioMode").attribute("value").as_int(radioMode);
             }
 
             // Display
             if (auto display = settings.child("display")) {
-                brightness = display.child("Brightness").attribute("value").as_int();
-                gamma = display.child("Gamma").attribute("value").as_double();
-                subtitles = display.child("Subtitles").attribute("value").as_bool();
-                language = display.child("Language").attribute("value").as_int();
-                showHUD = display.child("ShowHUD").attribute("value").as_bool();
-                showRadar = display.child("ShowRadar").attribute("value").as_bool();
-                weaponTarget = display.child("WeaponTarget").attribute("value").as_int();
-                simpleReticuleSize = display.child("SimpleReticuleSize").attribute("value").as_double();
-                savePhotos = display.child("SavePhotos").attribute("value").as_bool();
-                gpsRoute = display.child("GpsRoute").attribute("value").as_bool();
-                safeZoneSize = display.child("SafeZoneSize").attribute("value").as_double();
-                measurementSys = display.child("MeasurementSys").attribute("value").as_int();
+                brightness = display.child("Brightness").attribute("value").as_int(brightness);
+                gamma = display.child("Gamma").attribute("value").as_double(gamma);
+                subtitles = display.child("Subtitles").attribute("value").as_bool(subtitles);
+                language = display.child("Language").attribute("value").as_int(language);
+                showHUD = display.child("ShowHUD").attribute("value").as_bool(showHUD);
+                showRadar = display.child("ShowRadar").attribute("value").as_bool(showRadar);
+                weaponTarget = display.child("WeaponTarget").attribute("value").as_int(weaponTarget);
+                simpleReticuleSize = display.child("SimpleReticuleSize").attribute("value").as_double(simpleReticuleSize);
+                savePhotos = display.child("SavePhotos").attribute("value").as_bool(savePhotos);
+                gpsRoute = display.child("GpsRoute").attribute("value").as_bool(gpsRoute);
+                safeZoneSize = display.child("SafeZoneSize").attribute("value").as_double(safeZoneSize);
+                measurementSys = display.child("MeasurementSys").attribute("value").as_int(measurementSys);
             }
 
             // Graphics
             if (auto graphics = settings.child("graphics")) {
-                const char* st = graphics.child("ScreenType").attribute("value").as_string();
+                const char* st = graphics.child("ScreenType").attribute("value").as_string("windowed");
                 if (!faststrcmp(st, "windowed")) {
                     screenType = 1;
                 }
-                else {
+                else if (!faststrcmp(st, "fullscreen")) {
                     screenType = 0;
                 }
 
-                screenWidth = graphics.child("ScreenWidth").attribute("value").as_int();
-                screenHeight = graphics.child("ScreenHeight").attribute("value").as_int();
+                screenWidth = graphics.child("ScreenWidth").attribute("value").as_int(screenWidth);
+                screenHeight = graphics.child("ScreenHeight").attribute("value").as_int(screenHeight);
                 videoMode = MenuNew.ResToIndex(screenWidth, screenHeight);
 
-                //aspectRatio = graphics.child("AspectRatio").attribute("value").as_int();
-                mipMapping = graphics.child("MipMapping").attribute("value").as_bool();
-                antiAliasing = graphics.child("AntiAliasing").attribute("value").as_int() + 1;
-                drawDist = graphics.child("DrawDist").attribute("value").as_double();
-                visualQuality = graphics.child("VisualQuality").attribute("value").as_int();
-                widescreen = graphics.child("Widescreen").attribute("value").as_bool();
-                frameLimiter = graphics.child("FrameLimiter").attribute("value").as_bool();
+                //aspectRatio = graphics.child("AspectRatio").attribute("value").as_int(aspectRatio);
+                mipMapping = graphics.child("MipMapping").attribute("value").as_bool(mipMapping);
+                antiAliasing = graphics.child("AntiAliasing").attribute("value").as_int(antiAliasing) + 1;
+                drawDist = graphics.child("DrawDist").attribute("value").as_double(drawDist);
+                visualQuality = graphics.child("VisualQuality").attribute("value").as_int(visualQuality);
+                widescreen = graphics.child("Widescreen").attribute("value").as_bool(widescreen);
+                frameLimiter = graphics.child("FrameLimiter").attribute("value").as_bool(frameLimiter);
             }
 
             // Saving and Startup
             if (auto startup = settings.child("startup")) {
-                landingPage = startup.child("LandingPage").attribute("value").as_bool();
-                saveSlot = startup.append_child("SaveSlot").append_attribute("value").as_int();
+                landingPage = startup.child("LandingPage").attribute("value").as_bool(landingPage);
+                saveSlot = startup.append_child("SaveSlot").append_attribute("value").as_int(saveSlot);
             }
 
             // Misc
             if (auto misc = settings.child("misc")) {
                 char tmp[32];
-                sprintf(tmp, "%s", misc.child("UIMainColor").attribute("value").as_string());
+                sprintf(tmp, "%s", misc.child("UIMainColor").attribute("value").as_string("HUD_COLOUR_MICHAEL"));
                 strcpy(uiMainColor, tmp);
             }
         }
