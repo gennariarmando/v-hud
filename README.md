@@ -54,5 +54,5 @@ Check out the [Releases](https://github.com/gennariarmando/v-hud/releases) page.
 [bass](https://www.un4seen.com/)\
 [pugixml](https://github.com/zeux/pugixml)\
 [GInputSA](https://gtaforums.com/topic/562765-ginput/)\
-[ModuleList](https://github.com/CookiePLMonster/ModUtils/blob/master/ModuleList.hpp)\
+[ModUtils](https://github.com/CookiePLMonster/ModUtils)\
 [GTA5 HUD by DK22Pac](https://gtaforums.com/topic/652697-gta5-hud-by-dk22pac/)

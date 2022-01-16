@@ -165,6 +165,10 @@ const char* controlKeysStrings[62] = {
     "MWHD",
 };
 
+static LateStaticInit InstallHooks([]() {
+
+});
+
 static int savedID = -1;
 CPadNew::CPadNew() {
     Id = savedID + 1;
@@ -832,7 +836,7 @@ bool CPadNew::HasPadInHands(int id) {
 
 bool CPadNew::GetOpenCloseMenuJustDown() {
     if (HAS_PAD_IN_HANDS(Id))
-        return (NewState.Start && !OldState.Start);
+        return (!NewState.Start && OldState.Start);
 
     return
         (NewKeyState.esc && !OldKeyState.esc);

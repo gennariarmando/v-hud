@@ -99,25 +99,25 @@ const char* PickupsBlipsFileNames[]{
     "pickup_weapon_up",
 };
 
-CRadarNew::CRadarNew() {
-    patch::RedirectJump(0x583480, TransformRadarPointToScreenSpace);
-    patch::RedirectJump(0x583530, TransformRealWorldPointToRadarSpace);
-    patch::RedirectJump(0x5832F0, LimitRadarPoint);
-    patch::RedirectJump(0x585FF0, (void(__cdecl *)(unsigned short, float, float, unsigned char))DrawRadarSprite);
-    patch::RedirectCall(0x58563E, TransformRadarPoint); // Gang overlay
-    patch::RedirectCall(0x586408, TransformRadarPoint);
-    //patch::RedirectJump(0x583350, LimitToMap);
-    patch::RedirectJump(0x5835A0, TransformRadarPointToRealWorldSpace); 
+static LateStaticInit InstallHooks([]() {
+    patch::RedirectJump(0x583480, CRadarNew::TransformRadarPointToScreenSpace);
+    patch::RedirectJump(0x583530, CRadarNew::TransformRealWorldPointToRadarSpace);
+    patch::RedirectJump(0x5832F0, CRadarNew::LimitRadarPoint);
+    patch::RedirectJump(0x585FF0, (void(__cdecl*)(unsigned short, float, float, unsigned char))CRadarNew::DrawRadarSprite);
+    patch::RedirectCall(0x58563E, CRadarNew::TransformRadarPoint); // Gang overlay
+    patch::RedirectCall(0x586408, CRadarNew::TransformRadarPoint);
+    //patch::RedirectJump(0x583350, CRadarNew::LimitToMap);
+    patch::RedirectJump(0x5835A0, CRadarNew::TransformRadarPointToRealWorldSpace);
 
-    patch::RedirectJump(0x584070, ShowRadarTraceWithHeight);
-    // patch::RedirectJump(0x5859F0, AddBlipToLegendList);
+    patch::RedirectJump(0x584070, CRadarNew::ShowRadarTraceWithHeight);
+    // patch::RedirectJump(0x5859F0, CRadarNew::AddBlipToLegendList);
     patch::PutRetn(0x5859F0);
 
-    patch::RedirectJump(0x585040, ClipRadarPoly);
-    patch::RedirectJump(0x583670, CalculateCachedSinCos);
+    patch::RedirectJump(0x585040, CRadarNew::ClipRadarPoly);
+    patch::RedirectJump(0x583670, CRadarNew::CalculateCachedSinCos);
 
-    patch::RedirectJump(0x584770, GetRadarTraceColour);
-}
+    patch::RedirectJump(0x584770, CRadarNew::GetRadarTraceColour);
+});
 
 void CRadarNew::Init() {
     if (m_bInitialised)

@@ -6,6 +6,10 @@ using namespace plugin;
 
 CHudColoursNew HudColourNew;
 
+static LateStaticInit InstallHooks([]() {
+
+});
+
 void CHudColoursNew::ReadColorsFromFile() {
     std::ifstream file(PLUGIN_PATH("VHud\\data\\hudcolor.dat"));
 

@@ -43,6 +43,7 @@ struct CFontDetailsNew {
 	CRect backgroundBorder;
 	bool isBlip;
 	char ignoreTokens[2];
+	bool ignoreGamePadSymbols;
 
 	CFontDetailsNew() {}
 };
@@ -220,7 +221,6 @@ public:
 	static CFontTT TTF[NUM_FONTS];
 
 public:
-	CFontNew();
 	static void Init();
 	static void ReadValuesFromFile();
 	static void Clear();
@@ -269,4 +269,5 @@ public:
 	static void SetColor(CRGBA const& col) { Details.color = col; }
 	static void SetDropColor(CRGBA const& col) { Details.dropColor = col; }
 	static void SetScale(float w, float h) { Details.scale = CVector2D(w, h); }
+	static void SetIgnoreGamePadSymbols(bool on) { Details.ignoreGamePadSymbols = on; }
 };

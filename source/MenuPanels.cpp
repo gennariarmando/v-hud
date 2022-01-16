@@ -22,9 +22,9 @@ CSprite2d CMenuPanels::ShopUiSprites[32];
 int CMenuPanels::NumPanels;
 bool CMenuPanels::bActive;
 
-CMenuPanels::CMenuPanels() {
-    patch::RedirectJump(0x580E00, Draw);
-}
+static LateStaticInit InstallHooks([]() {
+    patch::RedirectJump(0x580E00, CMenuPanels::Draw);
+});
 
 void CMenuPanels::Init() {
     ReadValuesFromFile();

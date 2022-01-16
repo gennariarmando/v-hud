@@ -47,12 +47,9 @@ public:
     CTextSwitch TextSwitch;
 
 public:
-    CTextNew();
-
     void ReadLanguagesFromFile();
 
     void Load();
-    void LoadGameText();
     CTextRead GetText(int s);
     CTextRead GetText(const char* str);
     void UpperCase(char* s);

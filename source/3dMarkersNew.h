@@ -27,7 +27,6 @@ public:
     int MarkersCount;
 
 public:
-    C3dMarkersNew();  
     void Init();
     void Shutdown();
     void DrawArrows();

@@ -24,20 +24,12 @@ int CRadioHud::m_nTimeToDisplay = 0;
 int CRadioHud::m_nCurrentRadioId = 1;
 int CRadioHud::m_nPreviousRadioId = 1;
 bool CRadioHud::m_bChangeRadioStation = false;
+bool CRadioHud::m_bJustEnteredAVehicle = false;
 
-CRadioHud::CRadioHud() {
-    // Disable default input
-    patch::Nop(0x4EB728, 32);
-    patch::Nop(0x4EB751, 36);
+static LateStaticInit InstallHooks([]() {
+    patch::PutRetn(0x4EB660);
 
-    // No retune delay
-    //patch::Set(0x4EB81C + 3, 5);
-    //patch::Nop(0x4EB7E4, 19);
-    //patch::Nop(0x4EB829, 2);
-    //
-    //patch::Set(0x4EB961 + 3, 5);
-    //patch::Nop(0x4EB946, 19);
-}
+});
 
 void CRadioHud::Init() {
     if (m_bInitialised)
@@ -56,6 +48,7 @@ void CRadioHud::Init() {
 
 void CRadioHud::Clear() {
     m_nTimeToDisplay = 0;
+    m_bJustEnteredAVehicle = false;
 }
 
 bool CRadioHud::CanRetuneRadioStation() {
@@ -68,13 +61,18 @@ bool CRadioHud::CanRetuneRadioStation() {
 }
 
 void CRadioHud::Process() {
+    if (FindPlayerVehicle(-1, false)) {
+        if (!m_bJustEnteredAVehicle) {
+            m_nCurrentRadioId = AudioEngine.GetCurrentRadioStationID();
+            m_bJustEnteredAVehicle = true;
+        }
+    }
+    else {
+        m_bJustEnteredAVehicle = false;
+    }
+
     if (!CHud::bDrawingVitalStats && !CellPhone.bActive) {
         if (CanRetuneRadioStation()) {
-            if (AERadioTrackManager.field_1) {
-                m_nCurrentRadioId = AERadioTrackManager.m_TempSettings.m_nCurrentRadioStation;
-                AERadioTrackManager.field_1 = false;
-            }
-
             if (CPadNew::GetPad(0)->CycleRadioStationLeftJustDown()) {
                 m_nPreviousRadioId = m_nCurrentRadioId;
                 m_nCurrentRadioId--;
@@ -98,7 +96,8 @@ void CRadioHud::Process() {
 
     if (m_bChangeRadioStation) {
         MenuNew.RetuneRadio(m_nCurrentRadioId);
-
+        AERadioTrackManager.StopRadio(NULL, 0);
+        AERadioTrackManager.StartRadio(m_nCurrentRadioId, AERadioTrackManager.m_Settings.m_nBassSet, LOWORD(AERadioTrackManager.m_Settings.m_fBassGain), 0);
         m_nTimeToDisplay = CTimer::m_snTimeInMilliseconds + 2000;
         m_bChangeRadioStation = false;
 
@@ -126,7 +125,7 @@ void CRadioHud::Draw() {
         CFontNew::SetWrapX(SCREEN_COORD(640.0f));
         CFontNew::SetFontStyle(CFontNew::FONT_1);
         CFontNew::SetDropShadow(0.0f);
-        CFontNew::SetOutline(SCREEN_COORD(2.0f));
+        CFontNew::SetOutline(SCREEN_MULTIPLIER(2.0f));
         CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
         CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
         CFontNew::SetScale(SCREEN_MULTIPLIER(0.72f), SCREEN_MULTIPLIER(1.80f));

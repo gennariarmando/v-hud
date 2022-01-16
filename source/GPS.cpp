@@ -23,10 +23,10 @@ CLocalization CGPS::Dest;
 bool CGPS::bShowGPS;
 CSprite2d CGPS::pathDirSprite;
 
-CGPS::CGPS() {
+static LateStaticInit InstallHooks([]() {
     patch::SetUInt(0x4518F8, 50000);
     patch::SetUInt(0x4519B0, 49950);
-}
+});
 
 void CGPS::Init() {
     if (!pathDirSprite.m_pTexture)
@@ -63,7 +63,7 @@ void CGPS::DrawDistanceFromWaypoint() {
         CFontNew::SetColor(GET_SETTING(HUD_RADAR_GPS_DIST_TEXT).col);
         CFontNew::SetOutline(0.0f);
         CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
-        CFontNew::SetDropShadow(SCREEN_COORD(1.0f));
+        CFontNew::SetDropShadow(SCREEN_MULTIPLIER(1.0f));
         w = GET_SETTING(HUD_RADAR_GPS_DIST_TEXT).w;
         h = GET_SETTING(HUD_RADAR_GPS_DIST_TEXT).h;
         CFontNew::SetScale(SCREEN_MULTIPLIER(w), SCREEN_MULTIPLIER(h));

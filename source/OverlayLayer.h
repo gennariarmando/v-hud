@@ -15,7 +15,6 @@ private:
     static bool bInitialised;
 
 public:
-    COverlayLayer();
     static void Init();
     static void Shutdown();
     static void UpdateFrameBuffer();

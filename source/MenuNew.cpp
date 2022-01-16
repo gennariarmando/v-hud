@@ -103,6 +103,10 @@ bool bSaveScreenHasBeenOpened = false;
 char* gGxtString = (char*)0xC1B100;
 char* gGxtString2 = (char*)0xC1AED8;
 
+// Video mode change
+static RwInt32& GcurSel = *(RwInt32*)0xC920F4;
+static RwInt32& GcurSelVM = *(RwInt32*)0x8D6220;
+
 // Help text actions
 auto HelpText_GoThrough = []() { MenuNew.ProcessGoThrough(-99); };
 auto HelpText_GoBack = []() { MenuNew.ProcessGoBack(-99); };
@@ -112,7 +116,7 @@ auto HelpText_DeleteSave = []() { MenuNew.SetMenuMessage(MENUMESSAGE_DELETE_GAME
 auto HelpText_ApplyChanges = []() { if (MenuNew.nMenuAlert == MENUALERT_PENDINGCHANGES) MenuNew.ApplyGraphicsChanges(); Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f); };
 auto HelpText_UnSetKey = []() { MenuNew.SetMenuMessage(MENUMESSAGE_SETKEYTONULL); Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f); };
 
-CMenuNew::CMenuNew() {
+static LateStaticInit InstallHooks([]() {
     patch::Set<BYTE>(0x53E797, 0xEB);
     patch::Nop(0x53EB85, 2);
     patch::Nop(0x53E826, 2);
@@ -128,6 +132,12 @@ CMenuNew::CMenuNew() {
     patch::Nop(0x748CF1, 10);
 
     patch::RedirectJump(0x748995, (void*)0x7489D4);
+
+    auto centerMouseCursor = [](RwV2d*) {
+        if (!MenuNew.bMenuActive)
+            MenuNew.CenterCursor();
+    };
+    patch::RedirectCall(0x53E9F1, (void(__cdecl*)(RwV2d*))centerMouseCursor);
 
     auto openSavePage = [](int, int, int, int, int) {
         if (!bSaveScreenHasBeenOpened) {
@@ -148,10 +158,17 @@ CMenuNew::CMenuNew() {
     };
     patch::RedirectJump(0x57C290, (void(__fastcall*)(int, int))drawFrontend);
 
-    auto loadSettings = [](int, int) {
+    //CdeclEvent<AddressList<0x7461AA, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void()> loadSettings;
+    //loadSettings += [] {
+    //    MenuNew.Settings.Load();
+    //};
+
+    auto loadSettings = []() {
         MenuNew.Settings.Load();
+        return 1;
     };
-    patch::RedirectJump(0x57C8F0, (void(__fastcall*)(int, int))loadSettings);
+    patch::RedirectJump(0x746190, (int(__cdecl*)())loadSettings);
+    patch::Nop(0x747540, 10);
 
     auto saveSettings = [](int, int) {
         MenuNew.Settings.Save();
@@ -171,7 +188,7 @@ CMenuNew::CMenuNew() {
         CRenderer::PreRender();
     };
     patch::RedirectCall(0x53E9FE, (void(__cdecl*)())preRenderEntity);
-}
+});
 
 void CMenuNew::Init() {
     if (bInitialised)
@@ -191,7 +208,7 @@ void CMenuNew::Init() {
 
     for (int i = 0; i < NUM_FRONTEND_SPRITES; i++) {
         FrontendSprites[i] = new CSprite2d();
-        FrontendSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\frontend"), FrontendSpritesFileNames[i]);    
+        FrontendSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\frontend"), FrontendSpritesFileNames[i]);
     }
 
     BuildMenuBar();
@@ -202,7 +219,7 @@ void CMenuNew::Init() {
     MenuNew.Settings.Load();
     TempSettings = Settings;
 
-    if (!SAMP) {
+    if (!VHud::bSAMP) {
         bLandingPage = Settings.landingPage;
         bStartOrLoadGame = !bLandingPage;
 
@@ -286,9 +303,9 @@ void CMenuNew::Clear() {
     bRequestScreenUpdate = false;
     fScreenAlpha = 0;
 
-    nLoadingTime = CTimer::m_snTimeInMillisecondsPauseMode;
+    nLoadingTime = 0;
 
-    nOpenCloseWaitTime = CTimer::m_snTimeInMillisecondsPauseMode;
+    nOpenCloseWaitTime = 0;
 
     nUsedVidMemory = 0;
 
@@ -366,7 +383,7 @@ void CMenuNew::BuildMenuScreen() {
 
     // MENUSCREEN_STATS
     if (auto stats = AddNewScreen("FE_STA")) {
-        if (!SAMP) {
+        if (!VHud::bSAMP) {
             AddNewTab(stats, MENUENTRY_STAT, "FE_STAT_1", NULL, false);
             AddNewTab(stats, MENUENTRY_STAT, "FE_STAT_2", NULL, false);
             AddNewTab(stats, MENUENTRY_STAT, "FE_STAT_3", NULL, false);
@@ -448,7 +465,7 @@ void CMenuNew::BuildMenuScreen() {
 
     // MENUSCREEN_GAME
     if (auto game = AddNewScreen("FE_GAM")) {
-        if (!SAMP) {
+        if (!VHud::bSAMP) {
             if (auto loadGame = AddNewTab(game, MENUENTRY_POPULATESAVESLOT, "FE_LGAM", NULL, false)) {
                 AddNewEntry(loadGame, MENUENTRY_LOADGAME, "FE_NOSAV", 0, 1);
                 AddNewEntry(loadGame, MENUENTRY_LOADGAME, "FE_NOSAV", 0, 0);
@@ -535,7 +552,7 @@ void CMenuNew::SetLandingPageBehaviour() {
 }
 
 void CMenuNew::SetLoadingPageBehaviour() {
-    if (SAMP) {
+    if (VHud::bSAMP) {
         DoSettingsBeforeStartingAGame(bLoad, nSlot);
         return;
     }
@@ -828,13 +845,13 @@ int CMenuNew::GetEntryBackHeight() {
 
 void CMenuNew::OpenCloseMenu(bool on, bool force) {
     if (!force) {
-        if (nOpenCloseWaitTime > GetTimeInMillisecondsRight() || IsLoading())
+        if (nOpenCloseWaitTime > CTimer::m_snTimeInMillisecondsPauseMode || IsLoading())
             return;
     }
 
     CPadNew* pad = CPadNew::GetPad(0);
     if (on) {
-        if (SAMP) {
+        if (VHud::bSAMP) {
             CWeaponSelector::DisableCameraMovement();
         }
         else
@@ -852,7 +869,7 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
         Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
     }
     else {
-        if (SAMP) {
+        if (VHud::bSAMP) {
             CWeaponSelector::ResetCameraMovement();
         }
         else
@@ -869,8 +886,8 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
         bRequestScreenUpdate = true;
     }
 
-    nLoadingTime = GetTimeInMillisecondsRight() + MENU_SCREEN_CHANGE_WAIT_TIME;
-    nOpenCloseWaitTime = GetTimeInMillisecondsRight() + MENU_OPEN_CLOSE_WAIT_TIME;
+    nLoadingTime = CTimer::m_snTimeInMillisecondsPauseMode + MENU_SCREEN_CHANGE_WAIT_TIME;
+    nOpenCloseWaitTime = CTimer::m_snTimeInMillisecondsPauseMode + MENU_OPEN_CLOSE_WAIT_TIME;
     bMenuActive = on;
 
     CenterCursor();
@@ -890,7 +907,7 @@ void CMenuNew::OpenMenuScreen(int screen) {
 }
 
 void CMenuNew::CenterCursor() {
-    if (SAMP)
+    if (VHud::bSAMP)
         return;
 
     POINT p;
@@ -1059,18 +1076,22 @@ void CMenuNew::Process() {
     if (nTimePassedSinceLastKeyBind > CTimer::m_snTimeInMillisecondsPauseMode)
         return;
 
-    float x = CPadNew::GetMouseInput(256.0f).x;
-    float y = CPadNew::GetMouseInput(256.0f).y;
-
     vOldMousePos.x = vMousePos.x;
     vOldMousePos.y = vMousePos.y;
 
     if (nCurrentInputType != MENUINPUT_REDEFINEKEY) {
-        if (x < 0.01f || x > 0.01f)
-            vMousePos.x += x;
+        psGlobalType* ps = RsGlobal.ps;
 
-        if (y < 0.01f || y > 0.01f)
-            vMousePos.y += y;
+        if (ps) {
+            HWND wnd = RsGlobal.ps->window;
+
+            POINT p;
+            GetCursorPos(&p);
+            ScreenToClient(wnd, &p);
+
+            vMousePos.x = p.x;
+            vMousePos.y = p.y;
+        }
     }
 
     if (vMousePos.x < 0)
@@ -1081,6 +1102,8 @@ void CMenuNew::Process() {
         vMousePos.y = 0;
     if (vMousePos.y > SCREEN_HEIGHT)
         vMousePos.y = SCREEN_HEIGHT;
+
+    ProcessFullscreenToggle();
 
     // Input
     CPadNew* pad = CPadNew::GetPad(0);
@@ -1112,7 +1135,7 @@ void CMenuNew::Process() {
 
     bool OpenClose = pad->GetOpenCloseMenuJustDown();
 
-    if (nOpenCloseWaitTime < GetTimeInMillisecondsRight()) {
+    if (nOpenCloseWaitTime < CTimer::m_snTimeInMillisecondsPauseMode) {
         Up = pad->GetMenuUpJustDown();
         Down = pad->GetMenuDownJustDown();
         Left = pad->GetMenuLeftJustDown();
@@ -1561,7 +1584,7 @@ void CMenuNew::Process() {
 
         if (bRequestScreenUpdate) {
             fScreenAlpha = 0;
-            nLoadingTime = GetTimeInMillisecondsRight() + MENU_SCREEN_CHANGE_WAIT_TIME;
+            nLoadingTime = CTimer::m_snTimeInMillisecondsPauseMode + MENU_SCREEN_CHANGE_WAIT_TIME;
             bRequestScreenUpdate = false;
             tabItemBeforeScreenChange = nPreviousTabItem;
         }
@@ -1626,10 +1649,6 @@ void CMenuNew::ScanGalleryPictures(bool force) {
             bRequestScreenUpdate = true;
         }
     }
-}
-
-unsigned int CMenuNew::GetTimeInMillisecondsRight() {
-    return CTimer::m_snTimeInMillisecondsPauseMode;
 }
 
 unsigned char CMenuNew::FadeIn(unsigned char alpha) {
@@ -1780,6 +1799,22 @@ void CMenuNew::ProcessAlertStuff() {
     }
 }
 
+int CMenuNew::ResToIndex(int w, int h) {
+    int numModes = RwEngineGetNumVideoModes();
+
+    for (int i = 0; i < numModes; i++) {
+        RwVideoMode vm;
+        RwEngineGetVideoModeInfo(&vm, i);
+
+        if ((vm.flags & rwVIDEOMODEEXCLUSIVE)
+            && vm.width == w && vm.height == h && vm.depth == 32) {
+            return i;
+        }
+    }
+
+    return 1;
+}
+
 char** CMenuNew::GetVideoModeList() {
     int numModes = RwEngineGetNumVideoModes();
     char** list = new char* [numModes];
@@ -1791,7 +1826,7 @@ char** CMenuNew::GetVideoModeList() {
 
         char tmp[100] = { NULL };
         if ((vm.flags & rwVIDEOMODEEXCLUSIVE)
-            && vm.width >= 640 && vm.height >= 480 && vm.depth == 32) {
+            && vm.width >= 800 && vm.height >= 600 && vm.depth == 32) {
             sprintf(tmp, "%dx%d", vm.width, vm.height);
         }
 
@@ -1872,6 +1907,8 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
         }
         break;
     case MENUENTRY_SCREENTYPE:
+        TempSettings.screenType = TempSettings.screenType == false;
+        ApplyChanges();
         break;
     case MENUENTRY_CHANGERES:
         if (char** modes = VideoModeList) {
@@ -2136,7 +2173,7 @@ void CMenuNew::RetuneRadio(char id) {
     CRadioHud::m_nCurrentRadioId = id;
 
     MenuNew.TempSettings.radioStation = CRadioHud::m_nCurrentRadioId;
-    MenuNew.Settings.radioStation = CRadioHud::m_nCurrentRadioId;
+    MenuNew.Settings.radioStation = id;
 }
 
 void CMenuNew::StartRadio() {
@@ -2227,7 +2264,7 @@ void CMenuNew::DrawPauseMenuExtraText() {
     CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
     CFontNew::SetWrapX(SCREEN_COORD(640.0f));
     CFontNew::SetFontStyle(CFontNew::FONT_4);
-    CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
+    CFontNew::SetDropShadow(SCREEN_MULTIPLIER(2.0f));
     CFontNew::SetOutline(0.0f);
     CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
     CFontNew::SetColor(CRGBA(255, 255, 255, 255));
@@ -2239,7 +2276,7 @@ void CMenuNew::DrawPauseMenuExtraText() {
         header = TextNew.GetText("FE_SGAM").text;
         break;
     default:
-        if (SAMP)
+        if (VHud::bSAMP)
             header = TextNew.GetText("FE_GTAO").text;
         else
             header = TextNew.GetText("FE_GTA").text;
@@ -2261,7 +2298,7 @@ void CMenuNew::DrawPauseMenuExtraText() {
         CHudNew::CheckPlayerPortrait(CWorld::PlayerInFocus);
         CHudNew::PlayerPortrait[CWorld::PlayerInFocus][1]->Draw(portrait, CRGBA(255, 255, 255, 255));
 
-        CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
+        CFontNew::SetDropShadow(SCREEN_MULTIPLIER(2.0f));
         CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
         CFontNew::SetScale(SCREEN_MULTIPLIER(0.58f), SCREEN_MULTIPLIER(1.42f));
 
@@ -2678,7 +2715,7 @@ void CMenuNew::UnSetMenuMessage() {
 }
 
 bool CMenuNew::IsLoading() {
-    if (nLoadingTime > GetTimeInMillisecondsRight())
+    if (nLoadingTime > CTimer::m_snTimeInMillisecondsPauseMode)
         return true;
 
     nLoadingTime = CTimer::m_snTimeInMillisecondsPauseMode;
@@ -2888,6 +2925,8 @@ void CMenuNew::DrawDefault() {
             if (HasToContinueLoop(i))
                 continue;
 
+            CFontNew::SetIgnoreGamePadSymbols(false);
+
             const int entryType = MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].type;
             switch (entryType) {
             case MENUENTRY_LOADGAME:
@@ -2908,6 +2947,7 @@ void CMenuNew::DrawDefault() {
                 }
                 else {
                     if (Controls[i].key != rsNULL) {
+                        CFontNew::SetIgnoreGamePadSymbols(true);
                         sprintf(rightTextTmp, "~k~~%s~", Controls[i].action);
                         rightText = rightTextTmp;
                     }
@@ -3839,7 +3879,7 @@ void CMenuNew::PrintBrief() {
 }
 
 void CMenuNew::PrintStats() {
-    if (SAMP) {
+    if (VHud::bSAMP) {
         DrawScreenUnavailableOnline();
         return;
     }
@@ -4502,8 +4542,7 @@ void CMenuNew::PassSettingsToCurrentGame(const CMenuSettings* s) {
         CRenderer::ms_lodDistScale = s->drawDist;
         g_fx.SetFxQuality((FxQuality_e)s->visualQuality);
         gamma.SetGamma(s->gamma, 1);
-        m.m_bChangeVideoMode = true;
-        //MenuNew.ChangeVideoMode(s->currentVideoMode, s->currentAntiAliasing);
+        m.m_bChangeVideoMode = false;
     }
 }
 
@@ -4555,6 +4594,12 @@ void CMenuNew::FindOutUsedMemory() {
 }
 
 void CMenuNew::ChangeVideoMode(int mode, int msaa) {
+    psGlobalType* ps = RsGlobal.ps;
+
+    if (!ps)
+        return;
+
+    HWND wnd = RsGlobal.ps->window;
     RwD3D9ChangeMultiSamplingLevels(msaa);
     RwD3D9ChangeVideoMode(mode);
 
@@ -4565,13 +4610,100 @@ void CMenuNew::ChangeVideoMode(int mode, int msaa) {
 
     RsGlobal.maximumWidth = w;
     RsGlobal.maximumHeight = h;
+
+    unsigned int refreshRate = plugin::CallAndReturn<unsigned int, 0x7460A0>(w, h, 32);
+    RwD3D9EngineSetRefreshRate(refreshRate);
+
+    ps->fullScreen = true;
+}
+
+void CMenuNew::GetWindowSize(int* w, int* h) {
+    HWND wnd = RsGlobal.ps->window;
+
+    RECT rect;
+    GetClientRect(wnd, &rect);
+
+    int _w = rect.right - rect.left;
+    int _h = rect.bottom - rect.right;
+    w = &_w;
+    h = &_h;
+}
+
+void CMenuNew::ChangeVideoModeWindowed(int mode, int msaa) {
+    psGlobalType* ps = RsGlobal.ps;
+
+    if (!ps)
+        return;
+
+    HWND wnd = RsGlobal.ps->window;
+    RwD3D9ChangeMultiSamplingLevels(msaa);
+
+    RwVideoMode info;
+    RwEngineGetVideoModeInfo(&info, mode);
+
+    GcurSel = RwEngineGetCurrentSubSystem();
+    GcurSelVM = mode;
+
+    RECT rect;
+    GetClientRect(GetDesktopWindow(), &rect);
+    rect.left = (rect.right / 2) - (info.width / 2);
+    rect.top = (rect.bottom / 2) - (info.height / 2);
+
+    SetWindowLong(wnd, GWL_STYLE, WS_VISIBLE | WS_OVERLAPPEDWINDOW);
+    SetWindowPos(wnd, HWND_NOTOPMOST, rect.left, rect.top, info.width, info.height, 0);
+
+    plugin::Call<0x7043D0>(); // CreateCameraSubraster
+
+    int w = info.width;
+    int h = info.height;
+
+    RsGlobal.maximumWidth = w;
+    RsGlobal.maximumHeight = h;
+
+    ps->fullScreen = false;
+}
+
+void CMenuNew::ProcessFullscreenToggle() {
+    static bool needsToChangeMode = false;
+    if (!needsToChangeMode) {
+        ApplyGraphicsChanges();
+        needsToChangeMode = true;
+    }
+
+    if (((GetKeyState(VK_MENU) & 0x8000) && (GetKeyState(VK_RETURN) & 0x8000))) {
+        TempSettings.screenType = TempSettings.screenType == false;
+        needsToChangeMode = false;
+        return;
+    }
+
+    static int previousWidth = RsGlobal.maximumWidth;
+    static int previousHeight = RsGlobal.maximumHeight;
+    if ((RsGlobal.maximumWidth != previousWidth || RsGlobal.maximumHeight != previousHeight)) {
+        plugin::Call<0x7043D0>(); // CreateCameraSubraster
+
+        int w = Scene.m_pRwCamera->frameBuffer->width;
+        int h = Scene.m_pRwCamera->frameBuffer->height;
+
+        RsGlobal.maximumWidth = w;
+        RsGlobal.maximumHeight = h;
+        previousWidth = w;
+        previousHeight = h;
+    }
 }
 
 void CMenuNew::ApplyGraphicsChanges() {
     const CMenuSettings& ts = TempSettings;
     CMenuSettings& s = Settings;
 
-    ChangeVideoMode(ts.videoMode, ts.antiAliasing);
+    switch (ts.screenType) {
+    case 1:
+        ChangeVideoMode(0, ts.antiAliasing);
+        ChangeVideoModeWindowed(ts.videoMode, ts.antiAliasing);
+        break;
+    default:
+        ChangeVideoMode(ts.videoMode, ts.antiAliasing);
+        break;
+    }
     RwTextureSetMipmapping(ts.mipMapping);
     g_fx.SetFxQuality((FxQuality_e)ts.visualQuality);
     CRenderer::ms_lodDistScale = ts.drawDist;
@@ -4716,7 +4848,11 @@ void CMenuSettings::Clear() {
     safeZoneSize = 32.0;
     measurementSys = 0;
 
-    videoMode = 0;
+    screenType = 1;
+    screenWidth = 800;
+    screenHeight = 600;
+    videoMode = MenuNew.ResToIndex(screenWidth, screenHeight);
+
     aspectRatio = 0;
     mipMapping = true;
     antiAliasing = 1;
@@ -4791,10 +4927,21 @@ void CMenuSettings::Load() {
 
             // Graphics
             if (auto graphics = settings.child("graphics")) {
-                videoMode = graphics.child("VideoMode").attribute("value").as_int();
+                const char* st = graphics.child("ScreenType").attribute("value").as_string();
+                if (!faststrcmp(st, "windowed")) {
+                    screenType = 1;
+                }
+                else {
+                    screenType = 0;
+                }
+
+                screenWidth = graphics.child("ScreenWidth").attribute("value").as_int();
+                screenHeight = graphics.child("ScreenHeight").attribute("value").as_int();
+                videoMode = MenuNew.ResToIndex(screenWidth, screenHeight);
+
                 //aspectRatio = graphics.child("AspectRatio").attribute("value").as_int();
                 mipMapping = graphics.child("MipMapping").attribute("value").as_bool();
-                antiAliasing = graphics.child("AntiAliasing").attribute("value").as_int();
+                antiAliasing = graphics.child("AntiAliasing").attribute("value").as_int() + 1;
                 drawDist = graphics.child("DrawDist").attribute("value").as_double();
                 visualQuality = graphics.child("VisualQuality").attribute("value").as_int();
                 widescreen = graphics.child("Widescreen").attribute("value").as_bool();
@@ -4880,11 +5027,30 @@ void CMenuSettings::Save() {
     display.append_child("MeasurementSystem").append_attribute("value").set_value(measurementSys);
 
     // Graphics
-    auto graphics = settings.append_child("graphics");
-    graphics.append_child("VideoMode").append_attribute("value").set_value(videoMode);
+    auto graphics = settings.append_child("graphics");   
+    
+    char* st = NULL;
+    switch (screenType) {
+    case 1:
+        st = "windowed";
+        break;
+    default:
+        st = "fullscreen";
+        break;
+    }
+    graphics.append_child("ScreenType").append_attribute("value").set_value(st);
+
+    RwVideoMode vm;
+    RwEngineGetVideoModeInfo(&vm, videoMode);
+    screenWidth = vm.width;
+    screenHeight = vm.height;
+
+    graphics.append_child("ScreenWidth").append_attribute("value").set_value(screenWidth);
+    graphics.append_child("ScreenHeight").append_attribute("value").set_value(screenHeight);
+
     //graphics.append_child("AspectRatio").append_attribute("value").set_value(aspectRatio);
     graphics.append_child("MipMapping").append_attribute("value").set_value(mipMapping);
-    graphics.append_child("AntiAliasing").append_attribute("value").set_value(antiAliasing);
+    graphics.append_child("AntiAliasing").append_attribute("value").set_value(antiAliasing - 1);
     graphics.append_child("DrawDist").append_attribute("value").set_value(drawDist);
     graphics.append_child("VisualQuality").append_attribute("value").set_value(visualQuality);
     graphics.append_child("Widescreen").append_attribute("value").set_value(widescreen);

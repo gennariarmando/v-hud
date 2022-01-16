@@ -17,7 +17,6 @@ public:
     static bool bActive;
 
 public:
-    CMenuPanels();
     static void Init();
     static void Shutdown();
     static void Process(unsigned char panelId);

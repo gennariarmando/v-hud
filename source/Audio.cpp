@@ -25,28 +25,23 @@ const char* ChunksFileNames[] = {
     "screen_pulse1"
 };
 
-CAudio::CAudio() {
+static LateStaticInit InstallHooks([]() {
 
-}
+});
 
 void CAudio::Init() {
     if (bInitialised)
         return;
 
     if (!BASS_Init(-1, 44100, 0, RsGlobal.ps->window, NULL)) {
-        printf("[BASS] Can't initialize device. \n");
-
-        if (BASS_ErrorGetCode() != BASS_ERROR_ALREADY)
+        int code = BASS_ErrorGetCode();
+        if (code != BASS_ERROR_ALREADY) {
             return;
-        else
-            printf("[BASS] Device has already been initialized. \n");
-    }
-    else {
-        printf("[BASS] Initialized \n");
+        }
     }
 
     for (int i = 0; i < NUM_CHUNKS; i++) {
-        Chunks[i] = LoadChunkFile(PLUGIN_PATH("VHud\\audio\\frontend"), ChunksFileNames[i]);   
+        Chunks[i] = LoadChunkFile(PLUGIN_PATH("VHud\\audio\\frontend"), ChunksFileNames[i]);
     }
 
     bInitialised = true;
@@ -61,9 +56,6 @@ void CAudio::Shutdown() {
     }
 
     BASS_Free();
-
-    printf("[BASS] Shutdown. \n");
-
     bInitialised = false;
 }
 

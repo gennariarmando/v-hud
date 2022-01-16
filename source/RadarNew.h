@@ -117,7 +117,6 @@ public:
     static bool m_bRemoveBlipsLimit;
 
 public:
-    CRadarNew();
     static void Init();
     static void Shutdown();
     static void Clear();

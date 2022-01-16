@@ -101,7 +101,6 @@ public:
     int nTimeLastTimePhoneShown;
 
 public:
-    CCellPhone();
     void Init();
     void Shutdown();
     void AddNewApp(int type, char* name);

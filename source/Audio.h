@@ -23,7 +23,6 @@ public:
     bool loop;
 
 public:
-    CAudio();
     void Init();
     void Shutdown();
     void Update();

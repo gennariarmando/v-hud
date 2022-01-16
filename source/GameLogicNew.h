@@ -2,6 +2,5 @@
 
 class CGameLogicNew {
 public:
-    CGameLogicNew();
 
 };

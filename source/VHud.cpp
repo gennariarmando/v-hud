@@ -18,149 +18,175 @@
 
 #include "VHudAPI.h"
 
-#include "CTimer.h"
-
 using namespace plugin;
 
-VHud pluginVHud;
-
-inline int OpenConsole(bool console) {
-    if (!freopen("conin$", "r", stdin))
-        return false;
-
-    if (!freopen("conout$", "w", stdout))
-        return false;
-
-    if (!freopen("conout$", "w", stderr))
-        return false;
-
-    return false;
-}
-
-
-HANDLE thread = NULL;
-bool rwInitialized = false;
-bool rwQuit = false;
 int& gGameState = *(int*)0xC8D4C0;
 
-bool SAMP = false;
+bool VHud::bInitialised = false;
+HANDLE VHud::pThread = NULL;
+bool VHud::bRwInitialized = false;
+bool VHud::bRwQuit = false;
+bool VHud::bSAMP = false;
 
-VHud::VHud() {
+bool VHud::Init() {
+    if (bInitialised)
+        return false;
+
 #ifdef DEBUG
-    OpenConsole(AllocConsole());
+    OpenConsole();
 #endif
+    
+    if (!CheckCompatibility()) {
+        bRwInitialized = false;
+        bRwQuit = true;
+        return false;
+    }
+    else {
+        std::function<bool()> b([] { return true; });
+        LateStaticInit::TryApplyWithPredicate(b);
 
-    if (!IsSupportedGameVersion())
-        Error("This version of GTA: San Andreas is not supported by this plugin.");
+        Events::initRwEvent += [] {
+            Audio.Init();
+            HudColourNew.ReadColorsFromFile();
+            CFontNew::Init();
+            MenuNew.Init();
+            CRadioHud::Init();
+            COverlayLayer::Init();
+            MarkersNew.Init();
 
-    auto VHudLoop = []() {
-        CPadNew::Init();
+            bRwInitialized = true;
+        };
 
-        while (!rwQuit) {
-            CheckForMP();
+        Events::initGameEvent += [] {
+            CGPS::Init();
+            CHudNew::Init();
+            CellPhone.Init();
+            CRadarNew::Init();
+            CWeaponSelector::Init();
+            CMenuPanels::Init();
+        };
 
-            if (rwInitialized) {
-                if (gGameState && !SAMP) {
-                    switch (gGameState) {
-                    case 7:
-                        if (MenuNew.ProcessMenuToGameSwitch(false)) {
-                            gGameState = 8;
-                            MenuNew.OpenCloseMenu(false, true);
-                        }
-                        break;
-                    case 8:
-                        MenuNew.fLoadingPercentage = 100.0f;
-                        gGameState = 9;
-                        break;
-                    case 9:
-                        if (MenuNew.ProcessMenuToGameSwitch(true)) {
-                            MenuNew.OpenCloseMenu(false, true);
-                        }
-                        break;
-                    }
-                }
+        Events::reInitGameEvent += [] {
+            CHudNew::ReInit();
+            CWeaponSelector::ReInit();
+        };
 
-                Audio.Update();
-                CPadNew::GInputUpdate();
-            }
-        }
-        CPadNew::GInputRelease();
+        CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void()> beforeFading;
+        beforeFading += [] {
+            CHudNew::Draw();
+        };
 
-        CloseHandle(thread);
-    };
+        CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> afterFading;
+        afterFading += [] {
+            CHudNew::DrawAfterFade();
+        };
 
-    thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)(void(__cdecl*)())VHudLoop, 0, 0, 0);
+        Events::d3dLostEvent += [] {
+            CFontNew::Lost();
+        };
 
-    Events::initRwEvent += [] {
-        Audio.Init();
-        HudColourNew.ReadColorsFromFile();
-        CFontNew::Init();
-        MenuNew.Init();
-        CRadioHud::Init();
-        COverlayLayer::Init();
-        MarkersNew.Init();
+        Events::d3dResetEvent += [] {
+            CFontNew::Reset();
+        };
 
-        rwInitialized = true;
-    };
+        Events::shutdownRwEvent += [] {
+            MenuNew.Shutdown();
+            CGPS::Shutdown();
+            CRadarNew::Shutdown();
+            CHudNew::Shutdown();
+            CellPhone.Shutdown();
+            CRadioHud::Shutdown();
+            COverlayLayer::Shutdown();
+            CFontNew::Shutdown();
+            CWeaponSelector::Shutdown();
+            CMenuPanels::Shutdown();
+            Audio.Shutdown();
+            MarkersNew.Shutdown();
+            CPadNew::Shutdown();
 
-    Events::initGameEvent += [] {
-        CGPS::Init();
-        CHudNew::Init();
-        CellPhone.Init();
-        CRadarNew::Init();
-        CWeaponSelector::Init();
-        CMenuPanels::Init();
-    };
+            bRwQuit = true;
+        };
+    
+        bInitialised = true;
+    }
 
-    Events::reInitGameEvent += [] {
-        CHudNew::ReInit();
-        CWeaponSelector::ReInit();
-    };
-
-    CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void()> beforeFading;
-    beforeFading += [] {
-        CHudNew::Draw();
-    };
-
-    CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> afterFading;
-    afterFading += [] {
-        CHudNew::DrawAfterFade();
-    };
-
-    Events::d3dLostEvent += [] {
-        CFontNew::Lost();
-    };
-
-    Events::d3dResetEvent += [] {
-        CFontNew::Reset();
-    };
-
-    Events::shutdownRwEvent += [] {
-        MenuNew.Shutdown();
-        CGPS::Shutdown();
-        CRadarNew::Shutdown();
-        CHudNew::Shutdown();
-        CellPhone.Shutdown();
-        CRadioHud::Shutdown();
-        COverlayLayer::Shutdown();
-        CFontNew::Shutdown();
-        CWeaponSelector::Shutdown();
-        CMenuPanels::Shutdown();
-        Audio.Shutdown();
-        MarkersNew.Shutdown();
-        CPadNew::Shutdown();
-
-        rwQuit = true;
-    };
+    return true;
 }
 
-void CheckForMP() {
-    if (SAMP)
+void VHud::Shutdown() {
+    if (!bInitialised)
         return;
 
-    const HMODULE h = ModuleList().Get(L"SAMP");
+    bInitialised = false;
+}
 
-    if (h) {
-        SAMP = true;
+void VHud::Run() {
+    CPadNew::Init();
+
+    while (!bRwQuit) {
+        CheckForMP();
+
+        if (bRwInitialized) {
+            if (gGameState && !bSAMP) {
+                switch (gGameState) {
+                case 7:
+                    if (MenuNew.ProcessMenuToGameSwitch(false)) {
+                        gGameState = 8;
+                        MenuNew.OpenCloseMenu(false, true);
+                    }
+                    break;
+                case 8:
+                    MenuNew.fLoadingPercentage = 100.0f;
+                    gGameState = 9;
+                    break;
+                case 9:
+                    if (MenuNew.ProcessMenuToGameSwitch(true)) {
+                        MenuNew.OpenCloseMenu(false, true);
+                    }
+                    break;
+                }
+            }
+
+            Audio.Update();
+            CPadNew::GInputUpdate();
+        }
     }
+    CPadNew::GInputRelease();
+
+    CloseHandle(pThread);
+};
+
+void VHud::CheckForMP() {
+    if (bSAMP)
+        return;
+
+    if (const HMODULE h = ModuleList().Get(L"SAMP")) {
+        bSAMP = true;
+    }
+}
+
+bool VHud::CheckCompatibility() {
+    if (!IsSupportedGameVersion()) {
+        Error("This version of GTA: San Andreas is not supported by this plugin.");
+        return false;
+    }
+
+    return true;
+}
+
+bool VHud::OpenConsole() {
+    AllocConsole();
+    freopen("conin$", "r", stdin);
+    freopen("conout$", "w", stdout);
+    freopen("conout$", "w", stderr);
+
+    return true;
+}
+
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
+    if (reason == DLL_PROCESS_ATTACH) {
+        if (VHud::Init())
+            VHud::pThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)(void(__cdecl*)())VHud::Run, 0, 0, 0);
+    }
+    return TRUE;
 }

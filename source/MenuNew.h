@@ -324,6 +324,8 @@ public:
     // Graphics
     int screenType;
     int videoMode;
+    int screenWidth;
+    int screenHeight;
     int aspectRatio;
     bool mipMapping;
     int antiAliasing;
@@ -472,7 +474,6 @@ public:
     int nSlot;
 
 public:
-    CMenuNew();
     void Init();
     void Shutdown();
     void Clear();
@@ -516,7 +517,6 @@ public:
     void ProcessGoBack(int input);
     void Process();
     void ScanGalleryPictures(bool force);
-    unsigned int GetTimeInMillisecondsRight();
     unsigned char FadeIn(unsigned char alpha);
     void ProcessTabStuff();
     void DoSettingsBeforeStartingAGame(bool load, int slot = -1);
@@ -524,6 +524,7 @@ public:
     bool ProcessMenuToGameSwitch(bool force);
     void ProcessMessagesStuff(int enter, int esc, int space, int input);
     void ProcessAlertStuff();
+    int ResToIndex(int w, int h);
     char** GetVideoModeList();
     void ProcessEntryStuff(int enter, int input);
     void RetuneRadio(char id);
@@ -574,6 +575,9 @@ public:
     static void PassSettingsToCurrentGame(const CMenuSettings* s);
     void FindOutUsedMemory();
     void ChangeVideoMode(int mode, int msaa);
+    void GetWindowSize(int* w, int* h);
+    void ChangeVideoModeWindowed(int mode, int msaa);
+    void ProcessFullscreenToggle();
     void ApplyGraphicsChanges();
     void ApplyChanges();
     void RestorePreviousSettings();

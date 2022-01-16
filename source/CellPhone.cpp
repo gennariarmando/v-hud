@@ -57,9 +57,9 @@ const char* CellPhoneSharedFileNames[] = {
     "cellphone_shared_sign",
 };
 
-CCellPhone::CCellPhone() {
+static LateStaticInit InstallHooks([]() {
 
-}
+});
 
 void CCellPhone::Init() {
     if (bInitialised)
@@ -286,7 +286,7 @@ void CCellPhone::ProcessPhoneApp() {
 
     switch (Apps[nCurrentItem].type) {
     case CELLPHONE_APP_QUICKSAVE:
-        if (SAMP)
+        if (VHud::bSAMP)
             return;
 
         if (playa->m_nPedFlags.bInVehicle) {

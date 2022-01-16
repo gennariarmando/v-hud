@@ -20,7 +20,7 @@ project "v-hud"
 		"$(PLUGIN_SDK_DIR)/plugin_sa/game_sa/",
 		"vendor/pugixml/src",
 		"$(DXSDK_DIR)/Include/",
-		"vendor/ModuleList",
+		"vendor/ModUtils",
 		"vendor/bass"
 	}
 	

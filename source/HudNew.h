@@ -138,7 +138,6 @@ public:
     static int nTimersCount;
 
 public:
-    CHudNew();
     static void Init();
     static void ReInit();
     static void Shutdown();

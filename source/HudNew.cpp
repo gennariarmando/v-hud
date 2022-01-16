@@ -90,11 +90,11 @@ int CHudNew::nTimersCount;
 
 void* simple_mask_fxc;
 
-CHudNew::CHudNew() {
+static LateStaticInit InstallHooks([]() {
     patch::PutRetn(0x58FAE0); // CHud::Draw
     patch::PutRetn(0x58D490); // CHud::DrawAfterFade
-    patch::Set(0x53E4FA, 5); // CAudioEngine::DisplayRadioStationName
-    patch::Nop(0x53E202, 17); // CPlayerPed::DrawTriangleForMouseRecruitPed
+    patch::Nop(0x53E4F5, 10); // CAudioEngine::DisplayRadioStationName
+    patch::PutRetn(0x60BA80); // CPlayerPed::DrawTriangleForMouseRecruitPed
 
     // No sniper/rocket borders.
     patch::Nop(0x53E4ED, 5);
@@ -126,7 +126,7 @@ CHudNew::CHudNew() {
     patch::Nop(0x69F203, 5);
     patch::Nop(0x69F2D3, 5);
     patch::Nop(0x69F394, 5);
-}
+});
 
 void CHudNew::Init() {
     if (bInitialised)
@@ -741,7 +741,7 @@ void CHudNew::DrawMoneyCounter() {
     CFontNew::SetWrapX(SCREEN_COORD(640.0f));
     CFontNew::SetFontStyle(CFontNew::FONT_3);
     CFontNew::SetDropShadow(0.0f);
-    CFontNew::SetOutline(SCREEN_COORD(2.0f));
+    CFontNew::SetOutline(SCREEN_MULTIPLIER(2.0f));
     CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
     CFontNew::SetColor(GET_SETTING(HUD_CASH).col);
     CFontNew::Details.color.a = nMoneyFadeAlpha;
@@ -838,7 +838,7 @@ void CHudNew::DrawAmmo() {
     CFontNew::SetFontStyle(CFontNew::FONT_3);
     CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
     CFontNew::SetDropShadow(0.0f);
-    CFontNew::SetOutline(SCREEN_COORD(2.0f));
+    CFontNew::SetOutline(SCREEN_MULTIPLIER(2.0f));
     CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_AMMO).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_AMMO).h));
 
     CFontNew::SetDropColor(CRGBA(0, 0, 0, nAmmoFadeAlpha));
@@ -1328,7 +1328,7 @@ void CHudNew::DrawVehicleName() {
                 CFontNew::SetWrapX(SCREEN_COORD(640.0f));
                 CFontNew::SetFontStyle(CFontNew::FONT_2);
                 CFontNew::SetOutline(0.0f);
-                CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
+                CFontNew::SetDropShadow(SCREEN_MULTIPLIER(2.0f));
                 CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
 
                 CRGBA col = GET_SETTING(HUD_VEHICLE_NAME).col;
@@ -1479,7 +1479,7 @@ void CHudNew::DrawSubtitles() {
         CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
         CFontNew::SetWrapX(SCREEN_COORD(940.0f));
         CFontNew::SetFontStyle(CFontNew::FONT_1);
-        CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
+        CFontNew::SetDropShadow(SCREEN_MULTIPLIER(2.0f));
         CFontNew::SetOutline(0.0f);
         CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
         CFontNew::SetColor(GET_SETTING(HUD_SUBTITLES).col);
@@ -1875,7 +1875,7 @@ void CHudNew::DrawZoneName() {
             CFontNew::SetWrapX(SCREEN_COORD(640.0f));
             CFontNew::SetFontStyle(CFontNew::FONT_2);
             CFontNew::SetOutline(0.0f);
-            CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
+            CFontNew::SetDropShadow(SCREEN_MULTIPLIER(2.0f));
             CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
 
             CRGBA col = GET_SETTING(HUD_ZONE_NAME).col;
@@ -1930,7 +1930,7 @@ void CHudNew::DrawLevelName() {
         CFontNew::SetWrapX(SCREEN_COORD(640.0f));
         CFontNew::SetFontStyle(CFontNew::FONT_2);
         CFontNew::SetOutline(0.0f);
-        CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
+        CFontNew::SetDropShadow(SCREEN_MULTIPLIER(2.0f));
         CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
 
         CRGBA col = GET_SETTING(HUD_LEVEL_NAME).col;
@@ -2057,7 +2057,7 @@ void CHudNew::DrawMissionTitle() {
         CFontNew::SetWrapX(SCREEN_COORD(640.0f));
         CFontNew::SetFontStyle(CFontNew::FONT_2);
         CFontNew::SetOutline(0.0f);
-        CFontNew::SetDropShadow(SCREEN_COORD(2.0f));
+        CFontNew::SetDropShadow(SCREEN_MULTIPLIER(2.0f));
         CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
 
         CRGBA col = HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255);

@@ -57,13 +57,13 @@ float CWeaponSelector::fStatsDiff[4];
 int CWeaponSelector::nWeaponExtraFadeAlpha;
 CWeaponCrosshair CWeaponSelector::nCrosshairs[1024];
 
-CWeaponSelector::CWeaponSelector() {
+static LateStaticInit InstallHooks([]() {
     // Disable weapon cycle CPlayerPed::ProcessPlayerWeaponSwitch
     patch::Set<BYTE>(0x60D8C6, 0x90);
     patch::Set<BYTE>(0x60D8C7, 0xE9);
     patch::Set<BYTE>(0x60DA85, 0x90);
     patch::Set<BYTE>(0x60DA86, 0xE9);
-}
+});
 
 char* WheelFileNames[] = {
     "wheel_part_active",
@@ -288,6 +288,8 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
         && !playa->m_nPedFlags.bFiringWeapon
         && !playa->m_nPedFlags.bIsAimingGun
         && !playa->m_pPlayerData->m_bInVehicleDontAllowWeaponChange
+        && !playa->m_pPlayerData->m_bStoppedMoving
+        && !playa->m_pPlayerData->m_bHaveTargetSelected
         && !CDarkel::FrenzyOnGoing()
         && !playa->m_nPhysicalFlags.bAttachedToEntity
         && !playa->m_pIntelligence->GetTaskJetPack()
@@ -642,7 +644,7 @@ void CWeaponSelector::OpenWeaponWheel(bool slow) {
         if (bSlowCycle) {
             DisableCameraMovement();
 
-            if (!SAMP)
+            if (!VHud::bSAMP)
                 CTimer::ms_fTimeScale = 0.25f;
 
             Audio.PlayChunk(CHUNK_WHEEL_OPEN_CLOSE, 1.0f);
@@ -915,7 +917,7 @@ void CWeaponSelector::DrawWheel() {
                     CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
                     CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
                     CFontNew::SetDropShadow(0.0f);
-                    CFontNew::SetOutline(SCREEN_COORD(1.5f));
+                    CFontNew::SetOutline(SCREEN_MULTIPLIER(1.5f));
                     CFontNew::SetScale(SCREEN_MULTIPLIER(0.58f), SCREEN_MULTIPLIER(1.30f));
 
                     if (str_ammo && str_clip) {
@@ -954,7 +956,7 @@ void CWeaponSelector::DrawWheel() {
             CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
             CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
             CFontNew::SetDropShadow(0.0f);
-            CFontNew::SetOutline(SCREEN_COORD(1.5f));
+            CFontNew::SetOutline(SCREEN_MULTIPLIER(1.5f));
             CFontNew::SetScale(SCREEN_MULTIPLIER(0.58f), SCREEN_MULTIPLIER(1.30f));
 
             if (selected_wep && nSelectedWeapon[nSelectedSlot] != -1) {

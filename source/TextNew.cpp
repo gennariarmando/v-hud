@@ -10,8 +10,8 @@ using namespace plugin;
 
 CTextNew TextNew;
 
-CTextNew::CTextNew() {
-    ReadLanguagesFromFile();
+static LateStaticInit InstallHooks([]() {
+    TextNew.ReadLanguagesFromFile();
 
     CdeclEvent<AddressList<0x6A03E3, H_CALL>, PRIORITY_AFTER, ArgPickNone, void(const char*)> OnTextLoad;
 
@@ -31,7 +31,7 @@ CTextNew::CTextNew() {
     };
     patch::RedirectJump(0x6A0228, (int(__cdecl*)(const char*, const char*))openFile);
     patch::RedirectJump(0x69FD5A, (int(__cdecl*)(const char*, const char*))openFile);
-}
+});
 
 void CTextNew::ReadLanguagesFromFile() {
     std::ifstream file(PLUGIN_PATH("VHud\\data\\languages.dat"));

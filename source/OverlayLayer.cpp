@@ -32,7 +32,7 @@ RwRaster* frameBuffer;
 void* im2dPixelShader = NULL;
 void _rwSetPixelShader(void* ps) { im2dPixelShader = ps; }
 
-COverlayLayer::COverlayLayer() {
+static LateStaticInit InstallHooks([]() {
     CdeclEvent<AddressList<0x7FB830, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void(int, int)> OnSetPixelShader;
 
     OnSetPixelShader += [] {
@@ -43,10 +43,10 @@ COverlayLayer::COverlayLayer() {
     CdeclEvent<AddressList<0x53EAD3, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> OnRenderEffects;
 
     OnRenderEffects += [] {
-        RenderEffects();
+        COverlayLayer::RenderEffects();
         COverlayLayer::SetEffect(EFFECT_NONE);
     };
-}
+});
 
 void COverlayLayer::Init() {
     if (bInitialised)

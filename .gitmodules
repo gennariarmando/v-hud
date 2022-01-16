@@ -1,3 +1,6 @@
 [submodule "vendor/pugixml"]
 	path = vendor/pugixml
 	url = https://github.com/zeux/pugixml
+[submodule "vendor/ModUtils"]
+	path = vendor/ModUtils
+	url = https://github.com/CookiePLMonster/ModUtils

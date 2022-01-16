@@ -79,8 +79,6 @@ public:
     static CWeaponCrosshair nCrosshairs[1024];
 
 public:
-    CWeaponSelector();
-
     static CWeaponWheel* GetActiveWeapon();
 
     static void Init();

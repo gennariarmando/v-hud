@@ -18,13 +18,13 @@ using namespace plugin;
 
 C3dMarkersNew MarkersNew;
 
-C3dMarkersNew::C3dMarkersNew() {
+static LateStaticInit InstallHooks([]() {
     auto placeMarker = [](unsigned int id, unsigned short type, CVector& posn, float size, unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha, unsigned short pulsePeriod, float pulseFraction, short rotateRate, float nrm_x, float nrm_y, float nrm_z, bool zCheck) {
         CRGBA col = { red, green, blue, alpha };
         if (type == MARKER3D_CYLINDER) {
             col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, alpha);
             size = 0.8f;
-        }    
+        }
         C3dMarkers::PlaceMarker(id, type, posn, size, col.r, col.g, col.b, col.a, pulsePeriod, pulseFraction, rotateRate, nrm_x, nrm_y, nrm_z, zCheck);
     };
     patch::RedirectCall(0x725BF0, (void(__cdecl*)(unsigned int, unsigned short, CVector&, float, unsigned char red, unsigned char, unsigned char, unsigned char, unsigned short, float, short, float, float, float, bool))placeMarker);
@@ -39,8 +39,8 @@ C3dMarkersNew::C3dMarkersNew() {
         MarkersNew.Markers[MarkersNew.MarkersCount].col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, alpha);
         MarkersNew.MarkersCount++;
     };
-    patch::RedirectCall(0x440F4E, (void(__cdecl*)(unsigned int, CVector &, float, unsigned char, unsigned char, unsigned char, unsigned char, int, unsigned short, float, float, bool))placeEntryExitMarker);
-}
+    patch::RedirectCall(0x440F4E, (void(__cdecl*)(unsigned int, CVector&, float, unsigned char, unsigned char, unsigned char, unsigned char, int, unsigned short, float, float, bool))placeEntryExitMarker);
+});
 
 void C3dMarkersNew::Init() {
     if (bInitialised)

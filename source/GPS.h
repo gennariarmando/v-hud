@@ -32,7 +32,6 @@ public:
     static CSprite2d pathDirSprite;
 
 public:
-    CGPS();
     static void Init();
     static void Shutdown();
     static void DrawDistanceFromWaypoint();

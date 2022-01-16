@@ -13,10 +13,9 @@ public:
     static int m_nCurrentRadioId;
     static int m_nPreviousRadioId;
     static bool m_bChangeRadioStation;
+    static bool m_bJustEnteredAVehicle;
 
 public:
-    CRadioHud();
-
     static void Init();
     static void Clear();
     static bool CanRetuneRadioStation();
