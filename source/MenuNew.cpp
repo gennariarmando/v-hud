@@ -4672,7 +4672,7 @@ void CMenuNew::ProcessFullscreenToggle() {
 
     if (((GetKeyState(VK_MENU) & 0x8000) && (GetKeyState(VK_RETURN) & 0x8000))) {
         TempSettings.screenType = TempSettings.screenType == false;
-        needsToChangeMode = false;
+        ApplyGraphicsChanges();
         return;
     }
 
