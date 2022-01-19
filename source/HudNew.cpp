@@ -1826,7 +1826,7 @@ void CHudNew::DrawSuccessFailedMessage() {
         m_bShowSuccessFailed = true;
     }
 
-    if (m_bShowSuccessFailed) {
+    if (m_bShowSuccessFailed && m_SuccessFailedText[0]) {
         if (slide) {
             if (m_nBigMessageTime == -1)
                 m_nBigMessageTime = CTimer::m_snTimeInMilliseconds + 1500;
