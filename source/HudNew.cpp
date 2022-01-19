@@ -1718,6 +1718,8 @@ void CHudNew::DrawOddJobMessage() {
     if (m_bShowSuccessFailed)
         return;
 
+    SetHUDSafeZone(false);
+
     m_nMiddleTopMessageIdToSet = 0;
     for (int i = 3; i < 6; i++) {
         if (m_BigMessage[i][0]) {
@@ -1773,9 +1775,9 @@ void CHudNew::DrawOddJobMessage() {
         float left = HUD_X(0.0f);
         float right = HUD_RIGHT(0.0f);
         float top1 = HUD_Y(-256.0f) + SCREEN_COORD_CENTER_Y - HUD_Y(101.0f);
-        float bottom1 = HUD_Y(-256.0f) + SCREEN_COORD_CENTER_Y + HUD_Y(40.0f);
+        float bottom1 = HUD_Y(-256.0f) + SCREEN_COORD_CENTER_Y + HUD_Y(-60.0f);
         float top2 = HUD_Y(-256.0f) + SCREEN_COORD_CENTER_Y - HUD_Y(143.0f);
-        float bottom2 = HUD_Y(-256.0f) + SCREEN_COORD_CENTER_Y + HUD_Y(85.0f);
+        float bottom2 = HUD_Y(-256.0f) + SCREEN_COORD_CENTER_Y + HUD_Y(-15.0f);
 
         int n = CFontNew::GetNumberLines(false, SCREEN_COORD_CENTER_LEFT(0.0f), SCREEN_COORD_CENTER_DOWN(-332.0f), m_MiddleTopMessage[m_nCurrentMiddleTopMessage]);
 
@@ -1790,6 +1792,8 @@ void CHudNew::DrawOddJobMessage() {
             m_MiddleTopMessage[m_nCurrentMiddleTopMessage][0] = '\0';
         }
     }
+
+    SetHUDSafeZone(true);
 }
 
 void CHudNew::DrawSuccessFailedMessage() {
