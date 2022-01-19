@@ -124,6 +124,14 @@ public:
 
     static bool m_bShowWastedBusted;
     static bool m_bShowSuccessFailed;
+    static int m_nBigMessageTime;
+    static float m_fBigMessageOffset;
+    static char* m_SuccessFailedText[2];
+    static int m_nMiddleTopMessageTime;
+    static char m_MiddleTopMessage[16][128];
+    static int m_nCurrentMiddleTopMessage;
+    static bool m_bShowMiddleTopMessage;
+    static int m_nMiddleTopMessageIdToSet;
 
     static char m_CurrentLevelName[128];
     static int m_nLevelNameState;
@@ -165,7 +173,7 @@ public:
     static void DrawHelpText();
     static void PrintSmallHelpText(int alpha);
     static void PrintBigHelpText(int alpha);
-    static void DrawOddJobMessage(bool priority);
+    static void DrawOddJobMessage();
     static void DrawSuccessFailedMessage();
     static void DrawZoneName();
 

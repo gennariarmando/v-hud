@@ -106,6 +106,7 @@ public:
     char action[128];
     int key;
     int button;
+    int button2;
 };
 
 class CPadNew : public CPad {

@@ -231,8 +231,6 @@ void CMenuNew::Init() {
 
     ScanGalleryPictures(true);
 
-    nOpenCloseWaitTime = CTimer::m_snTimeInMillisecondsPauseMode + 500;
-
     bInitialised = true;
 }
 
@@ -305,8 +303,6 @@ void CMenuNew::Clear() {
 
     nLoadingTime = 0;
 
-    nOpenCloseWaitTime = 0;
-
     nUsedVidMemory = 0;
 
     unsigned int mem;
@@ -324,6 +320,7 @@ void CMenuNew::Clear() {
     bShowMenuBar = true;
     bShowMenu = true;
     bNoTransparentBackg = false;
+    bStylizedBackground = false;
     bLandingPage = false;
     bInvertInput = false;
 
@@ -843,12 +840,7 @@ int CMenuNew::GetEntryBackHeight() {
     return GetLastMenuScreenEntry() - 1;
 }
 
-void CMenuNew::OpenCloseMenu(bool on, bool force) {
-    if (!force) {
-        if (nOpenCloseWaitTime > CTimer::m_snTimeInMillisecondsPauseMode || IsLoading())
-            return;
-    }
-
+void CMenuNew::OpenCloseMenu(bool on) {
     CPadNew* pad = CPadNew::GetPad(0);
     if (on) {
         if (VHud::bSAMP) {
@@ -876,18 +868,14 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
             CTimer::EndUserPause();
 
         pad->Clear(1, 1);
-        //pad->ClearKeyBoardHistory();
         pad->ClearMouseHistory();
         CurrentPlayerControls = PreviousPlayerControls;
         pad->DisablePlayerControls = PreviousPlayerControls;
 
         Clear();
-        SetInputTypeAndClear(MENUINPUT_BAR);
-        bRequestScreenUpdate = true;
     }
 
     nLoadingTime = CTimer::m_snTimeInMillisecondsPauseMode + MENU_SCREEN_CHANGE_WAIT_TIME;
-    nOpenCloseWaitTime = CTimer::m_snTimeInMillisecondsPauseMode + MENU_OPEN_CLOSE_WAIT_TIME;
     bMenuActive = on;
 
     CenterCursor();
@@ -895,8 +883,7 @@ void CMenuNew::OpenCloseMenu(bool on, bool force) {
 
 void CMenuNew::OpenMenuScreen(int screen) {
     CTimer::StartUserPause();
-    nLoadingTime = CTimer::m_snTimeInMillisecondsPauseMode;
-    nOpenCloseWaitTime = CTimer::m_snTimeInMillisecondsPauseMode;
+    nLoadingTime = 0;
     bMenuActive = true;
     bRequestScreenUpdate = true;
 
@@ -1002,13 +989,16 @@ void CMenuNew::ProcessGoThrough(int input) {
 }
 
 void CMenuNew::ProcessGoBack(int input) {
+    if (IsLoading())
+        return;
+
     if (input == -99)
         input = nCurrentInputType;
 
     switch (input) {
     case MENUINPUT_BAR:
         Audio.PlayChunk(CHUNK_MENU_BACK, 1.0f);
-        OpenCloseMenu(false, false);
+        OpenCloseMenu(false);
         break;
     case MENUINPUT_TAB:
         if (nCurrentScreen != MENUSCREEN_LANDING && nCurrentScreen != MENUSCREEN_LOADING) {
@@ -1135,41 +1125,39 @@ void CMenuNew::Process() {
 
     bool OpenClose = pad->GetOpenCloseMenuJustDown();
 
-    if (nOpenCloseWaitTime < CTimer::m_snTimeInMillisecondsPauseMode) {
-        Up = pad->GetMenuUpJustDown();
-        Down = pad->GetMenuDownJustDown();
-        Left = pad->GetMenuLeftJustDown();
-        Right = pad->GetMenuRightJustDown();
+    Up = pad->GetMenuUpJustDown();
+    Down = pad->GetMenuDownJustDown();
+    Left = pad->GetMenuLeftJustDown();
+    Right = pad->GetMenuRightJustDown();
 
-        UpPressed = pad->GetMenuUp();
-        DownPressed = pad->GetMenuDown();
-        LeftPressed = pad->GetMenuLeft();
-        RightPressed = pad->GetMenuRight();
+    UpPressed = pad->GetMenuUp();
+    DownPressed = pad->GetMenuDown();
+    LeftPressed = pad->GetMenuLeft();
+    RightPressed = pad->GetMenuRight();
 
-        Enter = pad->GetMenuEnterJustDown();
-        Back = pad->GetMenuBackJustDown() || (pad->GetRightMouseJustDown() && nCurrentInputType != MENUINPUT_BAR);
-        Space = pad->GetMenuSpaceJustDown();
-        WheelUp = pad->GetMenuMapZoomInJustDown();
-        WheelDown = pad->GetMenuMapZoomOutJustDown();
-        LeftMouseDown = pad->GetLeftMouseDown();
-        LeftMouseJustDown = pad->GetLeftMouseJustDown();
-        LeftMouseJustUp = pad->GetLeftMouseJustUp();
-        MiddleMouseJustDown = pad->GetMiddleMouseJustDown();
-        LeftMouseDoubleClickJustDown = pad->GetLeftMouseDoubleClickJustDown();
+    Enter = pad->GetMenuEnterJustDown();
+    Back = pad->GetMenuBackJustDown() || (pad->GetRightMouseJustDown() && nCurrentInputType != MENUINPUT_BAR);
+    Space = pad->GetMenuSpaceJustDown();
+    WheelUp = pad->GetMenuMapZoomInJustDown();
+    WheelDown = pad->GetMenuMapZoomOutJustDown();
+    LeftMouseDown = pad->GetLeftMouseDown();
+    LeftMouseJustDown = pad->GetLeftMouseJustDown();
+    LeftMouseJustUp = pad->GetLeftMouseJustUp();
+    MiddleMouseJustDown = pad->GetMiddleMouseJustDown();
+    LeftMouseDoubleClickJustDown = pad->GetLeftMouseDoubleClickJustDown();
 
-        MapZoomIn = pad->GetMenuMapZoomIn();
-        MapZoomOut = pad->GetMenuMapZoomOut();
-        ShowHideMapLegend = pad->GetMenuShowHideLegendJustDown();
+    MapZoomIn = pad->GetMenuMapZoomIn();
+    MapZoomOut = pad->GetMenuMapZoomOut();
+    ShowHideMapLegend = pad->GetMenuShowHideLegendJustDown();
 
-        if (bInvertInput) {
-            if (nCurrentScreen == MENUSCREEN_GALLERY) {
-                Up = Left;
-                Down = Right;
-            }
-            else {
-                Up = Right;
-                Down = Left;
-            }
+    if (bInvertInput) {
+        if (nCurrentScreen == MENUSCREEN_GALLERY) {
+            Up = Left;
+            Down = Right;
+        }
+        else {
+            Up = Right;
+            Down = Left;
         }
     }
 
@@ -1490,7 +1478,7 @@ void CMenuNew::Process() {
                     const char* charMap[] = {
                         "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
                         "A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
-                        "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T",
+                        "K", "L", "M", "N", "O", /*"P",*/ "Q", "R", "S", "T",
                         "U", "V", "W", "X", "Y", "Z", ".", ",", ":", ";",
                         " ", "'", "{", "}", "[", "]", "-", "=", "_", "+"
                         "`",
@@ -1600,16 +1588,16 @@ void CMenuNew::Process() {
             nLoadingTime = CTimer::m_snTimeInMillisecondsPauseMode;
 
             if (bRequestMenuClose) {
-                OpenCloseMenu(false, true);
+                OpenCloseMenu(false);
                 bRequestMenuClose = false;
+                return;
             }
         }
     }
     else {
-        if (TheCamera.GetScreenFadeStatus() != 2 
-            && COverlayLayer::GetCurrentEffect() == EFFECT_NONE) {
+        if (COverlayLayer::GetCurrentEffect() == EFFECT_NONE) {
             if (OpenClose) {
-                OpenCloseMenu(true, false);
+                OpenCloseMenu(true);
                 return;
             }
         }
@@ -2340,7 +2328,7 @@ void CMenuNew::Draw() {
     CFontNew::SetWrapX(SCREEN_WIDTH);
 
     // Set
-    if (bNoTransparentBackg) {
+    if (bNoTransparentBackg || TheCamera.GetScreenFadeStatus() == 2) {
         DrawBackground();
     }
     else {
@@ -2718,7 +2706,6 @@ bool CMenuNew::IsLoading() {
     if (nLoadingTime > CTimer::m_snTimeInMillisecondsPauseMode)
         return true;
 
-    nLoadingTime = CTimer::m_snTimeInMillisecondsPauseMode;
     return false;
 }
 
@@ -4672,6 +4659,7 @@ void CMenuNew::ProcessFullscreenToggle() {
 
     if (((GetKeyState(VK_MENU) & 0x8000) && (GetKeyState(VK_RETURN) & 0x8000))) {
         TempSettings.screenType = TempSettings.screenType == false;
+        Settings.screenType = Settings.screenType == false;
         ApplyGraphicsChanges();
         return;
     }

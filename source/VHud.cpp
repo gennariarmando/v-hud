@@ -132,7 +132,7 @@ void VHud::Run() {
                 case 7:
                     if (MenuNew.ProcessMenuToGameSwitch(false)) {
                         gGameState = 8;
-                        MenuNew.OpenCloseMenu(false, true);
+                        MenuNew.OpenCloseMenu(false);
                     }
                     break;
                 case 8:
@@ -141,7 +141,7 @@ void VHud::Run() {
                     break;
                 case 9:
                     if (MenuNew.ProcessMenuToGameSwitch(true)) {
-                        MenuNew.OpenCloseMenu(false, true);
+                        MenuNew.OpenCloseMenu(false);
                     }
                     break;
                 }

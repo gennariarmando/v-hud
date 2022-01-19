@@ -274,7 +274,6 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
 
     return
         playa
-        && !playa->m_pVehicle
         && !playa->m_nPedFlags.bInVehicle
         && !playa->PedIsInvolvedInConversation()
         && !playa->m_nPedFlags.bDontRender
@@ -289,6 +288,7 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
         && !playa->m_pPlayerData->m_bInVehicleDontAllowWeaponChange
         && !playa->m_pPlayerData->m_bHaveTargetSelected
         && !CDarkel::FrenzyOnGoing()
+        && !playa->m_pAttachedTo
         && !playa->m_nPhysicalFlags.bAttachedToEntity
         && !playa->m_pIntelligence->GetTaskJetPack()
         && !playa->m_pIntelligence->GetTaskClimb()
@@ -296,7 +296,6 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
         && !playa->m_pTargetedObject
         && !playa->m_nPedFlags.bIsTalking
         && !playa->m_pPlayerData->m_bDontAllowWeaponChange
-        && !playa->m_nPedFlags.bFallenDown
         && !playa->m_pIntelligence->GetUsingParachute()
         && !playa->m_pIntelligence->IsInACarOrEnteringOne()
         && !CHud::bDrawingVitalStats
@@ -307,13 +306,26 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
         && !playa->m_nPedFlags.bStuckUnderCar
         && !playa->m_nPedFlags.bUsingMobilePhone
         && !CPadNew::GetPad(0)->bDisablePlayerCycleWeapon
-        && playa->IsPedInControl();
+        && playa->IsPedInControl()
+        && mode != MODE_AIMWEAPON
+        && mode != MODE_AIMWEAPON_ATTACHED
+        && mode != MODE_ROCKETLAUNCHER
+        && mode != MODE_ROCKETLAUNCHER_HS
+        && mode != MODE_ROCKETLAUNCHER_RUNABOUT_HS
+        && mode != MODE_SNIPER
+        && mode != MODE_SNIPER_RUNABOUT
+        && mode != MODE_CAMERA
+        && mode != MODE_SYPHON
+        && mode != MODE_1STPERSON
+        && mode != MODE_AIMWEAPON_FROMCAR
+        && mode != MODE_AIMWEAPON_ATTACHED
+        && mode != MODE_TWOPLAYER_IN_CAR_AND_SHOOTING;
 }
 
 void CWeaponSelector::ProcessWeaponSelector() {
     UpdateCursorPos();
 
-    if (IsAbleToSwitchWeapon() && !CHudNew::IsAimingWeapon()) {
+    if (IsAbleToSwitchWeapon()) {
         if (nTimeSinceClosed < CTimer::m_snTimeInMilliseconds) {
             if (!bShowWeaponWheel && CPadNew::GetPad(0)->GetShowWeaponWheel(350)) {
                 OpenWeaponWheel(true);

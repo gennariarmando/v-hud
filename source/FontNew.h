@@ -240,7 +240,7 @@ public:
 	static bool ParseGInputActions(const char* s);
 	static void DrawButton(float& x, float y, CSprite2d* sprite);
 	static int PrintString(float x, float y, const char* s);
-	static void PrintString(bool print, float x, float y, const char* start, const char* end, float spwidth);
+	static void PrintString(bool print, float& x, float y, const char* start, const char* end, float spwidth);
 	static float PrintChar(float& x, float y, char c);
 	static float DrawChar(bool print, bool calc, float x, float y, char c, int style, CRGBA const& col);
 	static void PrintStringFromBottom(float x, float y, const char* s);

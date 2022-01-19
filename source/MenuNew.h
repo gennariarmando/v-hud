@@ -1,6 +1,5 @@
 #pragma once
 #define MENUSETTINGS_VERSION 1.0
-#define MENU_OPEN_CLOSE_WAIT_TIME 500
 #define MENU_SCREEN_CHANGE_WAIT_TIME 250
 
 #define MENU_MAP_ZOOM_MIN (1.1f)
@@ -401,8 +400,6 @@ public:
     float fScreenAlpha;
     unsigned int nLoadingTime;
 
-    unsigned int nOpenCloseWaitTime;
-
     unsigned int nUsedVidMemory;
     unsigned int nFreeVidMemory;
 
@@ -508,7 +505,7 @@ public:
     bool HasToContinueLoop(int i);
     bool HasToContinueLoopInverse(int i);
     int GetEntryBackHeight();
-    void OpenCloseMenu(bool on, bool force);
+    void OpenCloseMenu(bool on);
     void OpenMenuScreen(int screen);
     void CenterCursor();
     void DoMapZoomInOut(bool out);
@@ -585,3 +582,5 @@ public:
 };
 
 extern CMenuNew MenuNew;
+extern char* gGxtString;
+extern char* gGxtString2;

@@ -76,6 +76,14 @@ bool CHudNew::m_bShowMissionText;
 char CHudNew::m_LastMissionName[128];
 bool CHudNew::m_bShowWastedBusted;
 bool CHudNew::m_bShowSuccessFailed;
+int CHudNew::m_nBigMessageTime;
+float CHudNew::m_fBigMessageOffset;
+char* CHudNew::m_SuccessFailedText[2];
+int CHudNew::m_nMiddleTopMessageTime;
+char CHudNew::m_MiddleTopMessage[16][128];
+int CHudNew::m_nCurrentMiddleTopMessage;
+bool CHudNew::m_bShowMiddleTopMessage;
+int CHudNew::m_nMiddleTopMessageIdToSet;
 
 char CHudNew::m_CurrentLevelName[128];
 int CHudNew::m_nLevelNameState;
@@ -103,6 +111,8 @@ static LateStaticInit InstallHooks([]() {
     patch::Nop(0x53E3F9, 5);
     patch::Nop(0x53E398, 5);
 
+    patch::Nop(0x53E522, 5); // CGarages::PrintMessages
+
     CdeclEvent<AddressList<0x705310, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> onTakingScreenShot;
     onTakingScreenShot += [] {
         CHudNew::TakePhotograph();
@@ -112,6 +122,8 @@ static LateStaticInit InstallHooks([]() {
     patch::PutRetn(0x742CF0);
 
     // CMessages::InsertPlayerControlKeysInString
+
+    patch::Nop(0x479EB7, 5);
     patch::Nop(0x588C55, 5);
     patch::Nop(0x588EB3, 5);
     patch::Nop(0x69E3AB, 5);
@@ -212,6 +224,20 @@ void CHudNew::ReInit() {
 
     m_bShowWastedBusted = false;
     m_bShowSuccessFailed = false;
+    m_nBigMessageTime = -1;
+    m_fBigMessageOffset = 0.0f;
+    m_SuccessFailedText[0] = NULL;
+    m_SuccessFailedText[1] = NULL;
+
+    m_nMiddleTopMessageTime = 0;
+
+    for (int i = 0; i < 16; i++) {
+        m_MiddleTopMessage[i][0] = '\0';
+    }
+
+    m_nCurrentMiddleTopMessage = 0;
+    m_bShowMiddleTopMessage = false;
+    m_nMiddleTopMessageIdToSet = 0;
 
     m_bShowMissionText = false;
 
@@ -399,7 +425,7 @@ void CHudNew::Draw() {
         if (CTheScripts::bDrawSubtitlesBeforeFade)
             DrawSubtitles();
 
-        DrawOddJobMessage(1);
+        DrawOddJobMessage();
         DrawSuccessFailedMessage();
         DrawWastedBustedText();
 
@@ -1112,17 +1138,6 @@ void CHudNew::DrawStats() {
         CFontNew::SetOutline(0.0f);
         CFontNew::SetScale(SCREEN_MULTIPLIER(0.52f), SCREEN_MULTIPLIER(1.24f));
 
-        char* str[] = {
-            "STAT068", // Respect
-            "STAT022", // Stamina
-            "CURWSKL", // Weapon skill
-            "STAT023", // Muscle
-            "STAT021", // Fat
-            "STAT025", // Sex appeal
-            "STAT081", // Gambling
-            "STAT225", // Lung capacity
-        };
-
         int wepType = playa->m_aWeapons[playa->m_nActiveWeaponSlot].m_nType;
         if (wepType == WEAPON_TEC9) {
             wepType = WEAPON_MICRO_UZI;
@@ -1149,7 +1164,9 @@ void CHudNew::DrawStats() {
             DrawProgressBarWithSprite(StatsSprites[PLRSTAT_PROGRESS_BAR], HUD_RIGHT((x - 12.0f)), HUD_BOTTOM(spacing + (y - 34.0f)), SCREEN_COORD(164.0f), SCREEN_COORD(8.0f), CStats::GetStatValue(stat[i]) / 1000, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
             RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
 
-            CFontNew::PrintString(HUD_RIGHT(x - 12.0f), HUD_BOTTOM(spacing + ((y - 34.0f) + 28.0f)), TheText.Get(str[i]));
+            char buff[16];
+            sprintf(buff, "STAT_%d", i + 1);
+            CFontNew::PrintString(HUD_RIGHT(x - 12.0f), HUD_BOTTOM(spacing + ((y - 34.0f) + 28.0f)), TextNew.GetText(buff).text);
             spacing -= (34.0f + 8.0f);
         }
 
@@ -1697,59 +1714,127 @@ void CHudNew::PrintBigHelpText(int alpha) {
     CFontNew::PrintString(HUD_X(GET_SETTING(HUD_HELP_BOX_TEXT).x), HUD_Y(GET_SETTING(HUD_HELP_BOX_TEXT).y), CHud::m_pHelpMessageToPrint);
 }
 
-void CHudNew::DrawOddJobMessage(bool priority) {
-    CHud::DrawOddJobMessage(priority);
+void CHudNew::DrawOddJobMessage() {
+    if (m_bShowSuccessFailed)
+        return;
+
+    m_nMiddleTopMessageIdToSet = 0;
+    for (int i = 3; i < 6; i++) {
+        if (m_BigMessage[i][0]) {
+            strcpy(m_MiddleTopMessage[m_nMiddleTopMessageIdToSet], m_BigMessage[i]);
+            m_BigMessage[i][0] = '\0';
+            m_nMiddleTopMessageIdToSet++;
+        }
+    }
+
+    if (CGarages::MessageIDString[0]) {
+        if (CGarages::MessageNumberInString2 >= 0) {
+            CMessages::InsertNumberInString(TheText.Get(CGarages::MessageIDString), CGarages::MessageNumberInString, CGarages::MessageNumberInString2, -1, -1, -1, -1, gGxtString);
+            strcpy(m_MiddleTopMessage[m_nMiddleTopMessageIdToSet], gGxtString);
+            m_nMiddleTopMessageIdToSet++;
+        }
+        else if (CGarages::MessageNumberInString >= 0) {
+            CMessages::InsertNumberInString(TheText.Get(CGarages::MessageIDString), CGarages::MessageNumberInString, -1, -1, -1, -1, -1, gGxtString);
+            strcpy(m_MiddleTopMessage[m_nMiddleTopMessageIdToSet], gGxtString);
+            m_nMiddleTopMessageIdToSet++;
+        }
+        else {
+            strcpy(m_MiddleTopMessage[m_nMiddleTopMessageIdToSet], TheText.Get(CGarages::MessageIDString));
+            m_nMiddleTopMessageIdToSet++;
+        }
+
+        CGarages::MessageIDString[0] = '\0';
+    }
+
+    if (!m_bShowMiddleTopMessage) {
+        for (int i = 0; i < 16; i++) {
+            if (m_MiddleTopMessage[i][0]) {
+                m_nCurrentMiddleTopMessage = i;
+                m_bShowMiddleTopMessage = true;
+                m_nMiddleTopMessageTime = CTimer::m_snTimeInMilliseconds + 3000;
+                break;
+            }
+        }
+    }
+
+    if (m_bShowMiddleTopMessage && m_MiddleTopMessage[m_nCurrentMiddleTopMessage][0]) {
+        CFontNew::SetBackground(false);
+        CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+        CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
+        CFontNew::SetWrapX(SCREEN_COORD(1280.0f));
+        CFontNew::SetFontStyle(CFontNew::FONT_3);
+        CFontNew::SetDropShadow(0.0f);
+        CFontNew::SetOutline(0.0f);
+        CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+
+        CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 150));
+        CFontNew::SetScale(SCREEN_MULTIPLIER(1.8f), SCREEN_MULTIPLIER(3.4f));
+
+        float left = HUD_X(0.0f);
+        float right = HUD_RIGHT(0.0f);
+        float top1 = HUD_Y(-256.0f) + SCREEN_COORD_CENTER_Y - HUD_Y(101.0f);
+        float bottom1 = HUD_Y(-256.0f) + SCREEN_COORD_CENTER_Y + HUD_Y(40.0f);
+        float top2 = HUD_Y(-256.0f) + SCREEN_COORD_CENTER_Y - HUD_Y(143.0f);
+        float bottom2 = HUD_Y(-256.0f) + SCREEN_COORD_CENTER_Y + HUD_Y(85.0f);
+
+        int n = CFontNew::GetNumberLines(false, SCREEN_COORD_CENTER_LEFT(0.0f), SCREEN_COORD_CENTER_DOWN(-332.0f), m_MiddleTopMessage[m_nCurrentMiddleTopMessage]);
+
+        bottom1 += CFontNew::GetHeightScale(CFontNew::Details.scale.y) * (n);
+        bottom2 += CFontNew::GetHeightScale(CFontNew::Details.scale.y) * (n);
+
+        DrawSimpleRectGradCentered(left, top1, right, top2, left, bottom1, right, bottom2, CRGBA(0, 0, 0, 150));
+        CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(0.0f), SCREEN_COORD_CENTER_DOWN(-340.0f), m_MiddleTopMessage[m_nCurrentMiddleTopMessage]);
+
+        if (m_nMiddleTopMessageTime < CTimer::m_snTimeInMilliseconds) {
+            m_bShowMiddleTopMessage = false;
+            m_MiddleTopMessage[m_nCurrentMiddleTopMessage][0] = '\0';
+        }
+    }
 }
 
 void CHudNew::DrawSuccessFailedMessage() {
-    char* mainText = NULL;
-    char* bottomText = NULL;
-    static float offset = 0.0f;
-    static int time = -1;
     bool slide = false;
     CRGBA col;
 
     SetHUDSafeZone(false);
 
-    m_bShowSuccessFailed = true;
+    m_SuccessFailedText[0] = NULL;
+    m_SuccessFailedText[1] = NULL;
     if (CHud::m_BigMessage[0][0] && !strncmp(CHud::m_BigMessage[0], TheText.Get("M_PASS"), 5)) {
-        mainText = TextNew.GetText("M_PASS").text;
-        bottomText = m_LastMissionName;
+        m_SuccessFailedText[0] = TextNew.GetText("M_PASS").text;
+        m_SuccessFailedText[1] = m_LastMissionName;
         col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 150);
         slide = true;
+        m_bShowSuccessFailed = true;
     }
     else if (CHud::m_BigMessage[0][0] && !strcmp(CHud::m_BigMessage[0], TheText.Get("M_FAIL"))) {
-        mainText = TextNew.GetText("M_FAIL").text;
+        m_SuccessFailedText[0] = TextNew.GetText("M_FAIL").text;
 
-        switch (FindPlayerPed(-1)->m_nPedState) {
-            case PEDSTATE_DEAD:
-                bottomText = TheText.Get("DEAD");
-                break;
-            case PEDSTATE_ARRESTED:
-                bottomText = TheText.Get("BUSTED");
-                break;
-            default:
-                bottomText = "";
-                break;
+        switch (FindPlayerPed(0)->m_nPedState) {
+        case PEDSTATE_DEAD:
+            m_SuccessFailedText[1] = TextNew.GetText("WASTED").text;
+            break;
+        case PEDSTATE_ARRESTED:
+            m_SuccessFailedText[1] = TextNew.GetText("BUSTED").text;
+            break;
+        default:
+            m_SuccessFailedText[1] = "";
+            break;
         }
 
         col = HudColourNew.GetRGB(HUD_COLOUR_RED, 150);
+        m_bShowSuccessFailed = true;
     }
-    else {
-        offset = 0.0f;
-        time = -1;
-        m_bShowSuccessFailed = false;
-    }
-    
+
     if (m_bShowSuccessFailed) {
         if (slide) {
-            if (time == -1)
-                time = CTimer::m_snTimeInMilliseconds + 1500;
+            if (m_nBigMessageTime == -1)
+                m_nBigMessageTime = CTimer::m_snTimeInMilliseconds + 1500;
 
-            if (time < CTimer::m_snTimeInMilliseconds) {
-                time = 0;
-                if (offset > -256.0f)
-                    offset -= CTimer::ms_fTimeStep * 0.02f * 512.0f;
+            if (m_nBigMessageTime < CTimer::m_snTimeInMilliseconds) {
+                m_nBigMessageTime = 0;
+                if (m_fBigMessageOffset > -256.0f)
+                    m_fBigMessageOffset -= CTimer::ms_fTimeStep * 0.02f * 512.0f;
             }
         }
 
@@ -1767,14 +1852,15 @@ void CHudNew::DrawSuccessFailedMessage() {
 
         float left = HUD_X(0.0f);
         float right = HUD_RIGHT(0.0f);
-        float top1 = HUD_Y(offset) + SCREEN_COORD_CENTER_Y - HUD_Y(101.0f);
-        float bottom1 = HUD_Y(offset) + SCREEN_COORD_CENTER_Y + HUD_Y(72.0f);
-        float top2 = HUD_Y(offset) + SCREEN_COORD_CENTER_Y - HUD_Y(143.0f);
-        float bottom2 = HUD_Y(offset) + SCREEN_COORD_CENTER_Y + HUD_Y(117.0f);
+        float top1 = HUD_Y(m_fBigMessageOffset) + SCREEN_COORD_CENTER_Y - HUD_Y(101.0f);
+        float bottom1 = HUD_Y(m_fBigMessageOffset) + SCREEN_COORD_CENTER_Y + HUD_Y(72.0f);
+        float top2 = HUD_Y(m_fBigMessageOffset) + SCREEN_COORD_CENTER_Y - HUD_Y(143.0f);
+        float bottom2 = HUD_Y(m_fBigMessageOffset) + SCREEN_COORD_CENTER_Y + HUD_Y(117.0f);
 
         DrawSimpleRectGradCentered(left, top1, right, top2, left, bottom1, right, bottom2, CRGBA(0, 0, 0, 150));
 
-        CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(HUD_BIG_MESSAGE).x), SCREEN_COORD_CENTER_DOWN(offset + GET_SETTING(HUD_BIG_MESSAGE).y), mainText);
+        if (m_SuccessFailedText[0])
+            CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(HUD_BIG_MESSAGE).x), SCREEN_COORD_CENTER_DOWN(m_fBigMessageOffset + GET_SETTING(HUD_BIG_MESSAGE).y), m_SuccessFailedText[0]);
 
         CFontNew::SetDropShadow(0.0f);
         CFontNew::SetOutline(0.0f);
@@ -1782,7 +1868,9 @@ void CHudNew::DrawSuccessFailedMessage() {
         CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
         CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
         CFontNew::SetScale(SCREEN_MULTIPLIER(0.9f), SCREEN_MULTIPLIER(1.6f));
-        CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(HUD_BIG_MESSAGE).x), SCREEN_COORD_CENTER_DOWN(offset + GET_SETTING(HUD_BIG_MESSAGE).y + 114.0f), bottomText);
+
+        if (m_SuccessFailedText[1])
+            CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(HUD_BIG_MESSAGE).x), SCREEN_COORD_CENTER_DOWN(m_fBigMessageOffset + GET_SETTING(HUD_BIG_MESSAGE).y + 114.0f), m_SuccessFailedText[1]);
     }
 
     SetHUDSafeZone(true);
@@ -1952,7 +2040,6 @@ void CHudNew::DrawAfterFade() {
             DrawSubtitles();
 
         DrawMissionTitle();
-        DrawOddJobMessage(0);
     }
 }
 
@@ -1964,34 +2051,33 @@ void CHudNew::DrawWastedBustedText() {
 
     char* str = NULL;
     static eHudSettings i;
-    static int time = -1;
 
     switch (FindPlayerPed(-1)->m_nPedState) {
         case PEDSTATE_DEAD:
         case PEDSTATE_DIE:
-            str = TheText.Get("DEAD");
+            str = TextNew.GetText("WASTED").text;
             i = HUD_WASTED_TEXT;
             COverlayLayer::SetEffect(EFFECT_BLACK_N_WHITE);
-            if (time == -1 && !m_bShowWastedBusted) {
-                Audio.PlayChunk(CHUNK_WASTED_BUSTED, 0.5f);
-                time = CTimer::m_snTimeInMilliseconds + 2000;
+            if (m_nBigMessageTime == -1 && !m_bShowWastedBusted) {
+                Audio.PlayChunk(CHUNK_WASTED_BUSTED, 1.0f);
+                m_nBigMessageTime = CTimer::m_snTimeInMilliseconds + 2000;
             }
             break;
         case PEDSTATE_ARRESTED:
-            str = TheText.Get("BUSTED");
+            str = TextNew.GetText("BUSTED").text;
             i = HUD_BUSTED_TEXT;
             COverlayLayer::SetEffect(EFFECT_BLACK_N_WHITE);
-            if (time == -1 && !m_bShowWastedBusted) {
-                Audio.PlayChunk(CHUNK_WASTED_BUSTED, 0.5f);
-                time = CTimer::m_snTimeInMilliseconds + 2000;
+            if (m_nBigMessageTime == -1 && !m_bShowWastedBusted) {
+                Audio.PlayChunk(CHUNK_WASTED_BUSTED, 1.0f);
+                m_nBigMessageTime = CTimer::m_snTimeInMilliseconds + 2000;
             }
             break;
     }
 
-    if (time != -1 && time < CTimer::m_snTimeInMilliseconds) {
+    if (m_nBigMessageTime != -1 && m_nBigMessageTime < CTimer::m_snTimeInMilliseconds) {
         m_bShowWastedBusted = true;
-        Audio.PlayChunk(CHUNK_SCREEN_PULSE1, 2.0f);
-        time = -1;
+        Audio.PlayChunk(CHUNK_SCREEN_PULSE1, 1.0f);
+        m_nBigMessageTime = -1;
     }
 
     if (m_bShowWastedBusted && str) {

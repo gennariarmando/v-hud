@@ -419,7 +419,7 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, const char*
 
                 float w = Details.wrapX;
 
-                if ((x + GetStringWidth(s) > w || bNewLine) && !first) {
+                if (x + GetStringWidth(s) > w && !first) {
                     float cx = xstart - x / 2;
                     PrintString(print, cx, y, start, s, 0.0f);
 
@@ -457,8 +457,6 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, const char*
             float cx = xstart - x / 2;
             PrintString(print, cx, y, start, s, 0.0f);
         }
-
-        bNewLine = false;
         return n;
     }
     else if (Details.alignment == ALIGN_RIGHT) {
@@ -495,7 +493,7 @@ int CFontNew::GetNumberLines(bool print, float xstart, float ystart, const char*
     return n;
 }
 
-void CFontNew::PrintString(bool print, float x, float y, const char* start, const char* end, float spwidth) {
+void CFontNew::PrintString(bool print, float& x, float y, const char* start, const char* end, float spwidth) {
     char const* s;
     char c;
 
@@ -503,6 +501,11 @@ void CFontNew::PrintString(bool print, float x, float y, const char* start, cons
     for (s = start; s < end; s++) {
         if (*s == '~')
             s = ParseToken(print, s);
+
+        if (bNewLine) {
+            x += GetCharacterSize(' ');
+            bNewLine = false;
+        }
 
         c = *s;
 
@@ -747,10 +750,12 @@ bool astrcmp(const char* s, const char* a) {
 }
 
 int CFontNew::ParseCustomActions(const char* s) {
+    bool ivControls = GInputPadSettings[0].ControlsSet == 2 ? true : false;
+
     for (int i = 0; i < NUM_CONTROL_ACTIONS; i++) {
         if (astrcmp(s, Controls[i].action)) {
             if (HAS_PAD_IN_HANDS(0) && !Details.ignoreGamePadSymbols)
-                return Controls[i].button;
+                return ivControls ? Controls[i].button2 : Controls[i].button;
             else
                 return Controls[i].key;
         }

@@ -2,6 +2,7 @@
 
 #include "GameLogicNew.h"
 #include "HudNew.h"
+#include "MenuNew.h"
 
 using namespace plugin;
 
@@ -12,5 +13,6 @@ static LateStaticInit InstallHooks([]() {
 
     OnResurrection += [] {
         CHudNew::ReInit();
+        MenuNew.Clear();
     };
 });
