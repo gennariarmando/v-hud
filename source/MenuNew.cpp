@@ -896,15 +896,17 @@ void CMenuNew::OpenMenuScreen(int screen) {
 void CMenuNew::CenterCursor() {
     if (VHud::bSAMP)
         return;
+    
+    if (GetFocus()) {
+        POINT p;
+        p.x = SCREEN_WIDTH / 2;
+        p.y = SCREEN_HEIGHT / 2;
+        if (ClientToScreen(RsGlobal.ps->window, &p)) {
+            SetCursorPos(p.x, p.y);
 
-    POINT p;
-    p.x = SCREEN_WIDTH / 2;
-    p.y = SCREEN_HEIGHT / 2;
-    if (ClientToScreen(RsGlobal.ps->window, &p)) {
-        SetCursorPos(p.x, p.y);
-
-        RsGlobal.ps->lastMousePos.x = p.x;
-        RsGlobal.ps->lastMousePos.y = p.y;
+            RsGlobal.ps->lastMousePos.x = p.x;
+            RsGlobal.ps->lastMousePos.y = p.y;
+        }
     }
 }
 
@@ -4588,6 +4590,13 @@ void CMenuNew::ChangeVideoMode(int mode, int msaa) {
 
     HWND wnd = RsGlobal.ps->window;
     RwD3D9ChangeMultiSamplingLevels(msaa);
+
+    RwVideoMode info;
+    RwEngineGetVideoModeInfo(&info, mode);
+
+    GcurSel = RwEngineGetCurrentSubSystem();
+    GcurSelVM = mode;
+
     RwD3D9ChangeVideoMode(mode);
 
     plugin::Call<0x7043D0>(); // CreateCameraSubraster
@@ -4602,18 +4611,6 @@ void CMenuNew::ChangeVideoMode(int mode, int msaa) {
     RwD3D9EngineSetRefreshRate(refreshRate);
 
     ps->fullScreen = true;
-}
-
-void CMenuNew::GetWindowSize(int* w, int* h) {
-    HWND wnd = RsGlobal.ps->window;
-
-    RECT rect;
-    GetClientRect(wnd, &rect);
-
-    int _w = rect.right - rect.left;
-    int _h = rect.bottom - rect.right;
-    w = &_w;
-    h = &_h;
 }
 
 void CMenuNew::ChangeVideoModeWindowed(int mode, int msaa) {
@@ -4635,9 +4632,18 @@ void CMenuNew::ChangeVideoModeWindowed(int mode, int msaa) {
     GetClientRect(GetDesktopWindow(), &rect);
     rect.left = (rect.right / 2) - (info.width / 2);
     rect.top = (rect.bottom / 2) - (info.height / 2);
+    rect.right = info.width;
+    rect.bottom = info.height;
 
-    SetWindowLong(wnd, GWL_STYLE, WS_VISIBLE | WS_OVERLAPPEDWINDOW);
-    SetWindowPos(wnd, HWND_NOTOPMOST, rect.left, rect.top, info.width, info.height, 0);
+    int extraWidth = GetSystemMetrics(SM_CXSIZEFRAME);
+    int extraHeight = GetSystemMetrics(SM_CYSIZE) + GetSystemMetrics(SM_CYSIZEFRAME);
+    rect.left -= extraWidth / 2;
+    rect.top -= extraHeight / 2;
+    rect.right += extraWidth;
+    rect.bottom += extraHeight;
+
+    SetWindowLong(wnd, GWL_STYLE, WS_VISIBLE | (WS_OVERLAPPEDWINDOW & ~WS_SIZEBOX));
+    SetWindowPos(wnd, HWND_NOTOPMOST, rect.left, rect.top, rect.right, rect.bottom, 0);
 
     plugin::Call<0x7043D0>(); // CreateCameraSubraster
 

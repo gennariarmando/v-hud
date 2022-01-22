@@ -129,9 +129,24 @@ char CTextNew::GetUpperCase(char c) {
     return c;
 }
 
+char CTextNew::GetLowerCase(char c) {
+    if (c >= 'A' && c <= 'Z') {
+        c = c - ('A' - 'a');
+    }
+    return c;
+}
+
 void CTextNew::UpperCase(char* s) {
     while (*s) {
         *s = GetUpperCase(*s);
         s++;
     }
 }
+
+void CTextNew::LowerCase(char* s) {
+    while (*s) {            
+        *s = GetLowerCase(*s);
+        s++;
+    }
+}
+

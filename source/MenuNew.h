@@ -572,7 +572,6 @@ public:
     static void PassSettingsToCurrentGame(const CMenuSettings* s);
     void FindOutUsedMemory();
     void ChangeVideoMode(int mode, int msaa);
-    void GetWindowSize(int* w, int* h);
     void ChangeVideoModeWindowed(int mode, int msaa);
     void ProcessFullscreenToggle();
     void ApplyGraphicsChanges();

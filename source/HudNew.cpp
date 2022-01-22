@@ -81,6 +81,8 @@ float CHudNew::m_fBigMessageOffset;
 char* CHudNew::m_SuccessFailedText[2];
 int CHudNew::m_nMiddleTopMessageTime;
 char CHudNew::m_MiddleTopMessage[16][128];
+char CHudNew::m_MiddleTopSubMessage[128];
+
 int CHudNew::m_nCurrentMiddleTopMessage;
 bool CHudNew::m_bShowMiddleTopMessage;
 int CHudNew::m_nMiddleTopMessageIdToSet;
@@ -234,6 +236,7 @@ void CHudNew::ReInit() {
     for (int i = 0; i < 16; i++) {
         m_MiddleTopMessage[i][0] = '\0';
     }
+    m_MiddleTopSubMessage[0] = '\0';
 
     m_nCurrentMiddleTopMessage = 0;
     m_bShowMiddleTopMessage = false;
@@ -1721,11 +1724,18 @@ void CHudNew::DrawOddJobMessage() {
     SetHUDSafeZone(false);
 
     m_nMiddleTopMessageIdToSet = 0;
-    for (int i = 3; i < 6; i++) {
-        if (m_BigMessage[i][0]) {
-            strcpy(m_MiddleTopMessage[m_nMiddleTopMessageIdToSet], m_BigMessage[i]);
-            m_BigMessage[i][0] = '\0';
+    for (int i = 3; i < 7; i++) {
+        if (m_BigMessage[i][0]) {      
+            switch (i) {
+            case 4:
+                strcpy(m_MiddleTopSubMessage, m_BigMessage[i]);
+                break;
+            default:
+                strcpy(m_MiddleTopMessage[m_nMiddleTopMessageIdToSet], m_BigMessage[i]);
+                break;
+            }
             m_nMiddleTopMessageIdToSet++;
+            m_BigMessage[i][0] = '\0';
         }
     }
 
@@ -1756,10 +1766,15 @@ void CHudNew::DrawOddJobMessage() {
                 m_nMiddleTopMessageTime = CTimer::m_snTimeInMilliseconds + 3000;
                 break;
             }
+            else if (!m_MiddleTopMessage[i][0] && m_MiddleTopSubMessage[0]) {
+                strcpy(m_MiddleTopMessage[i], TextNew.GetText("MSG").text);
+                m_bShowMiddleTopMessage = true;
+                m_nMiddleTopMessageTime = CTimer::m_snTimeInMilliseconds + 3000;
+            }
         }
     }
 
-    if (m_bShowMiddleTopMessage && m_MiddleTopMessage[m_nCurrentMiddleTopMessage][0]) {
+    if (m_bShowMiddleTopMessage) {
         CFontNew::SetBackground(false);
         CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
         CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
@@ -1779,17 +1794,41 @@ void CHudNew::DrawOddJobMessage() {
         float top2 = HUD_Y(-256.0f) + SCREEN_COORD_CENTER_Y - HUD_Y(143.0f);
         float bottom2 = HUD_Y(-256.0f) + SCREEN_COORD_CENTER_Y + HUD_Y(-15.0f);
 
-        int n = CFontNew::GetNumberLines(false, SCREEN_COORD_CENTER_LEFT(0.0f), SCREEN_COORD_CENTER_DOWN(-332.0f), m_MiddleTopMessage[m_nCurrentMiddleTopMessage]);
+        float shiftSub = 0.0f;
+        char* header = m_MiddleTopMessage[m_nCurrentMiddleTopMessage];
+        //TextNew.LowerCase(header);
+        char* sub = m_MiddleTopSubMessage;
 
-        bottom1 += CFontNew::GetHeightScale(CFontNew::Details.scale.y) * (n);
-        bottom2 += CFontNew::GetHeightScale(CFontNew::Details.scale.y) * (n);
+        if (header && header[0]) {
+            int n = CFontNew::GetNumberLines(false, SCREEN_COORD_CENTER_LEFT(0.0f), SCREEN_COORD_CENTER_DOWN(-332.0f), header);
 
-        DrawSimpleRectGradCentered(left, top1, right, top2, left, bottom1, right, bottom2, CRGBA(0, 0, 0, 150));
-        CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(0.0f), SCREEN_COORD_CENTER_DOWN(-340.0f), m_MiddleTopMessage[m_nCurrentMiddleTopMessage]);
+            shiftSub = (CFontNew::GetHeightScale(CFontNew::Details.scale.y) * n);
+
+            if (sub && sub[0])
+                shiftSub += SCREEN_COORD(16.0f);
+
+            bottom1 += shiftSub;
+            bottom2 += shiftSub;
+
+            DrawSimpleRectGradCentered(left, top1, right, top2, left, bottom1, right, bottom2, CRGBA(0, 0, 0, 150));
+
+            CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(0.0f), SCREEN_COORD_CENTER_DOWN(-340.0f), header);
+        }
+
+        if (sub && sub[0]) {
+            CFontNew::SetDropShadow(0.0f);
+            CFontNew::SetOutline(0.0f);
+            CFontNew::SetFontStyle(CFontNew::FONT_1);
+            CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
+            CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
+            CFontNew::SetScale(SCREEN_MULTIPLIER(0.74f), SCREEN_MULTIPLIER(1.5f));
+            CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(0.0f), SCREEN_COORD_CENTER_DOWN(-346.0f) + shiftSub, sub);
+        }
 
         if (m_nMiddleTopMessageTime < CTimer::m_snTimeInMilliseconds) {
             m_bShowMiddleTopMessage = false;
             m_MiddleTopMessage[m_nCurrentMiddleTopMessage][0] = '\0';
+            m_MiddleTopSubMessage[0] = '\0';
         }
     }
 
@@ -1806,6 +1845,7 @@ void CHudNew::DrawSuccessFailedMessage() {
     m_SuccessFailedText[1] = NULL;
     if (CHud::m_BigMessage[0][0] && !strncmp(CHud::m_BigMessage[0], TheText.Get("M_PASS"), 5)) {
         m_SuccessFailedText[0] = TextNew.GetText("M_PASS").text;
+        TextNew.LowerCase(m_SuccessFailedText[0]);
         m_SuccessFailedText[1] = m_LastMissionName;
         col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 150);
         slide = true;
@@ -2060,6 +2100,7 @@ void CHudNew::DrawWastedBustedText() {
         case PEDSTATE_DEAD:
         case PEDSTATE_DIE:
             str = TextNew.GetText("WASTED").text;
+            TextNew.LowerCase(str);
             i = HUD_WASTED_TEXT;
             COverlayLayer::SetEffect(EFFECT_BLACK_N_WHITE);
             if (m_nBigMessageTime == -1 && !m_bShowWastedBusted) {
@@ -2069,6 +2110,7 @@ void CHudNew::DrawWastedBustedText() {
             break;
         case PEDSTATE_ARRESTED:
             str = TextNew.GetText("BUSTED").text;
+            TextNew.LowerCase(str);
             i = HUD_BUSTED_TEXT;
             COverlayLayer::SetEffect(EFFECT_BLACK_N_WHITE);
             if (m_nBigMessageTime == -1 && !m_bShowWastedBusted) {

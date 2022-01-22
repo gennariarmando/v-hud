@@ -27,7 +27,7 @@
 #endif
 
 HRESULT GetVideoMemoryViaD3D9(HMONITOR hMonitor, UINT* pdwAvailableTextureMem) {
-    HRESULT hr;
+    bool hr = false;
     bool bGotMemory = false;
     *pdwAvailableTextureMem = 0;
 
@@ -65,7 +65,7 @@ HRESULT GetVideoMemoryViaD3D9(HMONITOR hMonitor, UINT* pdwAvailableTextureMem) {
                 //pD3D9->CreateDevice(iAdapter, D3DDEVTYPE_HAL, hWnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &pp, &pd3dDevice);
             }
 
-            if (SUCCEEDED(hr)) {
+            if (hr) {
                 *pdwAvailableTextureMem = pd3dDevice->GetAvailableTextureMem();
                 bGotMemory = true;
                 SAFE_RELEASE(pd3dDevice);

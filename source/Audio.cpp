@@ -42,8 +42,10 @@ void CAudio::Init() {
 
     for (int i = 0; i < NUM_CHUNKS; i++) {
         Chunks[i] = LoadChunkFile(PLUGIN_PATH("VHud\\audio\\frontend"), ChunksFileNames[i]);
+        fPreviousChunkVolume[i] = 0.0f;
     }
 
+    bResetMainVolume = !GetFocus();
     bInitialised = true;
 }
 
@@ -64,6 +66,26 @@ void CAudio::Update() {
         return;
 
     MenuNew.DoFadeTune();
+
+    if (RsGlobal.ps) {
+        if (GetForegroundWindow() != RsGlobal.ps->window) {
+            if (!bResetMainVolume) {
+                for (int i = 0; i < NUM_CHUNKS; i++) {
+                    fPreviousChunkVolume[i] = GetVolumeForChunk(i);
+                    SetVolumeForChunk(i, 0.0f);
+                    bResetMainVolume = true;
+                }
+            }
+        }
+        else {
+            if (bResetMainVolume) {
+                for (int i = 0; i < NUM_CHUNKS; i++) {
+                    SetVolumeForChunk(i, fPreviousChunkVolume[i]);
+                }
+                bResetMainVolume = false;
+            }
+        }
+    }
 }
 
 void CAudio::SetChunksMasterVolume(char vol) {
@@ -71,7 +93,7 @@ void CAudio::SetChunksMasterVolume(char vol) {
 }
 
 void CAudio::SetLoop(bool on) {
-    loop = on;
+    bLoop = on;
 }
 
 unsigned long CAudio::LoadChunkFile(const char* path, const char* name) {
@@ -90,7 +112,7 @@ void CAudio::PlayChunk(int chunk, float volume) {
 
     auto c = BASS_SampleGetChannel(Chunks[chunk], NULL);
 
-    if (loop) {
+    if (bLoop) {
         BASS_ChannelFlags(c, BASS_SAMPLE_LOOP, BASS_SAMPLE_LOOP);
     }
     else {
@@ -107,6 +129,26 @@ void CAudio::PlayChunk(int chunk, float volume) {
     BASS_ChannelPlay(c, FALSE);
 }
 
+float CAudio::GetVolumeForChunk(int chunk) {
+    float volume = 0.0f;
+
+    if (!bInitialised)
+        return volume;
+
+    chunk = clamp(chunk, 0, NUM_CHUNKS - 1);
+
+    BASS_SAMPLE info;
+    BASS_SampleGetInfo(Chunks[chunk], &info);
+    if (HCHANNEL* c = (HCHANNEL*)malloc(info.max * sizeof(HCHANNEL))) {
+        for (int i = 0; i < BASS_SampleGetChannels(Chunks[chunk], c); i++) {
+            BASS_ChannelGetAttribute(c[i], BASS_ATTRIB_VOL, &volume);
+        }
+        free(c);
+    }
+
+    return volume / (fChunksVolume * 0.5f);
+}
+
 void CAudio::SetVolumeForChunk(int chunk, float volume) {
     if (!bInitialised)
         return;
@@ -120,6 +162,7 @@ void CAudio::SetVolumeForChunk(int chunk, float volume) {
         for (int i = 0; i < BASS_SampleGetChannels(Chunks[chunk], c); i++) {
             BASS_ChannelSetAttribute(c[i], BASS_ATTRIB_VOL, volume * (fChunksVolume * 0.5f));
         }
+        free(c);
     }
 }
 
@@ -137,5 +180,6 @@ void CAudio::StopChunk(int chunk) {
             BASS_SampleStop(c[i]);
             BASS_ChannelStop(c[i]);
         }
+        free(c);
     }
 }

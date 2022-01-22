@@ -20,7 +20,9 @@ public:
     bool bInitialised;   
     unsigned long Chunks[NUM_CHUNKS];
     float fChunksVolume;
-    bool loop;
+    bool bLoop;
+    bool bResetMainVolume;
+    float fPreviousChunkVolume[NUM_CHUNKS];
 
 public:
     void Init();
@@ -29,6 +31,7 @@ public:
 
     unsigned long LoadChunkFile(const char* path, const char* name);
     void PlayChunk(int chunk, float volume);
+    float GetVolumeForChunk(int chunk);
     void SetVolumeForChunk(int chunk, float volume);
     void StopChunk(int chunk);
     void SetChunksMasterVolume(char vol);
