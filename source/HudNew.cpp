@@ -1796,7 +1796,6 @@ void CHudNew::DrawOddJobMessage() {
 
         float shiftSub = 0.0f;
         char* header = m_MiddleTopMessage[m_nCurrentMiddleTopMessage];
-        //TextNew.LowerCase(header);
         char* sub = m_MiddleTopSubMessage;
 
         if (header && header[0]) {
@@ -1845,7 +1844,6 @@ void CHudNew::DrawSuccessFailedMessage() {
     m_SuccessFailedText[1] = NULL;
     if (CHud::m_BigMessage[0][0] && !strncmp(CHud::m_BigMessage[0], TheText.Get("M_PASS"), 5)) {
         m_SuccessFailedText[0] = TextNew.GetText("M_PASS").text;
-        TextNew.LowerCase(m_SuccessFailedText[0]);
         m_SuccessFailedText[1] = m_LastMissionName;
         col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 150);
         slide = true;
@@ -2100,7 +2098,6 @@ void CHudNew::DrawWastedBustedText() {
         case PEDSTATE_DEAD:
         case PEDSTATE_DIE:
             str = TextNew.GetText("WASTED").text;
-            TextNew.LowerCase(str);
             i = HUD_WASTED_TEXT;
             COverlayLayer::SetEffect(EFFECT_BLACK_N_WHITE);
             if (m_nBigMessageTime == -1 && !m_bShowWastedBusted) {
@@ -2110,7 +2107,6 @@ void CHudNew::DrawWastedBustedText() {
             break;
         case PEDSTATE_ARRESTED:
             str = TextNew.GetText("BUSTED").text;
-            TextNew.LowerCase(str);
             i = HUD_BUSTED_TEXT;
             COverlayLayer::SetEffect(EFFECT_BLACK_N_WHITE);
             if (m_nBigMessageTime == -1 && !m_bShowWastedBusted) {

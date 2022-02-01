@@ -63,7 +63,7 @@ bool CRadarNew::m_bRemoveBlipsLimit;
 
 bool bShowWeaponPickupsOnRadar = false;
 
-const float World = 6000.0f;
+const float worldSize = 6000.0f;
 
 void* radar_gps_alpha_mask_fxc;
 void* multi_alpha_mask_fxc;
@@ -562,9 +562,9 @@ void CRadarNew::DrawRadarCop() {
 
 void CRadarNew::TransformRadarPointToRealWorldSpace(CVector2D& out, CVector2D& in) {
     if (MenuNew.bDrawMenuMap) {
-        float w = (World / 2) / World;
-        out.x = (in.x - w) * World;
-        out.y = (w + in.y) * World;
+        float w = (worldSize / 2) / worldSize;
+        out.x = (in.x - w) * worldSize;
+        out.y = (w + in.y) * worldSize;
     }
     else {
         float s = -CRadar::cachedSin;
@@ -580,8 +580,8 @@ void CRadarNew::TransformRadarPointToRealWorldSpace(CVector2D& out, CVector2D& i
 
 void CRadarNew::TransformRealWorldPointToRadarSpace(CVector2D& out, CVector2D& in) {
     if (MenuNew.bDrawMenuMap) {
-        out.x = (in.x + World / 2) / World;
-        out.y = ((World / 2) - in.y) / World;
+        out.x = (in.x + worldSize / 2) / worldSize;
+        out.y = ((worldSize / 2) - in.y) / worldSize;
     }
     else {
         float s = CRadar::cachedSin;

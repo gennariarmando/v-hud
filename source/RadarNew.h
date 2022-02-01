@@ -159,3 +159,5 @@ public:
     static void SetBlipSprite(int i, unsigned short icon);
     static unsigned int GetRadarTraceColour(unsigned int c, bool bright, bool friendly);
 };
+
+extern const float worldSize;

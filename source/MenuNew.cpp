@@ -21,6 +21,7 @@
 #include "CMessages.h"
 #include "CStats.h"
 #include "CTimeCycle.h"
+#include "CTheZones.h"
 
 #include "Audio.h"
 #include "GPS.h"
@@ -3775,19 +3776,19 @@ void CMenuNew::SetWaypoint(float x, float y) {
 
         CRadar::TransformRadarPointToRealWorldSpace(out, in);
 
-        CVector pos = { out.x, out.y, 0.0f };
+        CVector pos = { out.x, out.y, CWorld::FindGroundZForCoord(out.x, out.y) };
 
-        if (pos.x < -3000.0f)
-            pos.x = -3000.0f;
+        if (pos.x < -worldSize / 2)
+            pos.x = -worldSize / 2;
 
-        if (pos.x > 3000.0f)
-            pos.x = 3000.0f;
+        if (pos.x > worldSize / 2)
+            pos.x = worldSize / 2;
 
-        if (pos.y < -3000.0f)
-            pos.y = -3000.0f;
+        if (pos.y < -worldSize / 2)
+            pos.y = -worldSize / 2;
 
-        if (pos.y > 3000.0f)
-            pos.y = 3000.0f;
+        if (pos.y > worldSize / 2)
+            pos.y = worldSize / 2;
 
         int i = CRadar::SetCoordBlip(BLIP_COORD, pos, 0, BLIP_DISPLAY_BOTH, 0);
         CRadar::SetBlipSprite(i, RADAR_SPRITE_WAYPOINT);
@@ -4090,6 +4091,55 @@ void CMenuNew::DrawLegend() {
     }
 }
 
+void CMenuNew::DrawZone() {
+    CVector2D in;
+    CVector2D out;
+    float x = SCREEN_WIDTH / 2;
+    float y = SCREEN_HEIGHT / 2;
+
+    //if (bDrawMouse) {
+    //    x = vMousePos.x;
+    //    y = vMousePos.y;
+    //}
+
+    in.x = (x + GetMenuMapWholeSize() / 2) - MenuNew.vMapBase.x;
+    in.y = MenuNew.vMapBase.y - (y + GetMenuMapWholeSize() / 2);
+
+    in.x /= GetMenuMapWholeSize();
+    in.y /= GetMenuMapWholeSize();
+
+    CRadar::TransformRadarPointToRealWorldSpace(out, in);
+
+    CVector pos = { out.x, out.y, CWorld::FindGroundZForCoord(out.x, out.y) };
+
+    char* str = (char*)CTheZones::FindSmallestZoneForPosition(pos, false)->GetTranslatedName();
+    TextNew.UpperCase(str);
+
+    CRect rect;
+    rect.left = HUD_X(96.0f);
+    rect.top = HUD_BOTTOM(132.0f);
+    rect.right = SCREEN_COORD(18.0f);
+    rect.bottom = SCREEN_COORD(38.0f);
+
+    rect.right += CFontNew::GetStringWidth(str, true);
+    CSprite2d::DrawRect(CRect(rect.left, rect.top, rect.left + rect.right, rect.top + rect.bottom), CRGBA(0, 0, 0, 150));
+
+    CFontNew::SetBackground(false);
+    CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+    CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
+    CFontNew::SetWrapX(SCREEN_COORD(640.0f));
+    CFontNew::SetFontStyle(CFontNew::FONT_1);
+    CFontNew::SetDropShadow(0.0f);
+    CFontNew::SetOutline(0.0f);
+    CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
+    CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
+    CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
+
+    rect.left += SCREEN_COORD(10.0f);
+    rect.top += SCREEN_COORD(5.0f);
+    CFontNew::PrintString(rect.left, rect.top, str);
+}
+
 void CMenuNew::DrawMap() {
     CRect mask = GetMenuScreenRect();
 
@@ -4160,6 +4210,7 @@ void CMenuNew::DrawMap() {
     if (!bShowMenu) {
         DrawMapCrosshair(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
         DrawLegend();
+        DrawZone();
     }
 }
 

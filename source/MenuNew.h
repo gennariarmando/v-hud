@@ -560,6 +560,7 @@ public:
     void DrawScreenUnavailableOnline();
     CVector2D GetMapBaseDefault();
     void DrawLegend();
+    void DrawZone();
     void DrawMap();
     void DrawMapCrosshair(float x, float y);
     void DrawPatternBackground(CRect rect, CRGBA col);

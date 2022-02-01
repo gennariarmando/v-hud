@@ -23,9 +23,26 @@ CLocalization CGPS::Dest;
 bool CGPS::bShowGPS;
 CSprite2d CGPS::pathDirSprite;
 
+char pathNodesToStream[640] = { };
+int pathNodes[50000] = { };
+
 static LateStaticInit InstallHooks([]() {
-    patch::SetUInt(0x4518F8, 50000);
-    patch::SetUInt(0x4519B0, 49950);
+   for (int i = 0; i < 63; i++) {
+       pathNodesToStream[i] = 1;
+   }
+
+   for (int i = 0; i < 49999; i++) {
+       pathNodes[i] = -1;
+   }
+
+   patch::SetPointer(0x44DE3C, &pathNodesToStream);
+   patch::SetPointer(0x450D03, &pathNodesToStream);
+   patch::SetPointer(0x451782, &pathNodes);
+   patch::SetPointer(0x451904, &pathNodes);
+   patch::SetPointer(0x451AC3, &pathNodes);
+   patch::SetPointer(0x451B33, &pathNodes);
+   patch::SetUInt(0x4518F8, 50000);
+   patch::SetUInt(0x4519B0, 49950);
 });
 
 void CGPS::Init() {
@@ -223,14 +240,14 @@ void CGPS::DrawPathLine() {
             if (Dest.bDestFound) {
                 ProcessPath(Dest);
 
-                if (Dest.nNodesCount > 1) {
+                if (Dest.nNodesCount > 0) {
                     CPathNode* node = ThePaths.GetPathNode(Dest.resultNodes[0]);
 
                     if (!node)
                         return;
 
                     Dest.fGPSDistance += DistanceBetweenPoints(FindPlayerCentreOfWorld_NoInteriorShift(0), node->GetNodeCoors());
-                    Dest.nPathDirection = GetPathDirection(ThePaths.GetPathNode(Dest.resultNodes[0])->GetNodeCoors(), FindPlayerCentreOfWorld_NoInteriorShift(0), ThePaths.GetPathNode(Dest.resultNodes[1])->GetNodeCoors());
+                    Dest.nPathDirection = GetPathDirection(ThePaths.GetPathNode(Dest.resultNodes[Dest.nNodesCount - 1])->GetNodeCoors(), FindPlayerCentreOfWorld_NoInteriorShift(0), ThePaths.GetPathNode(Dest.resultNodes[0])->GetNodeCoors());
                     bShowGPS = true;
                 }
             }
