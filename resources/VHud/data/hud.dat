@@ -18,10 +18,10 @@ HUD_RADAR_FOREGROUND           89.0  264.0     373.0  52.8     HUD_COLOUR_WHITE 
 HUD_RADAR_BACKGROUND           96.0   72.0     366.0  54.5     HUD_COLOUR_BLACK           150
 HUD_RADAR_BACKGROUND_P2        96.0  261.0     366.0 243.5     HUD_COLOUR_BLACK           150
 
-HUD_RADAR_BLIPS_SIZE            0.0    0.0      12.0  12.0     HUD_COLOUR_WHITE           255
-HUD_RADAR_BLIPS_LEVEL_SIZE      0.0    0.0       8.0   8.0     HUD_COLOUR_WHITE           255
-HUD_RADAR_BLIPS_COP_SIZE        0.0    0.0       8.0   8.0     HUD_COLOUR_WHITE           255
-HUD_RADAR_BLIPS_COP_HELI_SIZE   0.0    0.0      13.5  13.5     HUD_COLOUR_WHITE           255
+HUD_RADAR_BLIPS_SIZE            0.0    0.0      22.0  22.0     HUD_COLOUR_WHITE           255
+HUD_RADAR_BLIPS_LEVEL_SIZE      0.0    0.0      18.0  18.0     HUD_COLOUR_WHITE           255
+HUD_RADAR_BLIPS_COP_SIZE        0.0    0.0      12.0  12.0     HUD_COLOUR_WHITE           255
+HUD_RADAR_BLIPS_COP_HELI_SIZE   0.0    0.0      20.0  20.0     HUD_COLOUR_WHITE           255
 HUD_RADAR_BLIPS_BORDER_SIZE     0.0    0.0      24.0  12.0     HUD_COLOUR_WHITE           255
 
 HUD_HEALTH_BAR                 96.0   68.0     134.0   9.0     HUD_COLOUR_RADAR_HEALTH    205
@@ -37,7 +37,7 @@ HUD_BREATH_BAR_P2             301.0  257.0      65.0   9.0     HUD_COLOUR_BLUELI
 HUD_RADAR_GPS_LINE              0.0    0.0      6.0   0.0      HUD_COLOUR_WHITE           255
 HUD_RADAR_GPS_RECT             96.0   94.0     366.0  72.0     HUD_COLOUR_BLACK           0
 HUD_RADAR_GPS_DIST_TEXT       129.0  103.0       0.61  1.3     HUD_COLOUR_WHITE           200
-HUD_RADAR_GPS_DIST_ARROW      116.0   88.0      15.0  15.0     HUD_COLOUR_WHITE           200
+HUD_RADAR_GPS_DIST_ARROW      116.0   88.0      20.0  20.0     HUD_COLOUR_WHITE           200
 
 HUD_SUBTITLES                   0.0   90.0       0.92  1.88    HUD_COLOUR_WHITE           255
 HUD_WANTED_STARS               96.0   54.0      32.0  33.0     HUD_COLOUR_WHITE           255

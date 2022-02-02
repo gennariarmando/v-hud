@@ -1,6 +1,13 @@
 #define RADAR_MENU_BLIP_MULT (1.3f)
 #define RADAR_MENU_BLIP_HOVER_MULT (1.8f)
 
+#define RADAR_START (-CRadarNew::m_fRadarMapSize / 2)
+#define RADAR_END (CRadarNew::m_fRadarMapSize / 2)
+#define RADAR_SIZE (RADAR_END - RADAR_START)
+
+#define RADAR_NUM_TILES (CRadarNew::m_nTiles)
+#define RADAR_TILE_SIZE (RADAR_SIZE / RADAR_NUM_TILES)
+
 #include "CSprite2d.h"
 
 extern void* radar_gps_alpha_mask_fxc;
@@ -95,7 +102,7 @@ class CRadarNew {
 public:
     static CSprite2d* m_RadarSprites[NUM_RADAR_SPRITES];
     static CSprite2d* m_BlipsSprites[NUM_BLIPS_SPRITES];
-    static CSprite2d* m_MiniMapSprites[12 * 12];
+    static CSprite2d** m_MiniMapSprites;
     static CSprite2d* m_PickupsSprites[NUM_PICKUPS_BLIPS_SPRITES];
     static CRadarAnim Anim;
     static CVector2D m_vRadarMapQuality;
@@ -115,12 +122,15 @@ public:
     static bool m_b3dRadar;
     static int m_nRadarRangeExtendTime;
     static bool m_bRemoveBlipsLimit;
+    static float m_fRadarMapSize;
+    static int m_nTiles;
 
 public:
     static void Init();
     static void Shutdown();
     static void Clear();
     static void ReadBlipsFromFile();
+    static void ReadRadarInfoFromFile();
     static void CreateCamera();
     static void DestroyCamera();
     static int CalculateBlipAlpha(float dist);
@@ -144,6 +154,9 @@ public:
     static void AddAnyBlip(unsigned short id, CVector posn, float width, float height, float angle, bool vcone, CRGBA const& col, bool limit);
     static void DrawRadarRectangle();
     static void ScanCopPursuit();
+    static void GetTextureCorners(int x, int y, CVector2D* out);
+    static void DrawAreaOnRadar(CRect const& rect, CRGBA const& col, bool force);
+    static void DrawGangOverlay(bool force);
     static void DrawRotatingRadarSprite(CSprite2d* sprite, float x, float y, float angle, float width, float height, CRGBA color);
     static void CalculateCachedSinCos();
     static void DrawMap();
@@ -160,4 +173,3 @@ public:
     static unsigned int GetRadarTraceColour(unsigned int c, bool bright, bool friendly);
 };
 
-extern const float worldSize;

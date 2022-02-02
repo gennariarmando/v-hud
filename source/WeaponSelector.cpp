@@ -275,7 +275,6 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
     return
         playa
         && !playa->m_nPedFlags.bInVehicle
-        && !playa->PedIsInvolvedInConversation()
         && !playa->m_nPedFlags.bDontRender
         && playa->m_nPedState != PEDSTATE_MAKE_PHONECALL
         && playa->m_nPedState != PEDSTATE_ANSWER_MOBILE
@@ -294,7 +293,6 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
         && !playa->m_pIntelligence->GetTaskClimb()
         && !playa->m_pIntelligence->GetTaskInAir()
         && !playa->m_pTargetedObject
-        && !playa->m_nPedFlags.bIsTalking
         && !playa->m_pPlayerData->m_bDontAllowWeaponChange
         && !playa->m_pIntelligence->GetUsingParachute()
         && !playa->m_pIntelligence->IsInACarOrEnteringOne()
@@ -303,7 +301,6 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
         && !CHudNew::m_bShowWastedBusted
         && !CHudNew::m_bShowSuccessFailed
         && !playa->m_nPedFlags.bTestForShotInVehicle
-        && !playa->m_nPedFlags.bStuckUnderCar
         && !playa->m_nPedFlags.bUsingMobilePhone
         && !CPadNew::GetPad(0)->bDisablePlayerCycleWeapon
         && playa->IsPedInControl()

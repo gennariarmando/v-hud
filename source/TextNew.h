@@ -52,9 +52,8 @@ public:
     void Load();
     CTextRead GetText(int s);
     CTextRead GetText(const char* str);
-    void UpperCase(char* s);
-
-    void LowerCase(char* s);
+    char* UpperCase(const char* s);
+    char* LowerCase(const char* s);
 
 private:
     char GetUpperCase(char c);

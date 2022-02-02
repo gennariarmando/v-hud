@@ -44,6 +44,7 @@ struct CFontDetailsNew {
 	bool isBlip;
 	char ignoreTokens[2];
 	bool ignoreGamePadSymbols;
+	bool upperCase;
 
 	CFontDetailsNew() {}
 };
@@ -252,6 +253,8 @@ public:
 	static void SetGradBackground(bool on) { Details.grad = on; }
 	static void SetBackgroundColor(CRGBA const& col) { Details.backgroundColor = col; }
 	static void SetBackgroundBorder(CRect const& rect) { Details.backgroundBorder = rect; }
+
+	static void SetUpperCase(bool on) { Details.upperCase = on; }
 
 	static void SetClipX(float x) { 
 		Details.clipX = x; 

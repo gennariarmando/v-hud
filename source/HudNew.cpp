@@ -1405,7 +1405,6 @@ void CHudNew::DrawMissionTimers() {
 
                 MissionTimersString[nTimersCount][0] = CUserDisplay::OnscnTimer.m_aCounters[i].m_szDisplayedText;
                 MissionTimersString[nTimersCount][1] = TheText.Get(CUserDisplay::OnscnTimer.m_aCounters[i].m_szDescriptionTextKey);
-                TextNew.UpperCase(MissionTimersString[nTimersCount][1]);
                 nTimersCount++;
             }
 
@@ -1434,7 +1433,9 @@ void CHudNew::DrawMissionTimers() {
                 }
 
                 if (MissionTimersString[i][1]) {
+                    CFontNew::SetUpperCase(true);
                     CFontNew::PrintString((x + SCREEN_COORD(-10.0f)) - w, y + SCREEN_COORD(-34.0f), MissionTimersString[i][1]);
+                    CFontNew::SetUpperCase(false);
                 }
 
                 MissionTimersString[i][0] = NULL;
@@ -1767,7 +1768,9 @@ void CHudNew::DrawOddJobMessage() {
                 break;
             }
             else if (!m_MiddleTopMessage[i][0] && m_MiddleTopSubMessage[0]) {
-                strcpy(m_MiddleTopMessage[i], TextNew.GetText("MSG").text);
+                m_nCurrentMiddleTopMessage = i;
+                strcpy(m_MiddleTopMessage[i], m_MiddleTopSubMessage);
+                m_MiddleTopSubMessage[0] = '\0';
                 m_bShowMiddleTopMessage = true;
                 m_nMiddleTopMessageTime = CTimer::m_snTimeInMilliseconds + 3000;
             }
@@ -1842,6 +1845,7 @@ void CHudNew::DrawSuccessFailedMessage() {
 
     m_SuccessFailedText[0] = NULL;
     m_SuccessFailedText[1] = NULL;
+    m_bShowSuccessFailed = false;
     if (CHud::m_BigMessage[0][0] && !strncmp(CHud::m_BigMessage[0], TheText.Get("M_PASS"), 5)) {
         m_SuccessFailedText[0] = TextNew.GetText("M_PASS").text;
         m_SuccessFailedText[1] = m_LastMissionName;

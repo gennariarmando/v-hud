@@ -431,6 +431,8 @@ void CMenuNew::BuildMenuScreen() {
 
         if (auto display = AddNewTab(settings, MENUENTRY_CHANGETAB, "FE_DIS", NULL, false)) {
             AddNewEntry(display, MENUENTRY_SHOWRADAR, "FE_RAD", 0, 0);
+            AddNewEntry(display, MENUENTRY_SHOWBLIPS, "FE_BLI", 0, 0);
+            AddNewEntry(display, MENUENTRY_SHOWGANGAREA, "FE_GAN", 0, 0);
             AddNewEntry(display, MENUENTRY_SHOWHUD, "FE_HUD", 0, 0);
             AddNewEntry(display, MENUENTRY_WEAPONTARGET, "FE_TAR", 0, 0);
             AddNewEntry(display, MENUENTRY_SIMPLERETICULESIZE, "FE_SRZ", 0, 0);
@@ -1994,6 +1996,14 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
         TempSettings.showRadar = TempSettings.showRadar == false;
         ApplyChanges();
         break;
+    case MENUENTRY_SHOWBLIPS:
+        TempSettings.showBlips = TempSettings.showBlips == false;
+        ApplyChanges();
+        break;
+    case MENUENTRY_SHOWGANGAREA:
+        TempSettings.showGangArea = TempSettings.showGangArea == false;
+        ApplyChanges();
+        break;
     case MENUENTRY_WEAPONTARGET:
         if (input < 0) {
             TempSettings.weaponTarget--;
@@ -2295,8 +2305,10 @@ void CMenuNew::DrawPauseMenuExtraText() {
 
         char playerName[16];
         sprintf(playerName, "%s", PedNameList[playa.m_pPed->m_nModelIndex]);
-        TextNew.UpperCase(playerName);
+
+        CFontNew::SetUpperCase(true);
         CFontNew::PrintString(MENU_RIGHT(311.0f + 69.0f + 8.0f), MENU_Y(92.0f), playerName);
+        CFontNew::SetUpperCase(false);
 
         char daytmp[32];
         char* day = NULL;
@@ -2304,8 +2316,9 @@ void CMenuNew::DrawPauseMenuExtraText() {
         day = TextNew.GetText(daytmp).text;
         
         if (day) {
-            TextNew.UpperCase(day);
+            CFontNew::SetUpperCase(true);
             CFontNew::PrintString(MENU_RIGHT(311.0f + 69.0f + 58.0f), MENU_Y(92.0f + 23.0), day);
+            CFontNew::SetUpperCase(false);
         }
 
         char time[16];
@@ -2413,8 +2426,9 @@ void CMenuNew::Draw() {
                 CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
 
                 char* str = TextNew.GetText(MenuBar[i].barName).text;
-                TextNew.UpperCase(str);
+                CFontNew::SetUpperCase(true);
                 CFontNew::PrintString(menuBar.left + (menuBar.right * 0.5f), menuBar.top + SCREEN_COORD(6.0f), str);
+                CFontNew::SetUpperCase(false);
 
                 menuBar.left += menuBar.right + spacing;
                 menuBarSelected.left += menuBarSelected.right + spacing;
@@ -2461,8 +2475,9 @@ void CMenuNew::Draw() {
                 CFontNew::SetColor(barTextColor);
                 CFontNew::SetScale(SCREEN_MULTIPLIER(0.6f), SCREEN_MULTIPLIER(1.2f));
 
-                TextNew.UpperCase(str);
+                CFontNew::SetUpperCase(true);
                 CFontNew::PrintString(bar.left + (bar.right * 0.5f), bar.top + SCREEN_COORD(6.0f), str);
+                CFontNew::SetUpperCase(false);
             }
         }
     }
@@ -3076,6 +3091,12 @@ void CMenuNew::DrawDefault() {
                 case MENUENTRY_SHOWRADAR:
                     rightText = TextNew.GetText(TempSettings.showRadar ? "FE_ON" : "FE_OFF").text;
                     break;
+                case MENUENTRY_SHOWBLIPS:
+                    rightText = TextNew.GetText(TempSettings.showBlips ? "FE_ON" : "FE_OFF").text;
+                    break;
+                case MENUENTRY_SHOWGANGAREA:
+                    rightText = TextNew.GetText(TempSettings.showGangArea ? "FE_ON" : "FE_OFF").text;
+                    break;
                 case MENUENTRY_WEAPONTARGET:
                     rightText = TextNew.GetText(TempSettings.weaponTarget ? "FE_COMP" : "FE_SIM").text;
                     break;
@@ -3336,8 +3357,9 @@ void CMenuNew::DrawTabGamePad() {
     CFontNew::SetAlignment(CFontNew::ALIGN_CENTER);
 
     str = TextNew.GetText(TempSettings.showControlsFor ? "PAD_VH" : "PAD_FT").text;
-    TextNew.UpperCase(str);
+    CFontNew::SetUpperCase(true);
     CFontNew::PrintString(rect.left + rect.right / 2, rect.top, str);
+    CFontNew::SetUpperCase(false);
 
     CFontNew::SetScale(SCREEN_MULTIPLIER(0.5f), SCREEN_MULTIPLIER(1.0f));
 
@@ -3407,9 +3429,11 @@ void CMenuNew::DrawTabGamePad() {
                 }               
             }
             str = TextNew.GetText(buff).text;
-            TextNew.UpperCase(str);
             DrawPadLine(x, y + next, w[i], h[i]);
+
+            CFontNew::SetUpperCase(true);
             CFontNew::PrintString(x - SCREEN_COORD(8.0f), y + next - SCREEN_COORD(12.0f), str);
+            CFontNew::SetUpperCase(false);
 
             next += SCREEN_COORD(30.0f - i);
             count++;
@@ -3481,9 +3505,11 @@ void CMenuNew::DrawTabGamePad() {
                 }            
             }            
             str = TextNew.GetText(buff).text;
-            TextNew.UpperCase(str);
             DrawPadLine(x, y + next, w[i], h[i]);
+
+            CFontNew::SetUpperCase(true);
             CFontNew::PrintString(x + SCREEN_COORD(8.0f), y + next - SCREEN_COORD(12.0f), str);
+            CFontNew::SetUpperCase(false);
 
             next += SCREEN_COORD(30.0f - i);
             count++;
@@ -3537,13 +3563,15 @@ void CMenuNew::DrawTabKeyBindings() {
     char* str = NULL;
 
     str = TextNew.GetText("FE_ACT").text;
-    TextNew.UpperCase(str);
+    CFontNew::SetUpperCase(true);
     CFontNew::PrintString(menuEntry.left + SCREEN_COORD(12.0f), menuEntry.top + SCREEN_COORD(5.0f), str);
+    CFontNew::SetUpperCase(false);
 
     CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
     str = TextNew.GetText("FE_PRI").text;
-    TextNew.UpperCase(str);
+    CFontNew::SetUpperCase(true);
     CFontNew::PrintString(menuEntry.left + menuEntry.right - SCREEN_COORD(12.0f), menuEntry.top + SCREEN_COORD(5.0f), str);
+    CFontNew::SetUpperCase(false);
 }
 
 void CMenuNew::DrawLandingPage() {
@@ -3613,8 +3641,9 @@ void CMenuNew::DrawLandingPage() {
         CFontNew::SetColor(menuEntryTextColor);
         CFontNew::SetScale(SCREEN_MULTIPLIER(0.92f), SCREEN_MULTIPLIER(1.8f));
 
-        TextNew.UpperCase(leftText);
+        CFontNew::SetUpperCase(true);
         CFontNew::PrintString(menuEntry.right, menuEntry.top + textoffset, leftText);
+        CFontNew::SetUpperCase(false);
     }
 
     plugin::screen::SetBaseResolution(previousBaseRes);
@@ -3778,17 +3807,17 @@ void CMenuNew::SetWaypoint(float x, float y) {
 
         CVector pos = { out.x, out.y, CWorld::FindGroundZForCoord(out.x, out.y) };
 
-        if (pos.x < -worldSize / 2)
-            pos.x = -worldSize / 2;
+        if (pos.x < -CRadarNew::m_fRadarMapSize / 2)
+            pos.x = -CRadarNew::m_fRadarMapSize / 2;
 
-        if (pos.x > worldSize / 2)
-            pos.x = worldSize / 2;
+        if (pos.x > CRadarNew::m_fRadarMapSize / 2)
+            pos.x = CRadarNew::m_fRadarMapSize / 2;
 
-        if (pos.y < -worldSize / 2)
-            pos.y = -worldSize / 2;
+        if (pos.y < -CRadarNew::m_fRadarMapSize / 2)
+            pos.y = -CRadarNew::m_fRadarMapSize / 2;
 
-        if (pos.y > worldSize / 2)
-            pos.y = worldSize / 2;
+        if (pos.y > CRadarNew::m_fRadarMapSize / 2)
+            pos.y = CRadarNew::m_fRadarMapSize / 2;
 
         int i = CRadar::SetCoordBlip(BLIP_COORD, pos, 0, BLIP_DISPLAY_BOTH, 0);
         CRadar::SetBlipSprite(i, RADAR_SPRITE_WAYPOINT);
@@ -4112,8 +4141,8 @@ void CMenuNew::DrawZone() {
 
     CVector pos = { out.x, out.y, CWorld::FindGroundZForCoord(out.x, out.y) };
 
-    char* str = (char*)CTheZones::FindSmallestZoneForPosition(pos, false)->GetTranslatedName();
-    TextNew.UpperCase(str);
+    const char* str = CTheZones::FindSmallestZoneForPosition(pos, false)->GetTranslatedName();
+    CFontNew::SetUpperCase(true);
 
     CRect rect;
     rect.left = HUD_X(96.0f);
@@ -4138,6 +4167,7 @@ void CMenuNew::DrawZone() {
     rect.left += SCREEN_COORD(10.0f);
     rect.top += SCREEN_COORD(5.0f);
     CFontNew::PrintString(rect.left, rect.top, str);
+    CFontNew::SetUpperCase(false);
 }
 
 void CMenuNew::DrawMap() {
@@ -4830,6 +4860,8 @@ void CMenuNew::RestoreDefaults(CMenuSettings* ts, int index) {
         ts->language = 0;
         ts->showHUD = true;
         ts->showRadar = true;
+        ts->showBlips = true;
+        ts->showGangArea = true;
         ts->weaponTarget = 0;
         ts->simpleReticuleSize = 0.0;
         ts->savePhotos = true;
@@ -4888,6 +4920,8 @@ void CMenuSettings::Clear() {
     language = 0;
     showHUD = true;
     showRadar = true;
+    showBlips = true;
+    showGangArea = true;
     savePhotos = true;
     gpsRoute = true;
     safeZoneSize = 32.0;
@@ -4962,6 +4996,8 @@ void CMenuSettings::Load() {
                 language = display.child("Language").attribute("value").as_int(language);
                 showHUD = display.child("ShowHUD").attribute("value").as_bool(showHUD);
                 showRadar = display.child("ShowRadar").attribute("value").as_bool(showRadar);
+                showBlips = display.child("ShowBlips").attribute("value").as_bool(showBlips);
+                showGangArea = display.child("ShowGangArea").attribute("value").as_bool(showGangArea);
                 weaponTarget = display.child("WeaponTarget").attribute("value").as_int(weaponTarget);
                 simpleReticuleSize = display.child("SimpleReticuleSize").attribute("value").as_double(simpleReticuleSize);
                 savePhotos = display.child("SavePhotos").attribute("value").as_bool(savePhotos);
@@ -5064,6 +5100,8 @@ void CMenuSettings::Save() {
     display.append_child("Language").append_attribute("value").set_value(language);
     display.append_child("ShowHUD").append_attribute("value").set_value(showHUD);
     display.append_child("ShowRadar").append_attribute("value").set_value(showRadar);
+    display.append_child("ShowBlips").append_attribute("value").set_value(showBlips);
+    display.append_child("ShowGangArea").append_attribute("value").set_value(showGangArea);
     display.append_child("WeaponTarget").append_attribute("value").set_value(weaponTarget);
     display.append_child("SimpleReticuleSize").append_attribute("value").set_value(simpleReticuleSize);
     display.append_child("SavePhotos").append_attribute("value").set_value(savePhotos);

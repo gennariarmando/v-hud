@@ -113,8 +113,7 @@ CTextRead CTextNew::GetText(const char* str) {
         if (TextList[i].str[0] == str[0]
             && TextList[i].str[1] == str[1]
             && TextList[i].str[2] == str[2]
-            && TextList[i].str[3] == str[3]
-            && !faststrcmp(str, TextList[i].str, 4)) {
+            && !faststrcmp(str, TextList[i].str, 3)) {
             result = GetText(i);
             break;
         }
@@ -136,17 +135,28 @@ char CTextNew::GetLowerCase(char c) {
     return c;
 }
 
-void CTextNew::UpperCase(char* s) {
+char* CTextNew::UpperCase(const char* s) {
     while (*s) {
-        *s = GetUpperCase(*s);
+        if (*s == '~') {
+            s++;
+            while (*s != '~') s++;
+        }
+        (char)*s = GetUpperCase(*s);
         s++;
     }
+
+    return (char*)s;
 }
 
-void CTextNew::LowerCase(char* s) {
-    while (*s) {            
-        *s = GetLowerCase(*s);
+char* CTextNew::LowerCase(const char* s) {
+    while (*s) {
+        if (*s == '~') {
+            s++;
+            while (*s != '~') s++;
+        }
+        (char)*s = GetLowerCase(*s);
         s++;
     }
+    return (char*)s;
 }
 

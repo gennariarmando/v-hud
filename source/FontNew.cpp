@@ -258,6 +258,7 @@ void CFontNew::Clear() {
     SetGradBackground(false);
     SetBackgroundColor(CRGBA(0, 0, 0, 255));
     SetBackgroundBorder(CRect(0, 0, 0, 0));
+    SetUpperCase(false);
     SetClipX(SCREEN_WIDTH);
     SetClipX(-1);
     SetWrapX(SCREEN_WIDTH);
@@ -912,6 +913,13 @@ float CFontNew::PrintChar(float& x, float y, char c) {
 float CFontNew::DrawChar(bool print, bool calc, float x, float y, char c, int style, CRGBA const& col) {
     float characterSize = 0.0f;
     static char s[2];
+
+    if (Details.upperCase) {
+        if (c >= 'a' && c <= 'z') {
+            c = c - ('a' - 'A');
+        }
+    }
+
     s[0] = c;
 
     if (c != '~') {

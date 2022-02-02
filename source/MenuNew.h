@@ -116,6 +116,8 @@ enum eMenuEntries {
     MENUENTRY_GAMMA,
     MENUENTRY_SHOWHUD,
     MENUENTRY_SHOWRADAR,
+    MENUENTRY_SHOWBLIPS,
+    MENUENTRY_SHOWGANGAREA,
     MENUENTRY_WEAPONTARGET,
     MENUENTRY_SIMPLERETICULESIZE,
     MENUENTRY_GPSROUTE,
@@ -313,6 +315,8 @@ public:
     int language;
     bool showHUD;
     bool showRadar;
+    bool showBlips;
+    bool showGangArea;
     int weaponTarget;
     double simpleReticuleSize;
     bool savePhotos;
@@ -584,3 +588,5 @@ public:
 extern CMenuNew MenuNew;
 extern char* gGxtString;
 extern char* gGxtString2;
+
+extern CRect GetMenuScreenRect();
