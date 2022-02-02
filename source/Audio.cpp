@@ -45,7 +45,7 @@ void CAudio::Init() {
         fPreviousChunkVolume[i] = 0.0f;
     }
 
-    bResetMainVolume = !GetFocus();
+    bResetMainVolume = GetForegroundWindow() != RsGlobal.ps->window;
     bInitialised = true;
 }
 

@@ -839,7 +839,7 @@ bool CPadNew::GetOpenCloseMenuJustDown() {
         return (!NewState.Start && OldState.Start);
 
     return
-        (GetKeyJustDown(rsESC)) || (GetKeyJustDown('P'));
+        GetKeyJustDown(rsESC);
 }
 
 bool CPadNew::GetMenuMapZoomIn() {
