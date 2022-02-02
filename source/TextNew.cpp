@@ -29,8 +29,8 @@ static LateStaticInit InstallHooks([]() {
 
         return CFileMgr::OpenFile(file, b);
     };
-    patch::RedirectJump(0x6A0228, (int(__cdecl*)(const char*, const char*))openFile);
-    patch::RedirectJump(0x69FD5A, (int(__cdecl*)(const char*, const char*))openFile);
+    patch::RedirectCall(0x6A0228, (int(__cdecl*)(const char*, const char*))openFile);
+    patch::RedirectCall(0x69FD5A, (int(__cdecl*)(const char*, const char*))openFile);
 });
 
 void CTextNew::ReadLanguagesFromFile() {
