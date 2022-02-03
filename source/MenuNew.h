@@ -474,6 +474,8 @@ public:
     bool bLoad;
     int nSlot;
 
+    bool bApplyGraphicsChanges;
+
 public:
     void Init();
     void Shutdown();
@@ -577,6 +579,7 @@ public:
     static void PassSettingsToCurrentGame(const CMenuSettings* s);
     void FindOutUsedMemory();
     void ChangeVideoMode(int mode, int msaa);
+    void ChangeVideoModeBorderlessWindowed(int mode, int msaa);
     void ChangeVideoModeWindowed(int mode, int msaa);
     void ProcessFullscreenToggle();
     void ApplyGraphicsChanges();

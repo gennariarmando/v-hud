@@ -159,16 +159,16 @@ static LateStaticInit InstallHooks([]() {
     };
     patch::RedirectJump(0x57C290, (void(__fastcall*)(int, int))drawFrontend);
 
-    //CdeclEvent<AddressList<0x7461AA, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void()> loadSettings;
-    //loadSettings += [] {
-    //    MenuNew.Settings.Load();
-    //};
-
-    auto loadSettings = []() {
+    CdeclEvent<AddressList<0x7461AA, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void()> loadSettings;
+    loadSettings += [] {
         MenuNew.Settings.Load();
-        return 1;
     };
-    patch::RedirectJump(0x746190, (int(__cdecl*)())loadSettings);
+
+    //auto loadSettings = []() {
+    //    MenuNew.Settings.Load();
+    //    return 1;
+    //};
+    //patch::RedirectJump(0x746190, (int(__cdecl*)())loadSettings);
     patch::Nop(0x747540, 10);
 
     auto saveSettings = [](int, int) {
@@ -1900,7 +1900,18 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
         }
         break;
     case MENUENTRY_SCREENTYPE:
-        TempSettings.screenType = TempSettings.screenType == false;
+        if (input < 0) {
+            --TempSettings.screenType;
+
+            if (TempSettings.screenType < 0)
+                TempSettings.screenType = 2;
+        }
+        else if (input > 0) {
+            ++TempSettings.screenType;
+
+            if (TempSettings.screenType > 2)
+                TempSettings.screenType = 0;
+        }
         ApplyChanges();
         break;
     case MENUENTRY_CHANGERES:
@@ -3033,7 +3044,17 @@ void CMenuNew::DrawDefault() {
                 case MENUENTRY_NONE:
                     break;
                 case MENUENTRY_SCREENTYPE:
-                    rightText = TextNew.GetText(TempSettings.screenType ? "FE_SCN1" : "FE_SCN0").text;
+                    switch (TempSettings.screenType) {
+                    case 2:
+                        rightText = TextNew.GetText("FE_SCN2").text;
+                        break;
+                    case 1:
+                        rightText = TextNew.GetText("FE_SCN1").text;
+                        break;
+                    default:
+                        rightText = TextNew.GetText("FE_SCN0").text;
+                        break;
+                    }
                     break;
                 case MENUENTRY_CHANGERES:
                     if (char* mode = VideoModeList[TempSettings.videoMode]) {
@@ -4570,7 +4591,7 @@ void CMenuNew::PassSettingsToCurrentGame(const CMenuSettings* s) {
     m.invertPadY2 = s->invertPadY2;
     m.swapPadAxis1 = s->swapPadAxis1;
     m.swapPadAxis2 = s->swapPadAxis2;
-    
+
     {
         TheCamera.m_bUseMouse3rdPerson = s->controller == 0;
     }
@@ -4613,21 +4634,40 @@ void CMenuNew::PassSettingsToCurrentGame(const CMenuSettings* s) {
         }
     }
 
-    // Graphics
-    m.m_nAppliedResolution = s->videoMode;
-    m.m_nResolution = s->videoMode;
-    m.m_bMipMapping = s->mipMapping;
-    m.m_nAntiAliasingLevel = s->antiAliasing;
-    m.m_nAppliedAntiAliasingLevel = s->antiAliasing;
-    m.m_fDrawDistance = s->drawDist;
-    m.m_bWidescreenOn = s->widescreen;
-    m.m_bFrameLimiterOn = s->frameLimiter;
+    gamma.SetGamma(s->gamma, 1);
 
-    {
-        CRenderer::ms_lodDistScale = s->drawDist;
-        g_fx.SetFxQuality((FxQuality_e)s->visualQuality);
-        gamma.SetGamma(s->gamma, 1);
-        m.m_bChangeVideoMode = false;
+    // Graphics
+    if (MenuNew.bApplyGraphicsChanges) {
+        m.m_nAppliedResolution = s->videoMode;
+        m.m_nResolution = s->videoMode;
+        m.m_bMipMapping = s->mipMapping;
+        m.m_nAntiAliasingLevel = s->antiAliasing;
+        m.m_nAppliedAntiAliasingLevel = s->antiAliasing;
+        m.m_fDrawDistance = s->drawDist;
+        m.m_bWidescreenOn = s->widescreen;
+        m.m_bFrameLimiterOn = s->frameLimiter;
+
+        {
+            switch (s->screenType) {
+            case 2:
+                MenuNew.ChangeVideoMode(0, s->antiAliasing);
+                MenuNew.ChangeVideoModeBorderlessWindowed(s->videoMode, s->antiAliasing);
+                break;
+            case 1:
+                MenuNew.ChangeVideoMode(0, s->antiAliasing);
+                MenuNew.ChangeVideoModeWindowed(s->videoMode, s->antiAliasing);
+                break;
+            default:
+                MenuNew.ChangeVideoMode(s->videoMode, s->antiAliasing);
+                break;
+            }
+            RwTextureSetMipmapping(s->mipMapping);
+            g_fx.SetFxQuality((FxQuality_e)s->visualQuality);
+            CRenderer::ms_lodDistScale = s->drawDist;
+            m.m_bChangeVideoMode = false;
+        }
+
+        MenuNew.bApplyGraphicsChanges = false;
     }
 }
 
@@ -4693,6 +4733,7 @@ void CMenuNew::ChangeVideoMode(int mode, int msaa) {
     GcurSel = RwEngineGetCurrentSubSystem();
     GcurSelVM = mode;
 
+    RwEngineSetVideoMode(mode);
     RwD3D9ChangeVideoMode(mode);
 
     plugin::Call<0x7043D0>(); // CreateCameraSubraster
@@ -4707,6 +4748,44 @@ void CMenuNew::ChangeVideoMode(int mode, int msaa) {
     RwD3D9EngineSetRefreshRate(refreshRate);
 
     ps->fullScreen = true;
+}
+
+void CMenuNew::ChangeVideoModeBorderlessWindowed(int mode, int msaa) {
+    psGlobalType* ps = RsGlobal.ps;
+
+    if (!ps)
+        return;
+
+    HWND wnd = RsGlobal.ps->window;
+    RwD3D9ChangeMultiSamplingLevels(msaa);
+
+    RwVideoMode info;
+    RwEngineGetVideoModeInfo(&info, mode);
+
+    GcurSel = RwEngineGetCurrentSubSystem();
+    GcurSelVM = mode;
+
+    RECT rect;
+    GetClientRect(GetDesktopWindow(), &rect);
+    rect.left = (rect.right / 2) - (info.width / 2);
+    rect.top = (rect.bottom / 2) - (info.height / 2);
+    rect.right = info.width;
+    rect.bottom = info.height;
+
+    DWORD dwStyle = GetWindowLong(wnd, GWL_STYLE);
+    SetWindowLongPtr(wnd, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_TOPMOST);
+    SetWindowLong(wnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
+    SetWindowPos(wnd, HWND_NOTOPMOST, rect.left, rect.top, rect.right, rect.bottom, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+
+    plugin::Call<0x7043D0>(); // CreateCameraSubraster
+
+    int w = info.width;
+    int h = info.height;
+
+    RsGlobal.maximumWidth = w;
+    RsGlobal.maximumHeight = h;
+
+    ps->fullScreen = false;
 }
 
 void CMenuNew::ChangeVideoModeWindowed(int mode, int msaa) {
@@ -4785,18 +4864,7 @@ void CMenuNew::ApplyGraphicsChanges() {
     const CMenuSettings& ts = TempSettings;
     CMenuSettings& s = Settings;
 
-    switch (ts.screenType) {
-    case 1:
-        ChangeVideoMode(0, ts.antiAliasing);
-        ChangeVideoModeWindowed(ts.videoMode, ts.antiAliasing);
-        break;
-    default:
-        ChangeVideoMode(ts.videoMode, ts.antiAliasing);
-        break;
-    }
-    RwTextureSetMipmapping(ts.mipMapping);
-    g_fx.SetFxQuality((FxQuality_e)ts.visualQuality);
-    CRenderer::ms_lodDistScale = ts.drawDist;
+    bApplyGraphicsChanges = true;
 
     s = ts;
     s.Save();
@@ -5024,7 +5092,10 @@ void CMenuSettings::Load() {
             // Graphics
             if (auto graphics = settings.child("graphics")) {
                 const char* st = graphics.child("ScreenType").attribute("value").as_string("windowed");
-                if (!faststrcmp(st, "windowed")) {
+                if (!faststrcmp(st, "borderless windowed")) {
+                    screenType = 2;
+                }
+                else if (!faststrcmp(st, "windowed")) {
                     screenType = 1;
                 }
                 else if (!faststrcmp(st, "fullscreen")) {
@@ -5037,7 +5108,7 @@ void CMenuSettings::Load() {
 
                 //aspectRatio = graphics.child("AspectRatio").attribute("value").as_int(aspectRatio);
                 mipMapping = graphics.child("MipMapping").attribute("value").as_bool(mipMapping);
-                antiAliasing = graphics.child("AntiAliasing").attribute("value").as_int(antiAliasing) + 1;
+                antiAliasing = graphics.child("AntiAliasing").attribute("value").as_int(antiAliasing);
                 drawDist = graphics.child("DrawDist").attribute("value").as_double(drawDist);
                 visualQuality = graphics.child("VisualQuality").attribute("value").as_int(visualQuality);
                 widescreen = graphics.child("Widescreen").attribute("value").as_bool(widescreen);
@@ -5129,6 +5200,9 @@ void CMenuSettings::Save() {
     
     char* st = NULL;
     switch (screenType) {
+    case 2:
+        st = "borderless windowed";
+        break;
     case 1:
         st = "windowed";
         break;
@@ -5148,7 +5222,7 @@ void CMenuSettings::Save() {
 
     //graphics.append_child("AspectRatio").append_attribute("value").set_value(aspectRatio);
     graphics.append_child("MipMapping").append_attribute("value").set_value(mipMapping);
-    graphics.append_child("AntiAliasing").append_attribute("value").set_value(antiAliasing - 1);
+    graphics.append_child("AntiAliasing").append_attribute("value").set_value(antiAliasing);
     graphics.append_child("DrawDist").append_attribute("value").set_value(drawDist);
     graphics.append_child("VisualQuality").append_attribute("value").set_value(visualQuality);
     graphics.append_child("Widescreen").append_attribute("value").set_value(widescreen);
