@@ -1,4 +1,4 @@
-#include "VHud.h"
+﻿#include "VHud.h"
 #include "CTimer.h"
 #include "CMenuManager.h"
 #include "CWorld.h"
@@ -3803,21 +3803,21 @@ void CMenuNew::SetWaypoint(float x, float y) {
         in.x /= GetMenuMapWholeSize();
         in.y /= GetMenuMapWholeSize();
 
-        CRadar::TransformRadarPointToRealWorldSpace(out, in);
+        CRadarNew::TransformRadarPointToRealWorldSpace(out, in);
 
         CVector pos = { out.x, out.y, CWorld::FindGroundZForCoord(out.x, out.y) };
 
-        if (pos.x < -CRadarNew::m_fRadarMapSize / 2)
-            pos.x = -CRadarNew::m_fRadarMapSize / 2;
+        if (pos.x < -(float)CRadarNew::m_nRadarMapSize / 2)
+            pos.x = -(float)CRadarNew::m_nRadarMapSize / 2;
 
-        if (pos.x > CRadarNew::m_fRadarMapSize / 2)
-            pos.x = CRadarNew::m_fRadarMapSize / 2;
+        if (pos.x > (float)CRadarNew::m_nRadarMapSize / 2)
+            pos.x = (float)CRadarNew::m_nRadarMapSize / 2;
 
-        if (pos.y < -CRadarNew::m_fRadarMapSize / 2)
-            pos.y = -CRadarNew::m_fRadarMapSize / 2;
+        if (pos.y < -(float)CRadarNew::m_nRadarMapSize / 2)
+            pos.y = -(float)CRadarNew::m_nRadarMapSize / 2;
 
-        if (pos.y > CRadarNew::m_fRadarMapSize / 2)
-            pos.y = CRadarNew::m_fRadarMapSize / 2;
+        if (pos.y > (float)CRadarNew::m_nRadarMapSize / 2)
+            pos.y = (float)CRadarNew::m_nRadarMapSize / 2;
 
         int i = CRadar::SetCoordBlip(BLIP_COORD, pos, 0, BLIP_DISPLAY_BOTH, 0);
         CRadar::SetBlipSprite(i, RADAR_SPRITE_WAYPOINT);
@@ -3831,7 +3831,7 @@ float CMenuNew::GetMenuMapTileSize() {
 }
 
 int CMenuNew::GetMenuMapTiles() {
-    const int tiles = 12;
+    const int tiles = RADAR_NUM_TILES;
     return tiles;
 }
 
@@ -4137,7 +4137,7 @@ void CMenuNew::DrawZone() {
     in.x /= GetMenuMapWholeSize();
     in.y /= GetMenuMapWholeSize();
 
-    CRadar::TransformRadarPointToRealWorldSpace(out, in);
+    CRadarNew::TransformRadarPointToRealWorldSpace(out, in);
 
     CVector pos = { out.x, out.y, CWorld::FindGroundZForCoord(out.x, out.y) };
 
@@ -4170,8 +4170,21 @@ void CMenuNew::DrawZone() {
     CFontNew::SetUpperCase(false);
 }
 
+bool IsCollidingRect(CRect const& a, CRect const& b) {
+    bool collision = false;
+
+    if (a.left <= b.left + b.right &&
+        a.left + a.right >= b.left &&
+        a.top <= b.top + b.bottom &&
+        a.top + a.bottom >= b.top)
+        collision = true;
+
+    return collision;
+}
+
 void CMenuNew::DrawMap() {
     CRect mask = GetMenuScreenRect();
+    bool bounds = false;
 
     if (nCurrentInputType == MENUINPUT_TAB) {
         if (bShowMenu) {
@@ -4203,6 +4216,8 @@ void CMenuNew::DrawMap() {
                 SetInputTypeAndClear(MENUINPUT_TAB);
             }
         }
+
+        bounds = true;
     }
 
     const float mapHalfSize = GetMenuMapWholeSize() / 2;

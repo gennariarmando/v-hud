@@ -102,8 +102,6 @@ void COverlayLayer::UpdateFrameBuffer() {
         _rwSetPixelShader(NULL); \
     } while (0); \
 
-
-
 void COverlayLayer::RenderEffects() {
     if (CurrentEffect == EFFECT_NONE)
         return;

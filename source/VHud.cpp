@@ -49,6 +49,7 @@ bool VHud::Init() {
             Audio.Init();
             HudColourNew.ReadColorsFromFile();
             CFontNew::Init();
+            CRadarNew::InitBeforeGame();
             MenuNew.Init();
             CRadioHud::Init();
             COverlayLayer::Init();

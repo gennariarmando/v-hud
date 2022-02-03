@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Radar>
-	<RadarTiles value="12" />
-	<RadarMapSize value="6000.0" />
+	<RadarMapSize value="6000" />
+	<RadarMapNamePrefix value="radar%02d" />
+	<RadarMapFileFormat value="dds" />
 </Radar>

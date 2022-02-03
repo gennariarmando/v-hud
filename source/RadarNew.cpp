@@ -65,8 +65,9 @@ bool CRadarNew::m_bCopPursuit;
 bool CRadarNew::m_b3dRadar;
 int CRadarNew::m_nRadarRangeExtendTime;
 bool CRadarNew::m_bRemoveBlipsLimit;
-float CRadarNew::m_fRadarMapSize;
-int CRadarNew::m_nTiles;
+int CRadarNew::m_nRadarMapSize;
+char CRadarNew::m_NamePrefix[16];
+char CRadarNew::m_FileFormat[4];
 
 bool bShowWeaponPickupsOnRadar = false;
 
@@ -108,6 +109,7 @@ const char* PickupsBlipsFileNames[]{
 static LateStaticInit InstallHooks([]() {
     patch::RedirectJump(0x583480, CRadarNew::TransformRadarPointToScreenSpace);
     patch::RedirectJump(0x583530, CRadarNew::TransformRealWorldPointToRadarSpace);
+    patch::RedirectJump(0x583600, CRadarNew::TransformRealWorldToTexCoordSpace);
     patch::RedirectJump(0x5832F0, CRadarNew::LimitRadarPoint);
     patch::RedirectJump(0x585FF0, (void(__cdecl*)(unsigned short, float, float, unsigned char))CRadarNew::DrawRadarSprite);
     patch::RedirectCall(0x58563E, CRadarNew::TransformRadarPoint); // Gang overlay
@@ -127,12 +129,14 @@ static LateStaticInit InstallHooks([]() {
     //patch::RedirectJump(0x5853D0, CRadarNew::DrawAreaOnRadar);
 });
 
+void CRadarNew::InitBeforeGame() {
+    ReadBlipsFromFile();
+    ReadRadarInfoFromFile();
+}
+
 void CRadarNew::Init() {
     if (m_bInitialised)
         return;
-
-    ReadBlipsFromFile();
-    ReadRadarInfoFromFile();
 
     for (int i = 0; i < NUM_RADAR_SPRITES; i++) {
         m_RadarSprites[i] = new CSprite2d();
@@ -144,18 +148,34 @@ void CRadarNew::Init() {
         m_BlipsSprites[i]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\blips"), m_BlipsList[i].texName);
     }
 
+    int possibleW = 0;
+    int possibleH = 0;
+
     m_MiniMapSprites = new CSprite2d*[RADAR_NUM_TILES * RADAR_NUM_TILES];
     for (int i = 0; i < RADAR_NUM_TILES * RADAR_NUM_TILES; i++) {
         char name[32];
-        sprintf(name, "radar_%02d", i + 1);
+        sprintf(name, m_NamePrefix, i);
         m_MiniMapSprites[i] = new CSprite2d();
-        m_MiniMapSprites[i]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\map"), name);
+
+        if (!faststrcmp(m_FileFormat, "dds"))
+            m_MiniMapSprites[i]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\map"), name);
+        else
+            m_MiniMapSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\map"), name);
+    
+        if (m_MiniMapSprites[i] && m_MiniMapSprites[i]->m_pTexture) {
+            int w = m_MiniMapSprites[i]->m_pTexture->raster->width;
+            int h = m_MiniMapSprites[i]->m_pTexture->raster->height;
+
+            if (possibleW < w)
+                possibleW = w;
+
+            if (possibleH < h)
+                possibleH = h;
+        }
     }
 
-    if (m_MiniMapSprites[0] && m_MiniMapSprites[0]->m_pTexture) {
-        m_vRadarMapQuality.x = m_MiniMapSprites[0]->m_pTexture->raster->width;
-        m_vRadarMapQuality.y = m_MiniMapSprites[0]->m_pTexture->raster->height;
-    }
+    m_vRadarMapQuality.x = (float)possibleW;
+    m_vRadarMapQuality.y = (float)possibleH;
 
     for (int i = 0; i < NUM_PICKUPS_BLIPS_SPRITES; i++) {
         m_PickupsSprites[i] = new CSprite2d();
@@ -249,9 +269,11 @@ void CRadarNew::ReadRadarInfoFromFile() {
     xml_parse_result file = doc.load_file(PLUGIN_PATH("VHud\\data\\radar.xml"));
 
     if (file) {
-        if (auto keyboard = doc.child("Radar")) {
-            m_nTiles = keyboard.child("RadarTiles").attribute("value").as_int();
-            m_fRadarMapSize = keyboard.child("RadarMapSize").attribute("value").as_float();
+        if (auto radar = doc.child("Radar")) {
+            m_nRadarMapSize = radar.child("RadarMapSize").attribute("value").as_int();
+           
+            strcpy(m_NamePrefix, radar.child("RadarMapNamePrefix").attribute("value").as_string());
+            strcpy(m_FileFormat, radar.child("RadarMapFileFormat").attribute("value").as_string());
         }
     }
 }
@@ -590,9 +612,9 @@ void CRadarNew::DrawRadarCop() {
 
 void CRadarNew::TransformRadarPointToRealWorldSpace(CVector2D& out, CVector2D& in) {
     if (MenuNew.bDrawMenuMap) {
-        float w = (CRadarNew::m_fRadarMapSize / 2) / CRadarNew::m_fRadarMapSize;
-        out.x = (in.x - w) * CRadarNew::m_fRadarMapSize;
-        out.y = (w + in.y) * CRadarNew::m_fRadarMapSize;
+        float w = ((float)m_nRadarMapSize / 2) / (float)m_nRadarMapSize;
+        out.x = (in.x - w) * (float)m_nRadarMapSize;
+        out.y = (w + in.y) * (float)m_nRadarMapSize;
     }
     else {
         float s = -CRadar::cachedSin;
@@ -608,8 +630,8 @@ void CRadarNew::TransformRadarPointToRealWorldSpace(CVector2D& out, CVector2D& i
 
 void CRadarNew::TransformRealWorldPointToRadarSpace(CVector2D& out, CVector2D& in) {
     if (MenuNew.bDrawMenuMap) {
-        out.x = (in.x + CRadarNew::m_fRadarMapSize / 2) / CRadarNew::m_fRadarMapSize;
-        out.y = ((CRadarNew::m_fRadarMapSize / 2) - in.y) / CRadarNew::m_fRadarMapSize;
+        out.x = (in.x + (float)m_nRadarMapSize / 2) / (float)m_nRadarMapSize;
+        out.y = (((float)m_nRadarMapSize / 2) - in.y) / (float)m_nRadarMapSize;
     }
     else {
         float s = CRadar::cachedSin;
@@ -1234,8 +1256,9 @@ void CRadarNew::CalculateCachedSinCos() {
 void CRadarNew::DrawMap() {
     ScanCopPursuit();
 
-    int x = floor((CRadar::vec2DRadarOrigin.x + (CRadarNew::m_fRadarMapSize * 0.5f)) * 0.002f);
-    int y = ceil((11.0f - CRadar::vec2DRadarOrigin.y + (CRadarNew::m_fRadarMapSize * 0.5f)) * 0.002f);
+
+    int x = floor((CRadar::vec2DRadarOrigin.x - RADAR_START) / RADAR_TILE_SIZE);
+    int y = ceil((RADAR_NUM_TILES - 1) - (CRadar::vec2DRadarOrigin.y - RADAR_START) / RADAR_TILE_SIZE);
 
     CRadar::SetupRadarRect(x, y);
 
@@ -1294,10 +1317,10 @@ void CRadarNew::DrawMap() {
 }
 
 void CRadarNew::DrawRadarSectionMap(int x, int y, CRect const& rect, CRGBA const& col) {
-    int index = x + 12 * y;
+    int index = x + RADAR_NUM_TILES * y;
     CSprite2d* sprite = m_MiniMapSprites[index];
 
-    bool inBounds = (x >= 0 && x <= 11) && (y >= 0 && y <= 11);
+    bool inBounds = (x >= 0 && x <= RADAR_NUM_TILES - 1) && (y >= 0 && y <= RADAR_NUM_TILES - 1);
 
     RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERMIPLINEAR);
     RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)rwBLENDSRCALPHA);
@@ -1315,13 +1338,20 @@ void CRadarNew::DrawRadarSectionMap(int x, int y, CRect const& rect, CRGBA const
     }
 }
 
+void CRadarNew::TransformRealWorldToTexCoordSpace(CVector2D& out, CVector2D& in, int x, int y) {
+    out.x = in.x - (x * RADAR_TILE_SIZE + RADAR_START);
+    out.y = -(in.y - ((RADAR_NUM_TILES - y) * RADAR_TILE_SIZE + RADAR_START));
+    out.x /= RADAR_TILE_SIZE;
+    out.y /= RADAR_TILE_SIZE;
+}
+
 void CRadarNew::DrawRadarSection(int x, int y) {
     CVector2D worldPoly[8];
     CVector2D radarCorners[4];
     CVector2D texCoords[8];
     CVector2D screenPoly[8];
-    bool inBounds = (x >= 0 && x <= 11) && (y >= 0 && y <= 11);
-    int index = x + 12 * y;
+    bool inBounds = (x >= 0 && x <= RADAR_NUM_TILES - 1) && (y >= 0 && y <= RADAR_NUM_TILES - 1);
+    int index = x + RADAR_NUM_TILES * y;
 
     //index = clamp(index, 0, 12 * 12);
     CSprite2d* sprite = m_MiniMapSprites[index];
@@ -1331,7 +1361,7 @@ void CRadarNew::DrawRadarSection(int x, int y) {
     for (int i = 0; i < 4; i++) {
         TransformRealWorldPointToRadarSpace(radarCorners[i], worldPoly[i]);
         TransformRadarPointToRealWorldSpace(worldPoly[i], radarCorners[i]);
-        CRadar::TransformRealWorldToTexCoordSpace(texCoords[i], worldPoly[i], x, y);
+        TransformRealWorldToTexCoordSpace(texCoords[i], worldPoly[i], x, y);
         TransformRadarPoint(screenPoly[i], radarCorners[i]);
     }
 
@@ -1730,12 +1760,12 @@ int CRadarNew::ClipRadarPoly(CVector2D* poly, CVector2D const* rect) {
 }
 
 void CRadarNew::StreamRadarSection(int x, int y) {
-    for (int i = 0; i < 12; ++i) {
-        for (int j = 0; j < 12; ++j) {
+    for (int i = 0; i < RADAR_NUM_TILES; ++i) {
+        for (int j = 0; j < RADAR_NUM_TILES; ++j) {
             if ((i >= x - 2 && i <= x + 2) && (j >= y - 2 && j <= y + 2))
-                CStreaming::RequestModel(gRadarTextures[i + 12 * j] + 20000, 10);
+                CStreaming::RequestModel(gRadarTextures[i + RADAR_NUM_TILES * j] + 20000, 10);
             else
-                CStreaming::RemoveModel(gRadarTextures[i + 12 * j] + 20000);
+                CStreaming::RemoveModel(gRadarTextures[i + RADAR_NUM_TILES * j] + 20000);
         };
     };
 }

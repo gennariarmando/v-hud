@@ -1,12 +1,12 @@
 #define RADAR_MENU_BLIP_MULT (1.3f)
 #define RADAR_MENU_BLIP_HOVER_MULT (1.8f)
 
-#define RADAR_START (-CRadarNew::m_fRadarMapSize / 2)
-#define RADAR_END (CRadarNew::m_fRadarMapSize / 2)
+#define RADAR_START (-CRadarNew::m_nRadarMapSize / 2)
+#define RADAR_END (CRadarNew::m_nRadarMapSize / 2)
 #define RADAR_SIZE (RADAR_END - RADAR_START)
 
-#define RADAR_NUM_TILES (CRadarNew::m_nTiles)
-#define RADAR_TILE_SIZE (RADAR_SIZE / RADAR_NUM_TILES)
+#define RADAR_TILE_SIZE (500)
+#define RADAR_NUM_TILES (RADAR_SIZE / RADAR_TILE_SIZE)
 
 #include "CSprite2d.h"
 
@@ -122,10 +122,12 @@ public:
     static bool m_b3dRadar;
     static int m_nRadarRangeExtendTime;
     static bool m_bRemoveBlipsLimit;
-    static float m_fRadarMapSize;
-    static int m_nTiles;
+    static int m_nRadarMapSize;
+    static char m_NamePrefix[16];
+    static char m_FileFormat[4];
 
 public:
+    static void InitBeforeGame();
     static void Init();
     static void Shutdown();
     static void Clear();
@@ -161,6 +163,7 @@ public:
     static void CalculateCachedSinCos();
     static void DrawMap();
     static void DrawRadarSectionMap(int x, int y, CRect const& rect, CRGBA const& col);
+    static void TransformRealWorldToTexCoordSpace(CVector2D& out, CVector2D& in, int x, int y);
     static void DrawRadarSection(int x, int y);
     static void DrawRadarMap(int x, int y);
     static void ShowRadarTraceWithHeight(float x, float y, unsigned int size, unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha, unsigned char type);
