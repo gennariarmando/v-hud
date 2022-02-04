@@ -125,6 +125,7 @@ public:
     static int m_nRadarMapSize;
     static char m_NamePrefix[16];
     static char m_FileFormat[4];
+    static bool m_bUseOriginalTiles;
 
 public:
     static void InitBeforeGame();

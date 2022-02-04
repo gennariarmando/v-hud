@@ -31,6 +31,7 @@
 #include "eModelID.h"
 #include "CGangWars.h"
 #include "CTheZones.h"
+#include "CTxdStore.h"
 
 #include <d3d9.h>
 #include <d3d9types.h>
@@ -68,6 +69,7 @@ bool CRadarNew::m_bRemoveBlipsLimit;
 int CRadarNew::m_nRadarMapSize;
 char CRadarNew::m_NamePrefix[16];
 char CRadarNew::m_FileFormat[4];
+bool CRadarNew::m_bUseOriginalTiles;
 
 bool bShowWeaponPickupsOnRadar = false;
 
@@ -151,26 +153,32 @@ void CRadarNew::Init() {
     int possibleW = 0;
     int possibleH = 0;
 
-    m_MiniMapSprites = new CSprite2d*[RADAR_NUM_TILES * RADAR_NUM_TILES];
-    for (int i = 0; i < RADAR_NUM_TILES * RADAR_NUM_TILES; i++) {
-        char name[32];
-        sprintf(name, m_NamePrefix, i);
-        m_MiniMapSprites[i] = new CSprite2d();
+    if (m_bUseOriginalTiles) {
+        possibleW = 256;
+        possibleH = 256;
+    }
+    else {
+        m_MiniMapSprites = new CSprite2d * [RADAR_NUM_TILES * RADAR_NUM_TILES];
+        for (int i = 0; i < RADAR_NUM_TILES * RADAR_NUM_TILES; i++) {
+            char name[32];
+            sprintf(name, m_NamePrefix, i);
+            m_MiniMapSprites[i] = new CSprite2d();
 
-        if (!faststrcmp(m_FileFormat, "dds"))
-            m_MiniMapSprites[i]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\map"), name);
-        else
-            m_MiniMapSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\map"), name);
-    
-        if (m_MiniMapSprites[i] && m_MiniMapSprites[i]->m_pTexture) {
-            int w = m_MiniMapSprites[i]->m_pTexture->raster->width;
-            int h = m_MiniMapSprites[i]->m_pTexture->raster->height;
+            if (!faststrcmp(m_FileFormat, "dds"))
+                m_MiniMapSprites[i]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\map"), name);
+            else
+                m_MiniMapSprites[i]->m_pTexture = CTextureMgr::LoadPNGTextureCB(PLUGIN_PATH("VHud\\map"), name);
 
-            if (possibleW < w)
-                possibleW = w;
+            if (m_MiniMapSprites[i] && m_MiniMapSprites[i]->m_pTexture) {
+                int w = m_MiniMapSprites[i]->m_pTexture->raster->width;
+                int h = m_MiniMapSprites[i]->m_pTexture->raster->height;
 
-            if (possibleH < h)
-                possibleH = h;
+                if (possibleW < w)
+                    possibleW = w;
+
+                if (possibleH < h)
+                    possibleH = h;
+            }
         }
     }
 
@@ -209,14 +217,16 @@ void CRadarNew::Shutdown() {
         }
     }
 
-    for (int i = 0; i < RADAR_NUM_TILES * RADAR_NUM_TILES; i++) {
-        if (m_MiniMapSprites[i]) {
-            m_MiniMapSprites[i]->Delete();
-            delete m_MiniMapSprites[i];
+    if (!m_bUseOriginalTiles) {
+        for (int i = 0; i < RADAR_NUM_TILES * RADAR_NUM_TILES; i++) {
+            if (m_MiniMapSprites[i]) {
+                m_MiniMapSprites[i]->Delete();
+                delete m_MiniMapSprites[i];
+            }
         }
-    }
 
-    delete[] m_MiniMapSprites;
+        delete[] m_MiniMapSprites;
+    }
 
     for (int i = 0; i < NUM_PICKUPS_BLIPS_SPRITES; i++) {
         if (m_PickupsSprites[i]) {
@@ -272,8 +282,10 @@ void CRadarNew::ReadRadarInfoFromFile() {
         if (auto radar = doc.child("Radar")) {
             m_nRadarMapSize = radar.child("RadarMapSize").attribute("value").as_int();
            
+            m_bUseOriginalTiles = radar.child("UseOriginalTiles").attribute("value").as_bool();
             strcpy(m_NamePrefix, radar.child("RadarMapNamePrefix").attribute("value").as_string());
             strcpy(m_FileFormat, radar.child("RadarMapFileFormat").attribute("value").as_string());
+
         }
     }
 }
@@ -1318,7 +1330,24 @@ void CRadarNew::DrawMap() {
 
 void CRadarNew::DrawRadarSectionMap(int x, int y, CRect const& rect, CRGBA const& col) {
     int index = x + RADAR_NUM_TILES * y;
-    CSprite2d* sprite = m_MiniMapSprites[index];
+    RwTexture* texture = NULL;
+
+    index = clamp(index, 0, (RADAR_NUM_TILES * RADAR_NUM_TILES) - 1);
+
+    if (m_bUseOriginalTiles) {
+        int r = gRadarTextures[index];
+
+        RwTexDictionary* txd = CTxdStore::ms_pTxdPool->GetAt(r)->m_pRwDictionary;
+
+        if (txd)
+            texture = GetFirstTexture(txd);
+    }
+    else {
+        CSprite2d* sprite = m_MiniMapSprites[index];
+
+        if (sprite && sprite->m_pTexture)
+            texture = sprite->m_pTexture;
+    }
 
     bool inBounds = (x >= 0 && x <= RADAR_NUM_TILES - 1) && (y >= 0 && y <= RADAR_NUM_TILES - 1);
 
@@ -1330,8 +1359,8 @@ void CRadarNew::DrawRadarSectionMap(int x, int y, CRect const& rect, CRGBA const
     RwRenderStateSet(rwRENDERSTATETEXTUREADDRESS, (void*)rwTEXTUREADDRESSCLAMP);
 
     if (inBounds) {
-        if (sprite && sprite->m_pTexture) {
-            RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(sprite->m_pTexture));
+        if (texture) {
+            RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(texture));
             CSprite2d::SetVertices(rect, col, col, col, col);
             RwIm2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 4);
         }
@@ -1352,9 +1381,23 @@ void CRadarNew::DrawRadarSection(int x, int y) {
     CVector2D screenPoly[8];
     bool inBounds = (x >= 0 && x <= RADAR_NUM_TILES - 1) && (y >= 0 && y <= RADAR_NUM_TILES - 1);
     int index = x + RADAR_NUM_TILES * y;
+    RwTexture* texture = NULL;
 
-    //index = clamp(index, 0, 12 * 12);
-    CSprite2d* sprite = m_MiniMapSprites[index];
+    index = clamp(index, 0, (RADAR_NUM_TILES * RADAR_NUM_TILES) - 1);
+
+    if (m_bUseOriginalTiles) {
+        int r = gRadarTextures[index];
+        RwTexDictionary* txd = CTxdStore::ms_pTxdPool->GetAt(r)->m_pRwDictionary;
+
+        if (txd)
+            texture = GetFirstTexture(txd);
+    }
+    else {
+        CSprite2d* sprite = m_MiniMapSprites[index];
+
+        if (sprite && sprite->m_pTexture)
+            texture = sprite->m_pTexture;
+    }
 
     GetTextureCorners(x, y, worldPoly);
 
@@ -1384,8 +1427,8 @@ void CRadarNew::DrawRadarSection(int x, int y) {
         RwIm2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 4);
 
         if (inBounds) {
-            if (sprite && sprite->m_pTexture) {
-                RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(sprite->m_pTexture));
+            if (texture) {
+                RwRenderStateSet(rwRENDERSTATETEXTURERASTER, RwTextureGetRaster(texture));
                 CSprite2d::SetVertices(4, (float*)screenPoly, (float*)texCoords, col);
                 RwIm2DRenderPrimitive(rwPRIMTYPETRIFAN, CSprite2d::maVertices, 4);
             }
@@ -1484,6 +1527,8 @@ void CRadarNew::DrawRadarMap(int x, int y) {
     RwCameraClear(m_pCamera, (RwRGBA*)&col, rwCAMERACLEARIMAGE);
 
     RwCameraBeginUpdate(m_pCamera);
+
+    StreamRadarSection(x, y);
 
     if (playa && !playa->m_nAreaCode) {
         DrawRadarSection(x - 1, y - 1);
@@ -1760,14 +1805,19 @@ int CRadarNew::ClipRadarPoly(CVector2D* poly, CVector2D const* rect) {
 }
 
 void CRadarNew::StreamRadarSection(int x, int y) {
+    if (!m_bUseOriginalTiles)
+        return;
+
     for (int i = 0; i < RADAR_NUM_TILES; ++i) {
         for (int j = 0; j < RADAR_NUM_TILES; ++j) {
-            if ((i >= x - 2 && i <= x + 2) && (j >= y - 2 && j <= y + 2))
+            if (MenuNew.bDrawMenuMap || ((i >= x - 1 && i <= x + 1) && (j >= y - 1 && j <= y + 1)))
                 CStreaming::RequestModel(gRadarTextures[i + RADAR_NUM_TILES * j] + 20000, 10);
             else
                 CStreaming::RemoveModel(gRadarTextures[i + RADAR_NUM_TILES * j] + 20000);
         };
     };
+
+    CStreaming::LoadAllRequestedModels(0);
 }
 
 bool CRadarNew::IsPlayerInVehicle() {

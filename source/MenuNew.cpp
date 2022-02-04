@@ -159,16 +159,16 @@ static LateStaticInit InstallHooks([]() {
     };
     patch::RedirectJump(0x57C290, (void(__fastcall*)(int, int))drawFrontend);
 
-    CdeclEvent<AddressList<0x7461AA, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void()> loadSettings;
-    loadSettings += [] {
-        MenuNew.Settings.Load();
-    };
-
-    //auto loadSettings = []() {
+    //CdeclEvent<AddressList<0x7461AA, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void()> loadSettings;
+    //loadSettings += [] {
     //    MenuNew.Settings.Load();
-    //    return 1;
     //};
-    //patch::RedirectJump(0x746190, (int(__cdecl*)())loadSettings);
+
+    auto loadSettings = []() {
+        MenuNew.Settings.Load();
+        return 1;
+    };
+    patch::RedirectJump(0x746190, (int(__cdecl*)())loadSettings);
     patch::Nop(0x747540, 10);
 
     auto saveSettings = [](int, int) {
@@ -4255,6 +4255,8 @@ void CMenuNew::DrawMap() {
     rect.right = rect.left + mapZoom;
     rect.bottom = rect.top + mapZoom;
 
+    CRadarNew::StreamRadarSection(0, 0);
+
     for (int y = 0; y < GetMenuMapTiles(); y++) {
         for (int x = 0; x < GetMenuMapTiles(); x++) {
             CRadarNew::DrawRadarSectionMap(x, y, CRect((rect.left - mapHalfSize), (rect.top - mapHalfSize), (rect.right - mapHalfSize), (rect.bottom - mapHalfSize)), col);
@@ -4737,6 +4739,7 @@ void CMenuNew::ChangeVideoMode(int mode, int msaa) {
     RwD3D9ChangeVideoMode(mode);
 
     plugin::Call<0x7043D0>(); // CreateCameraSubraster
+    plugin::Call<0x7046D0>();
 
     int w = Scene.m_pRwCamera->frameBuffer->width;
     int h = Scene.m_pRwCamera->frameBuffer->height;
@@ -4778,6 +4781,7 @@ void CMenuNew::ChangeVideoModeBorderlessWindowed(int mode, int msaa) {
     SetWindowPos(wnd, HWND_NOTOPMOST, rect.left, rect.top, rect.right, rect.bottom, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
 
     plugin::Call<0x7043D0>(); // CreateCameraSubraster
+    plugin::Call<0x7046D0>();
 
     int w = info.width;
     int h = info.height;
@@ -4821,6 +4825,7 @@ void CMenuNew::ChangeVideoModeWindowed(int mode, int msaa) {
     SetWindowPos(wnd, HWND_NOTOPMOST, rect.left, rect.top, rect.right, rect.bottom, 0);
 
     plugin::Call<0x7043D0>(); // CreateCameraSubraster
+    plugin::Call<0x7046D0>();
 
     int w = info.width;
     int h = info.height;
@@ -4849,6 +4854,7 @@ void CMenuNew::ProcessFullscreenToggle() {
     static int previousHeight = RsGlobal.maximumHeight;
     if ((RsGlobal.maximumWidth != previousWidth || RsGlobal.maximumHeight != previousHeight)) {
         plugin::Call<0x7043D0>(); // CreateCameraSubraster
+        plugin::Call<0x7046D0>();
 
         int w = Scene.m_pRwCamera->frameBuffer->width;
         int h = Scene.m_pRwCamera->frameBuffer->height;
