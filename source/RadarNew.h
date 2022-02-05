@@ -126,6 +126,7 @@ public:
     static char m_NamePrefix[16];
     static char m_FileFormat[4];
     static bool m_bUseOriginalTiles;
+    static int* m_nOriginalMiniMapId;
 
 public:
     static void InitBeforeGame();

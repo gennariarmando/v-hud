@@ -70,6 +70,7 @@ int CRadarNew::m_nRadarMapSize;
 char CRadarNew::m_NamePrefix[16];
 char CRadarNew::m_FileFormat[4];
 bool CRadarNew::m_bUseOriginalTiles;
+int* CRadarNew::m_nOriginalMiniMapId;
 
 bool bShowWeaponPickupsOnRadar = false;
 
@@ -156,6 +157,12 @@ void CRadarNew::Init() {
     if (m_bUseOriginalTiles) {
         possibleW = 256;
         possibleH = 256;
+
+        m_nOriginalMiniMapId = new int[RADAR_NUM_TILES * RADAR_NUM_TILES];
+
+        for (int i = 0; i < RADAR_NUM_TILES * RADAR_NUM_TILES; i++) {
+            m_nOriginalMiniMapId[i] = -1;
+        }
     }
     else {
         m_MiniMapSprites = new CSprite2d * [RADAR_NUM_TILES * RADAR_NUM_TILES];
@@ -217,7 +224,10 @@ void CRadarNew::Shutdown() {
         }
     }
 
-    if (!m_bUseOriginalTiles) {
+    if (m_bUseOriginalTiles) {
+        delete[] m_nOriginalMiniMapId;
+    }
+    else {
         for (int i = 0; i < RADAR_NUM_TILES * RADAR_NUM_TILES; i++) {
             if (m_MiniMapSprites[i]) {
                 m_MiniMapSprites[i]->Delete();
@@ -1335,7 +1345,7 @@ void CRadarNew::DrawRadarSectionMap(int x, int y, CRect const& rect, CRGBA const
     index = clamp(index, 0, (RADAR_NUM_TILES * RADAR_NUM_TILES) - 1);
 
     if (m_bUseOriginalTiles) {
-        int r = gRadarTextures[index];
+        int r = m_nOriginalMiniMapId[index];
 
         RwTexDictionary* txd = CTxdStore::ms_pTxdPool->GetAt(r)->m_pRwDictionary;
 
@@ -1386,7 +1396,7 @@ void CRadarNew::DrawRadarSection(int x, int y) {
     index = clamp(index, 0, (RADAR_NUM_TILES * RADAR_NUM_TILES) - 1);
 
     if (m_bUseOriginalTiles) {
-        int r = gRadarTextures[index];
+        int r = m_nOriginalMiniMapId[index];
         RwTexDictionary* txd = CTxdStore::ms_pTxdPool->GetAt(r)->m_pRwDictionary;
 
         if (txd)
@@ -1810,14 +1820,24 @@ void CRadarNew::StreamRadarSection(int x, int y) {
 
     for (int i = 0; i < RADAR_NUM_TILES; ++i) {
         for (int j = 0; j < RADAR_NUM_TILES; ++j) {
-            if (MenuNew.bDrawMenuMap || ((i >= x - 1 && i <= x + 1) && (j >= y - 1 && j <= y + 1)))
-                CStreaming::RequestModel(gRadarTextures[i + RADAR_NUM_TILES * j] + 20000, 10);
-            else
-                CStreaming::RemoveModel(gRadarTextures[i + RADAR_NUM_TILES * j] + 20000);
+            int index = i + RADAR_NUM_TILES * j;
+
+            if (m_nOriginalMiniMapId[index] == -1) {
+                char name[32];
+                sprintf(name, "radar%02d", index);
+                m_nOriginalMiniMapId[index] = CTxdStore::FindTxdSlot(name);
+            }
+
+            if (m_nOriginalMiniMapId[index] != -1) {
+                if (MenuNew.bDrawMenuMap || ((i >= x - 1 && i <= x + 1) && (j >= y - 1 && j <= y + 1))) {
+                    CStreaming::RequestTxdModel(m_nOriginalMiniMapId[index], 10);
+                    CStreaming::LoadRequestedModels();
+                }
+                else
+                    CStreaming::RemoveModel(m_nOriginalMiniMapId[index] + 20000);
+            }
         };
     };
-
-    CStreaming::LoadAllRequestedModels(0);
 }
 
 bool CRadarNew::IsPlayerInVehicle() {
