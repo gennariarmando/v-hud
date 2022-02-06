@@ -38,7 +38,7 @@ Download the latest archive from the [releases](https://github.com/gennariarmand
 An ASI Loader is required in order to inject the plugin into the game, if you already have one skip to the next step.\
 Recommended: [Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader)
 
-Place the DLL file (usually "dinput8.dll") into your GTA directory.
+Place the DLL file (renamed into "vorbisFile.dll") into your GTA directory.
 
 #### Installing V Hud:
 Archive content: 
