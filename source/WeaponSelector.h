@@ -1,4 +1,5 @@
 #pragma once
+#define MAX_WEAPONS_ON_WHEEL 128
 class CHudSetting;
 class CSprite2d;
 
@@ -63,20 +64,20 @@ public:
     static int nSelectedWeapon[8];
     static int nActiveSlot;
     static int nActiveWeapon[8];
-    static CWeaponWheel* WeaponWheel[8][128];
+    static CWeaponWheel* WeaponWheel[8][MAX_WEAPONS_ON_WHEEL];
     static bool bSlowCycle;
     static int nTimeSinceClosed;
     static float nPrevCamHor;
     static float nPrevCamVer;
     static int nNumSelectedWeaponAvailableInSlot[8];
     static int nNumWeaponsAvailableInSlot[8];
-    static int nArrayOfAvailableWeapons[8][128];
+    static int nArrayOfAvailableWeapons[8][MAX_WEAPONS_ON_WHEEL];
     static CWeaponStat* WeaponStat;
     static float fStatMaxRate;
     static float fStatsProgress[4];
     static float fStatsDiff[4];
     static int nWeaponExtraFadeAlpha;
-    static CWeaponCrosshair nCrosshairs[1024];
+    static CWeaponCrosshair nCrosshairs[MAX_WEAPONS_ON_WHEEL];
 
 public:
     static CWeaponWheel* GetActiveWeapon();

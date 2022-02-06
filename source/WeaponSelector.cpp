@@ -42,20 +42,20 @@ int CWeaponSelector::nActiveSlot;
 int CWeaponSelector::nActiveWeapon[8];
 int CWeaponSelector::nSelectedSlot;
 int CWeaponSelector::nSelectedWeapon[8];
-CWeaponWheel* CWeaponSelector::WeaponWheel[8][128];
+CWeaponWheel* CWeaponSelector::WeaponWheel[8][MAX_WEAPONS_ON_WHEEL];
 bool CWeaponSelector::bSlowCycle;
 int CWeaponSelector::nTimeSinceClosed;
 float CWeaponSelector::nPrevCamHor;
 float CWeaponSelector::nPrevCamVer;
 int CWeaponSelector::nNumSelectedWeaponAvailableInSlot[8];
 int CWeaponSelector::nNumWeaponsAvailableInSlot[8];
-int CWeaponSelector::nArrayOfAvailableWeapons[8][128];
+int CWeaponSelector::nArrayOfAvailableWeapons[8][MAX_WEAPONS_ON_WHEEL];
 CWeaponStat* CWeaponSelector::WeaponStat;
 float CWeaponSelector::fStatMaxRate;
 float CWeaponSelector::fStatsProgress[4];
 float CWeaponSelector::fStatsDiff[4];
 int CWeaponSelector::nWeaponExtraFadeAlpha;
-CWeaponCrosshair CWeaponSelector::nCrosshairs[1024];
+CWeaponCrosshair CWeaponSelector::nCrosshairs[MAX_WEAPONS_ON_WHEEL];
 
 static LateStaticInit InstallHooks([]() {
     // Disable weapon cycle CPlayerPed::ProcessPlayerWeaponSwitch

@@ -4224,7 +4224,8 @@ void CMenuNew::DrawMap() {
             vMapBase.y -= out.y - SCREEN_HALF_HEIGHT;
             vTempMapBase = vMapBase;
 
-            for (int i = 0; i < 24; i++) {
+            const int intialZoom = 21 + (int)(3 * RADAR_NUM_TILES / 12);
+            for (int i = 0; i < intialZoom; i++) {
                 DoMapZoomInOut(false);
                 nMapZoomTime = 0;
             }

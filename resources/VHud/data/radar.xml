@@ -5,5 +5,4 @@
 	<UseOriginalBlips value="false" />
 	<RadarMapNamePrefix value="radar%02d" />
 	<RadarMapFileFormat value="dds" />
-	<RadarTraces value="175" />
 </Radar>

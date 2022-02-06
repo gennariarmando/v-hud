@@ -184,6 +184,8 @@ public:
     static unsigned int GetRadarTraceColour(unsigned int c, bool bright, bool friendly);
     static int*& GetRadarTexturesSlot();
     static tRadarTrace*& GetRadarTrace();
+    static int& GetMaxRadarTrace();
+
     static CSprite2d*& GetRadarBlipsSprites();
     static CSprite2d* GetBlipsSprites(int id);
     static int& GetTxdStreamingShiftValue();

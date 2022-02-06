@@ -295,7 +295,6 @@ void CRadarNew::ReadRadarInfoFromFile() {
 
             strcpy(m_NamePrefix, radar.child("RadarMapNamePrefix").attribute("value").as_string());
             strcpy(m_FileFormat, radar.child("RadarMapFileFormat").attribute("value").as_string());
-            m_nMaxRadarTrace = radar.child("RadarTraces").attribute("value").as_int();
         }
     }
 }
@@ -380,6 +379,10 @@ tRadarTrace*& CRadarNew::GetRadarTrace() {
     return m_RadarTrace;
 }
 
+int& CRadarNew::GetMaxRadarTrace() {
+    return m_nMaxRadarTrace;
+}
+
 CSprite2d*& CRadarNew::GetRadarBlipsSprites() {
     return CRadar::RadarBlipSprites;
 }
@@ -445,7 +448,7 @@ void CRadarNew::DrawBlips() {
     CRadarNew::DrawRadarCop();
 
     tRadarTrace* trace = GetRadarTrace();
-    for (int i = 0; i < m_nMaxRadarTrace; i++) {
+    for (int i = 0; i < GetMaxRadarTrace(); i++) {
         if (!trace)
             continue;
 
