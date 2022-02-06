@@ -341,9 +341,6 @@ public:
     bool landingPage;
     int saveSlot;
 
-    // Misc
-    char uiMainColor[32];
-
 public:
     void Clear();
     void Load();
@@ -446,6 +443,8 @@ public:
     CVector2D vMapBase;
     CVector2D vTempMapBase;
     float fMapZoom;
+    int nMapMoveTime;
+    bool bMapPlayShot;
 
     int nMapZoomTime;
     bool bShowLegend;

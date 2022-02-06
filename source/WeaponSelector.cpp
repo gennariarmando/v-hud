@@ -804,12 +804,12 @@ void CWeaponSelector::DrawWheel() {
 
         for (int i = 0; i < 8; i++) {
             if (i == nSelectedSlot)
-                DrawWheelPart(WHEEL_PART_GRAD, x, y, i, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 200));
+                DrawWheelPart(WHEEL_PART_GRAD, x, y, i, HudColourNew.GetRGB(VHud::Settings.UIMainColor, 200));
             else
                 DrawWheelPart(WHEEL_PART_SOLID, x, y, i, CRGBA(0, 0, 0, 100));
 
             if (i == nActiveSlot && nSelectedWeapon[i] == nActiveWeapon[i])
-                DrawWheelPart(WHEEL_PART_ACTIVE, x, y, i, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+                DrawWheelPart(WHEEL_PART_ACTIVE, x, y, i, HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255));
             else
                 DrawWheelPart(WHEEL_PART_INACTIVE, x, y, i, CRGBA(0, 0, 0, 150));
 
@@ -977,8 +977,8 @@ void CWeaponSelector::DrawWheel() {
                 sprintf(gString, "%d    /    %d", curr, max);
                 CFontNew::PrintString(SCREEN_COORD_CENTER_X + SCREEN_COORD(x + 2.0f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 82.0f), gString);
 
-                DrawSpriteWithBorder(WheelSprite[WHEEL_ARROW_LEFT], SCREEN_COORD_CENTER_X + SCREEN_COORD((x + 2.0f) - (46.0f / 2) - 32.0f) - (CFontNew::GetStringWidth(gString, true) * 0.5f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 89.0f), SCREEN_COORD(46.0f), SCREEN_COORD(46.0f), SCREEN_COORD(1.5f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
-                DrawSpriteWithBorder(WheelSprite[WHEEL_ARROW_RIGHT], SCREEN_COORD_CENTER_X + SCREEN_COORD((x + 2.0f) - (46.0f / 2) + 32.0f) + (CFontNew::GetStringWidth(gString, true) * 0.5f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 89.0f), SCREEN_COORD(46.0f), SCREEN_COORD(46.0f), SCREEN_COORD(1.5f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+                DrawSpriteWithBorder(WheelSprite[WHEEL_ARROW_LEFT], SCREEN_COORD_CENTER_X + SCREEN_COORD((x + 2.0f) - (46.0f / 2) - 32.0f) - (CFontNew::GetStringWidth(gString, true) * 0.5f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 89.0f), SCREEN_COORD(46.0f), SCREEN_COORD(46.0f), SCREEN_COORD(1.5f), HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255));
+                DrawSpriteWithBorder(WheelSprite[WHEEL_ARROW_RIGHT], SCREEN_COORD_CENTER_X + SCREEN_COORD((x + 2.0f) - (46.0f / 2) + 32.0f) + (CFontNew::GetStringWidth(gString, true) * 0.5f), SCREEN_COORD_CENTER_Y + SCREEN_COORD(y - 89.0f), SCREEN_COORD(46.0f), SCREEN_COORD(46.0f), SCREEN_COORD(1.5f), HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255));
             }
 
             float offset = 0.0f;

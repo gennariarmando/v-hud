@@ -44,8 +44,9 @@ using namespace pugi;
 
 CRadarNew RadarNew;
 
+tRadarTrace* CRadarNew::m_RadarTrace;
 CSprite2d* CRadarNew::m_RadarSprites[NUM_RADAR_SPRITES];
-CSprite2d* CRadarNew::m_BlipsSprites[NUM_BLIPS_SPRITES];
+CSprite2d CRadarNew::m_BlipsSprites[NUM_BLIPS_SPRITES];
 CSprite2d** CRadarNew::m_MiniMapSprites;
 CSprite2d* CRadarNew::m_PickupsSprites[NUM_PICKUPS_BLIPS_SPRITES];
 CRadarAnim CRadarNew::Anim;
@@ -60,7 +61,7 @@ RwRaster* CRadarNew::m_pFrameBuffer1;
 RwRaster* CRadarNew::m_pFrameBuffer2;
 RwRaster* CRadarNew::m_pFrameBuffer3;
 int CRadarNew::m_nMapLegendBlipCount;
-CRadarLegend CRadarNew::m_MapLegendBlipList[175];
+CRadarLegend CRadarNew::m_MapLegendBlipList[512];
 unsigned int CRadarNew::m_nActualTraceIdToPass;
 bool CRadarNew::m_bCopPursuit;
 bool CRadarNew::m_b3dRadar;
@@ -70,7 +71,9 @@ int CRadarNew::m_nRadarMapSize;
 char CRadarNew::m_NamePrefix[16];
 char CRadarNew::m_FileFormat[4];
 bool CRadarNew::m_bUseOriginalTiles;
+bool CRadarNew::m_bUseOriginalBlips;
 int* CRadarNew::m_nOriginalMiniMapId;
+int CRadarNew::m_nMaxRadarTrace;
 
 bool bShowWeaponPickupsOnRadar = false;
 
@@ -147,8 +150,7 @@ void CRadarNew::Init() {
     }
 
     for (int i = 0; i < m_BlipsCount; i++) {
-        m_BlipsSprites[i] = new CSprite2d();
-        m_BlipsSprites[i]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\blips"), m_BlipsList[i].texName);
+        m_BlipsSprites[i].m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\blips"), m_BlipsList[i].texName);
     }
 
     int possibleW = 0;
@@ -218,10 +220,7 @@ void CRadarNew::Shutdown() {
     }
 
     for (int i = 0; i < NUM_BLIPS_SPRITES; i++) {
-        if (m_BlipsSprites[i]) {
-            m_BlipsSprites[i]->Delete();
-            delete m_BlipsSprites[i];
-        }
+        m_BlipsSprites[i].Delete();
     }
 
     if (m_bUseOriginalTiles) {
@@ -265,19 +264,21 @@ void CRadarNew::ReadBlipsFromFile() {
         for (std::string line; getline(file, line);) {
             char name[64];
             char col[64];
+            int id;
 
-            if (!line[0] || line[0] == '#' || line[0] == '[')
+            if (!line[0] || line[0] == '\t' || line[0] == ' ' || line[0] == '#' || line[0] == '[')
                 continue;
 
-            sscanf(line.c_str(), "%s %s", &name, &col);
+            sscanf(line.c_str(), "%d %s %s", &id, &name, &col);
 
-            strcpy(m_BlipsList[m_BlipsCount].texName, name);
+            strcpy(m_BlipsList[id].texName, name);
 
             if (!faststrcmp(col, "-"))
-                m_BlipsList[m_BlipsCount].color = HudColourNew.GetRGBA(MenuNew.Settings.uiMainColor);
+                m_BlipsList[id].color = HudColourNew.GetRGBA(VHud::Settings.UIMainColor);
             else
-                m_BlipsList[m_BlipsCount].color = HudColourNew.GetRGBA(col);
-            m_BlipsCount++;
+                m_BlipsList[id].color = HudColourNew.GetRGBA(col);
+
+            m_BlipsCount = id;
         }
 
         file.close();
@@ -293,9 +294,11 @@ void CRadarNew::ReadRadarInfoFromFile() {
             m_nRadarMapSize = radar.child("RadarMapSize").attribute("value").as_int();
            
             m_bUseOriginalTiles = radar.child("UseOriginalTiles").attribute("value").as_bool();
+            m_bUseOriginalBlips = radar.child("UseOriginalBlips").attribute("value").as_bool();
+
             strcpy(m_NamePrefix, radar.child("RadarMapNamePrefix").attribute("value").as_string());
             strcpy(m_FileFormat, radar.child("RadarMapFileFormat").attribute("value").as_string());
-
+            m_nMaxRadarTrace = radar.child("RadarTraces").attribute("value").as_int();
         }
     }
 }
@@ -372,6 +375,47 @@ unsigned int CRadarNew::GetRadarTraceColour(unsigned int c, bool bright, bool fr
     return color.ToInt();
 }
 
+tRadarTrace*& CRadarNew::GetRadarTrace() {
+    return m_RadarTrace;
+}
+
+CSprite2d*& CRadarNew::GetRadarBlipsSprites() {
+    return CRadar::RadarBlipSprites;
+}
+
+CSprite2d* CRadarNew::GetBlipsSprites(int id) {
+    switch (id) {
+    case RADAR_SPRITE_COP:
+    case RADAR_SPRITE_COP_HELI:
+    case RADAR_SPRITE_VCONE:
+    case RADAR_SPRITE_LEVEL:
+    case RADAR_SPRITE_LOWER:
+    case RADAR_SPRITE_HIGHER:
+        return &m_BlipsSprites[id];
+
+    }
+
+    if (GetRadarBlipsSprites() && m_bUseOriginalBlips)
+        return &GetRadarBlipsSprites()[id];
+
+    return &m_BlipsSprites[id];
+}
+
+CRGBA CRadarNew::GetBlipColor(int id) {
+    CRGBA col = { 255, 255, 255, 255 };
+
+    if (m_bUseOriginalBlips) {
+        switch (id) {
+        case RADAR_SPRITE_WAYPOINT:
+            col = HudColourNew.GetRGB(HUD_COLOUR_RED, 255);
+            break;
+        }
+
+        return col;
+    }
+    return CRadarNew::m_BlipsList[id].color;
+}
+
 void CRadarNew::DrawBlips() {
     RwRenderStateSet(rwRENDERSTATEZWRITEENABLE, (void*)(FALSE));
     RwRenderStateSet(rwRENDERSTATEZTESTENABLE, (void*)(FALSE));
@@ -379,15 +423,18 @@ void CRadarNew::DrawBlips() {
     RwRenderStateSet(rwRENDERSTATESRCBLEND, (void*)(rwBLENDSRCALPHA));
     RwRenderStateSet(rwRENDERSTATEDESTBLEND, (void*)(rwBLENDINVSRCALPHA));
     RwRenderStateSet(rwRENDERSTATEFOGENABLE, (void*)(FALSE));
-
+    
     m_nActualTraceIdToPass = -1;
     m_nMapLegendBlipCount = 0;
     AddBlipToLegendList(false, RADAR_SPRITE_MAP_HERE);
 
     CRadarNew::DrawRadarCop();
 
-    tRadarTrace* trace = CRadar::ms_RadarTrace;
-    for (int i = 0; i < 175; i++) {
+    tRadarTrace* trace = GetRadarTrace();
+    for (int i = 0; i < m_nMaxRadarTrace; i++) {
+        if (!trace)
+            continue;
+
         if (!trace[i].m_bTrackingBlip)
             continue;
 
@@ -412,6 +459,9 @@ void CRadarNew::DrawBlips() {
             if (!CTheScripts::bPlayerIsOffTheMap && !MenuNew.bDrawMenuMap)
                 DrawEntityBlip(i, 1);
             break;
+        default:
+            DrawEntityBlip(i, 1);
+            break;
         }
     }
 
@@ -428,7 +478,7 @@ void CRadarNew::DrawBlips() {
         float angle = FindPlayerHeading(0) - M_PI;
 
         if (FLASH_ITEM(1200, 200))
-            DrawRotatingRadarSprite(m_BlipsSprites[RADAR_SPRITE_CENTRE], out.x, out.y, angle, SCREEN_MULTIPLIER(GET_SETTING(HUD_RADAR_BLIPS_SIZE).w * 0.84f), SCREEN_MULTIPLIER(GET_SETTING(HUD_RADAR_BLIPS_SIZE).h * 0.84f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+            DrawRotatingRadarSprite(GetBlipsSprites(RADAR_SPRITE_CENTRE), out.x, out.y, angle, SCREEN_MULTIPLIER(GET_SETTING(HUD_RADAR_BLIPS_SIZE).w * 0.84f), SCREEN_MULTIPLIER(GET_SETTING(HUD_RADAR_BLIPS_SIZE).h * 0.84f), HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255));
     }
     else {
         CVector2D in, out;
@@ -440,7 +490,7 @@ void CRadarNew::DrawBlips() {
         TransformRealWorldPointToRadarSpace(in, vec2d);
         LimitRadarPoint(in);
         TransformRadarPointToScreenSpace(out, in);
-        DrawRotatingRadarSprite(m_BlipsSprites[RADAR_SPRITE_NORTH], out.x, out.y, M_PI, SCREEN_MULTIPLIER(GET_SETTING(HUD_RADAR_BLIPS_SIZE).w * 1.08f), SCREEN_MULTIPLIER(GET_SETTING(HUD_RADAR_BLIPS_SIZE).h * 1.08f), CRGBA(255, 255, 255, 255));
+        DrawRotatingRadarSprite(GetBlipsSprites(RADAR_SPRITE_NORTH), out.x, out.y, M_PI, SCREEN_MULTIPLIER(GET_SETTING(HUD_RADAR_BLIPS_SIZE).w * 1.08f), SCREEN_MULTIPLIER(GET_SETTING(HUD_RADAR_BLIPS_SIZE).h * 1.08f), CRGBA(255, 255, 255, 255));
 
         // Draw radar centre.
         CVector2D centreWorld = FindPlayerCentreOfWorld_NoInteriorShift(-1);
@@ -448,8 +498,14 @@ void CRadarNew::DrawBlips() {
         LimitRadarPoint(in);
         TransformRadarPointToScreenSpace(out, in);
 
+        float color = 255.0f;
+        static float c = (float)color;
+        if (FindPlayerPed()->IsHidden())
+            color = 100.0f;
+
+        c = interpF(c, color, 0.1f);
         float angle = FindPlayerHeading(0) - (CRadar::m_fRadarOrientation + M_PI);
-        DrawRotatingRadarSprite(m_BlipsSprites[RADAR_SPRITE_CENTRE], out.x, out.y, angle, SCREEN_MULTIPLIER(GET_SETTING(HUD_RADAR_BLIPS_SIZE).w * 0.84f), SCREEN_MULTIPLIER(GET_SETTING(HUD_RADAR_BLIPS_SIZE).h * 0.84f), CRGBA(255, 255, 255, 255));
+        DrawRotatingRadarSprite(GetBlipsSprites(RADAR_SPRITE_CENTRE), out.x, out.y, angle, SCREEN_MULTIPLIER(GET_SETTING(HUD_RADAR_BLIPS_SIZE).w * 0.84f), SCREEN_MULTIPLIER(GET_SETTING(HUD_RADAR_BLIPS_SIZE).h * 0.84f), CRGBA((int)c, (int)c, (int)c, 255));
     }
 }
 
@@ -577,15 +633,21 @@ void CRadarNew::DrawPickupBlips() {
 void CRadarNew::SetBlipSprite(int i, unsigned short icon) {
     int index = CRadar::GetActualBlipArrayIndex(i);
     if (index != -1) {
-        CRadar::ms_RadarTrace[index].m_nBlipSprite = icon;
+        GetRadarTrace()[index].m_nBlipSprite = icon;
     }
 }
 
 int CRadarNew::CalculateBlipAlpha(float dist) {
-    if (dist > 0.5f)
+    if (MenuNew.bDrawMenuMap)
         return 255;
-    else
-        return (0.5f - dist) * 255;
+
+    if (dist <= 1.0f)
+        return 255;
+
+    if (dist <= 10.0f)
+        return (128.0f * ((dist - 1.0f) / 9.0f)) + ((1.0f - (dist - 1.0f) / 9.0f) * 255.0f);
+
+    return 128;
 }
 
 void CRadarNew::DrawRadarCop() {
@@ -987,7 +1049,7 @@ void CRadarNew::DrawRadarSprite(unsigned short id, float x, float y, unsigned ch
     float h = SCREEN_MULTIPLIER(GET_SETTING(HUD_RADAR_BLIPS_SIZE).h);
 
     if (DisplayThisBlip(id, -99)) {
-        DrawRotatingRadarSprite(m_BlipsSprites[id], x, y, M_PI, w, h, CRGBA(m_BlipsList[id].color.r, m_BlipsList[id].color.g, m_BlipsList[id].color.b, alpha));
+        DrawRotatingRadarSprite(GetBlipsSprites(id), x, y, M_PI, w, h, CRGBA(GetBlipColor(id).r, GetBlipColor(id).g, GetBlipColor(id).b, alpha));
         AddBlipToLegendList(false, id);
     }
 }
@@ -1046,11 +1108,10 @@ void CRadarNew::AddAnyBlip(unsigned short id, CVector posn, float width, float h
     y = out.y;
 
     if (DisplayThisBlip(id, -99)) {
-        DrawRotatingRadarSprite(m_BlipsSprites[id], x, y, angle, w, h, col);
+        DrawRotatingRadarSprite(GetBlipsSprites(id), x, y, angle, w, h, col);
         AddBlipToLegendList(false, id);
     }
 }
-
 
 void CRadarNew::AddAnyBlip(unsigned short id, CEntity e, float width, float height, float angle, bool vcone, CRGBA const& col, bool limit) {
     float x = 0.0f;
@@ -1080,10 +1141,10 @@ void CRadarNew::AddAnyBlip(unsigned short id, CEntity e, float width, float heig
             float a1 = e.GetHeading();
             float a2 = TheCamera.GetHeading();
             float angle = a1 - (M_PI + a2);
-            DrawRotatingRadarSprite(m_BlipsSprites[RADAR_SPRITE_VCONE], x, y, angle, SCREEN_COORD(96.0f), SCREEN_COORD(96.0f), HudColourNew.GetRGB(HUD_COLOUR_BLUEDARK, 60));
+            DrawRotatingRadarSprite(GetBlipsSprites(RADAR_SPRITE_VCONE), x, y, angle, SCREEN_COORD(96.0f), SCREEN_COORD(96.0f), HudColourNew.GetRGB(HUD_COLOUR_BLUEDARK, 60));
         }
 
-        DrawRotatingRadarSprite(m_BlipsSprites[id], x, y, angle, w, h, col);
+        DrawRotatingRadarSprite(GetBlipsSprites(id), x, y, angle, w, h, col);
         AddBlipToLegendList(false, id);
     }
 }
@@ -1753,7 +1814,7 @@ void CRadarNew::ShowRadarTraceWithHeight(float x, float y, unsigned int size, un
         }
     }
 
-    DrawRotatingRadarSprite(m_BlipsSprites[id], x, y, M_PI, w, h, CRGBA(red, green, blue, alpha));
+    DrawRotatingRadarSprite(&m_BlipsSprites[id], x, y, M_PI, w, h, CRGBA(red, green, blue, alpha));
     AddBlipToLegendList(true, id);
 }
 
@@ -1763,7 +1824,7 @@ void CRadarNew::AddBlipToLegendList(bool trace, int id) {
     CVector pos = {};
 
     if (trace && m_nActualTraceIdToPass != -1) {
-        tRadarTrace t = CRadar::ms_RadarTrace[m_nActualTraceIdToPass];
+        tRadarTrace t = GetRadarTrace()[m_nActualTraceIdToPass];
 
         switch (id) {
         case RADAR_SPRITE_LEVEL:

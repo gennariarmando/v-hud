@@ -9,6 +9,7 @@
 #include "FontNew.h"
 #include "MenuNew.h"
 
+#include "CStreaming.h"
 #include "CRadar.h"
 #include "CMenuManager.h"
 #include "CWorld.h"
@@ -23,26 +24,20 @@ CLocalization CGPS::Dest;
 bool CGPS::bShowGPS;
 CSprite2d CGPS::pathDirSprite;
 
-char pathNodesToStream[640] = { };
-int pathNodes[50000] = { };
+int pathNodes[MAX_PATH_NODES] = { };
 
 static LateStaticInit InstallHooks([]() {
-   for (int i = 0; i < 63; i++) {
-       pathNodesToStream[i] = 1;
-   }
-
-   for (int i = 0; i < 49999; i++) {
-       pathNodes[i] = -1;
-   }
-
-   patch::SetPointer(0x44DE3C, &pathNodesToStream);
-   patch::SetPointer(0x450D03, &pathNodesToStream);
-   patch::SetPointer(0x451782, &pathNodes);
-   patch::SetPointer(0x451904, &pathNodes);
-   patch::SetPointer(0x451AC3, &pathNodes);
-   patch::SetPointer(0x451B33, &pathNodes);
-   patch::SetUInt(0x4518F8, 50000);
-   patch::SetUInt(0x4519B0, 49950);
+    for (int i = 0; i < MAX_PATH_NODES - 1; i++) {
+        pathNodes[i] = -1;
+    }
+    
+    patch::SetFloat(0x450ACD + 1, MAX_SEARCH_RADIUS);
+    patch::SetPointer(0x451782, &pathNodes);
+    patch::SetPointer(0x451904, &pathNodes);
+    patch::SetPointer(0x451AC3, &pathNodes);
+    patch::SetPointer(0x451B33, &pathNodes);
+    patch::SetUInt(0x4518F8, MAX_PATH_NODES);
+    patch::SetUInt(0x4519B0, MAX_PATH_NODES - 5);
 });
 
 void CGPS::Init() {
@@ -54,8 +49,6 @@ void CGPS::Shutdown() {
     if (pathDirSprite.m_pTexture)
         pathDirSprite.Delete();
 }
-
-#define CM_PER_INCH 2.54
 
 void CGPS::DrawDistanceFromWaypoint() {
     if (!MenuNew.Settings.gpsRoute)
@@ -157,10 +150,13 @@ void CGPS::DrawLine(CVector2D const&a, CVector2D const&b, float width, CRGBA col
 }
 
 void CGPS::ProcessPath(CLocalization& l) {
-    if (FindPlayerPed(0) && FindPlayerPed(0)->m_nAreaCode)
+    if (!FindPlayerPed(0))
         return;
 
-    ThePaths.DoPathSearch(0, FindPlayerCentreOfWorld_NoInteriorShift(0), CNodeAddress(), l.vecDest, l.resultNodes, &l.nNodesCount, MAX_NODE_POINTS, &l.fGPSDistance,
+    CVector start = FindPlayerCentreOfWorld(0);
+    CVector end = l.vecDest;
+
+    ThePaths.DoPathSearch(0, start, CNodeAddress(), end, l.resultNodes, &l.nNodesCount, MAX_NODE_POINTS, &l.fGPSDistance,
         999999.0f, NULL, 999999.0f, false, CNodeAddress(), false, false);
 
     if (l.nNodesCount > 0) {
@@ -201,9 +197,9 @@ void CGPS::DrawPathLine() {
 
     if (playa) {
         if (FrontEndMenuManager.m_nTargetBlipIndex
-            && CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nCounter == HIWORD(FrontEndMenuManager.m_nTargetBlipIndex)
-            && CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nBlipDisplayFlag
-            && DistanceBetweenPoints(CVector2D(FindPlayerCentreOfWorld_NoInteriorShift(0)), CVector2D(CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_vPosition)) < MAX_TARGET_DISTANCE) {
+            && CRadarNew::GetRadarTrace()[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nCounter == HIWORD(FrontEndMenuManager.m_nTargetBlipIndex)
+            && CRadarNew::GetRadarTrace()[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nBlipDisplayFlag
+            && DistanceBetweenPoints(CVector2D(FindPlayerCentreOfWorld_NoInteriorShift(0)), CVector2D(CRadarNew::GetRadarTrace()[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_vPosition)) < MAX_TARGET_DISTANCE) {
             CRadar::ClearBlip(FrontEndMenuManager.m_nTargetBlipIndex);
             FrontEndMenuManager.m_nTargetBlipIndex = 0;
         }
@@ -213,12 +209,12 @@ void CGPS::DrawPathLine() {
             && playa->m_pVehicle->m_nVehicleSubClass != VEHICLE_HELI
             && playa->m_pVehicle->m_nVehicleSubClass != VEHICLE_BMX) || MenuNew.bDrawMenuMap) {
             if (FrontEndMenuManager.m_nTargetBlipIndex
-                && CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nCounter == HIWORD(FrontEndMenuManager.m_nTargetBlipIndex)
-                && CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nBlipDisplayFlag) {
-                CVector destPosn = CRadar::ms_RadarTrace[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_vPosition;
+                && CRadarNew::GetRadarTrace()[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nCounter == HIWORD(FrontEndMenuManager.m_nTargetBlipIndex)
+                && CRadarNew::GetRadarTrace()[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_nBlipDisplayFlag) {
+                CVector destPosn = CRadarNew::GetRadarTrace()[LOWORD(FrontEndMenuManager.m_nTargetBlipIndex)].m_vPosition;
                 destPosn.z = CWorld::FindGroundZForCoord(destPosn.x, destPosn.y);
 
-                Dest.pathColor = CRadarNew::m_BlipsList[RADAR_SPRITE_WAYPOINT].color.ToInt();
+                Dest.pathColor = CRadarNew::GetBlipColor(RADAR_SPRITE_WAYPOINT).ToInt();
                 Dest.vecDest = destPosn;
                 Dest.bDestFound = true;
             }

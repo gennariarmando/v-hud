@@ -149,20 +149,24 @@ static LateStaticInit InstallHooks([]() {
     patch::RedirectCall(0x48547E, (void(__fastcall*)(int, int, int, int, int))openSavePage);
     patch::Nop(0x485457, 7);
 
-    auto processFrontend = [](int _this, int) {
+    auto processFrontend = [](int, int) {
         MenuNew.Process();
     };
+
     patch::RedirectJump(0x57B440, (void(__fastcall*)(int, int))processFrontend);
 
     auto drawFrontend = [](int, int) {
         MenuNew.Draw();
     };
+    
     patch::RedirectJump(0x57C290, (void(__fastcall*)(int, int))drawFrontend);
 
-    //CdeclEvent<AddressList<0x7461AA, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void()> loadSettings;
-    //loadSettings += [] {
-    //    MenuNew.Settings.Load();
-    //};
+    if (VHud::bUG) {
+        VHud::UG_RegisterEventCallback(UG_EVENT_BEFORE_RENDER2DSTUFF, (void(__cdecl*)(int, int))drawFrontend);
+        
+        auto setMousePos = centerMouseCursor;
+        patch::RedirectJump(0x6194A0, (void(__cdecl*)(RwV2d*))setMousePos);
+    }
 
     auto loadSettings = []() {
         MenuNew.Settings.Load();
@@ -346,6 +350,9 @@ void CMenuNew::Clear() {
     vMapBase.y = 0.0f;
     vTempMapBase = vMapBase;
     nMapZoomTime = 0;
+    nMapMoveTime = 0;
+    bMapPlayShot = false;
+
     bShowLegend = true;
 
     nTimeForSafeZonesToShow = 0;
@@ -1374,17 +1381,15 @@ void CMenuNew::Process() {
                         vMapBase.x = interpF(vMapBase.x, vTempMapBase.x, 0.2f);
                         vMapBase.y = interpF(vMapBase.y, vTempMapBase.y, 0.2f);
 
-                        static int mapMoveTime = 0;
-                        static bool mapPlayShot = false;
                         if (vTempMapBase.x != prevMapBase.x || vTempMapBase.y != prevMapBase.y) {
-                            if (!mapPlayShot && mapMoveTime < CTimer::m_snTimeInMillisecondsPauseMode) {
-                                mapMoveTime = CTimer::m_snTimeInMillisecondsPauseMode + 100;
-                                mapPlayShot = true;
+                            if (!bMapPlayShot && nMapMoveTime < CTimer::m_snTimeInMillisecondsPauseMode) {
+                                nMapMoveTime = CTimer::m_snTimeInMillisecondsPauseMode + 100;
+                                bMapPlayShot = true;
                             }
 
-                            if (mapPlayShot) {
+                            if (bMapPlayShot) {
                                 Audio.PlayChunk(CHUNK_MENU_MAP_MOVE, 0.5f);
-                                mapPlayShot = false;
+                                bMapPlayShot = false;
                             }
                         }
                     }
@@ -2410,7 +2415,7 @@ void CMenuNew::Draw() {
 
                 if (i == nCurrentBarItem) {
                     menuBarColor = { 255, 255, 255, 255 };
-                    menuBarSelectedColor = HudColourNew.GetRGB(Settings.uiMainColor, 255);
+                    menuBarSelectedColor = HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255);
                     menuBarTextColor = HudColourNew.GetRGB(HUD_COLOUR_BLACK, 255);
                 }
                 else if (i == nCurrentBarItemHover) {
@@ -2461,7 +2466,7 @@ void CMenuNew::Draw() {
                 bar.right = GetMenuScreenRect().right;
 
                 barColor = { 255, 255, 255, 255 };
-                barSelectedColor = HudColourNew.GetRGB(Settings.uiMainColor, 255);
+                barSelectedColor = HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255);
                 barTextColor = HudColourNew.GetRGB(HUD_COLOUR_BLACK, 255);
 
                 // Bar
@@ -3754,7 +3759,7 @@ void CMenuNew::DrawSliderRightAlign(float x, float y, float progress) {
     x = x - SCREEN_COORD(187.0f);
     float w = SCREEN_COORD(187.0f);
     float h = SCREEN_COORD(9.0f);
-    DrawProgressBar(x, y, w, h, progress, HudColourNew.GetRGB(Settings.uiMainColor, FadeIn(255)));
+    DrawProgressBar(x, y, w, h, progress, HudColourNew.GetRGB(VHud::Settings.UIMainColor, FadeIn(255)));
 
     bool point = false;
     int value = 0;
@@ -3975,7 +3980,7 @@ void CMenuNew::PrintStats() {
                 float p = CStats::GetStatValue(CStats::m_ThisStatIsABarChart) * 0.001f;
 
                 RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)(rwFILTERNEAREST));
-                DrawProgressBarWithSprite(CHudNew::StatsSprites[PLRSTAT_PROGRESS_BAR], x, y, w, h, p, HudColourNew.GetRGB(Settings.uiMainColor, FadeIn(255)));
+                DrawProgressBarWithSprite(CHudNew::StatsSprites[PLRSTAT_PROGRESS_BAR], x, y, w, h, p, HudColourNew.GetRGB(VHud::Settings.UIMainColor, FadeIn(255)));
                 RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)(rwFILTERLINEARMIPLINEAR));
             }
             else {
@@ -4061,7 +4066,7 @@ void CMenuNew::DrawLegend() {
             char legendString[64];
             sprintf(legendString, "LG_%02d", id);
             str = TextNew.GetText(legendString).text;
-            col = CRadarNew::m_BlipsList[id].color;
+            col = CRadarNew::GetBlipColor(id);
         }
 
         static int level;
@@ -4101,7 +4106,7 @@ void CMenuNew::DrawLegend() {
             id = level;
             break;
         case RADAR_SPRITE_MAP_HERE:
-            col = HudColourNew.GetRGBA(MenuNew.Settings.uiMainColor);
+            col = HudColourNew.GetRGBA(VHud::Settings.UIMainColor);
             id = RADAR_SPRITE_CENTRE;
             break;
         case RADAR_SPRITE_COP:
@@ -4129,11 +4134,11 @@ void CMenuNew::DrawLegend() {
             CFontNew::PrintString(rect.left - (s * 2) + x, rect.top + y, str);
 
             col.a = 255;
-            CRadarNew::m_BlipsSprites[id]->Draw(CRect(rect.left - s - x, rect.top + y, (rect.left - s - x) + s, rect.top + y + s), col);
+            CRadarNew::GetBlipsSprites(id)->Draw(CRect(rect.left - s - x, rect.top + y, (rect.left - s - x) + s, rect.top + y + s), col);
 
             // :(
             rect.top += SCREEN_COORD(41.0f);
-            if (rect.top > HUD_BOTTOM(128.0f)) {
+            if (rect.top > HUD_BOTTOM(148.0f)) {
                 rect.left -= biggestWidth + x;
                 rect.top = HUD_Y(54.0f);
             }
@@ -5031,9 +5036,6 @@ void CMenuSettings::Clear() {
 
     landingPage = true;
     saveSlot = 0;
-
-    const char* defColour = "HUD_COLOUR_MICHAEL";
-    strcpy(uiMainColor, defColour);
 }
 
 void CMenuSettings::Load() {
@@ -5125,13 +5127,6 @@ void CMenuSettings::Load() {
             if (auto startup = settings.child("startup")) {
                 landingPage = startup.child("LandingPage").attribute("value").as_bool(landingPage);
                 saveSlot = startup.append_child("SaveSlot").append_attribute("value").as_int(saveSlot);
-            }
-
-            // Misc
-            if (auto misc = settings.child("misc")) {
-                char tmp[32];
-                sprintf(tmp, "%s", misc.child("UIMainColor").attribute("value").as_string("HUD_COLOUR_MICHAEL"));
-                strcpy(uiMainColor, tmp);
             }
         }
     }
@@ -5237,9 +5232,6 @@ void CMenuSettings::Save() {
     auto startup = settings.append_child("startup");
     startup.append_child("LandingPage").append_attribute("value").set_value(landingPage);
     startup.append_child("SaveSlot").append_attribute("value").set_value(saveSlot);
-
-    auto misc = settings.append_child("misc");
-    misc.append_child("UIMainColor").append_attribute("value").set_value(uiMainColor);
 
     bool file = doc.save_file(PLUGIN_PATH(SettingsFileName));
     if (CreateDirectory(PLUGIN_PATH(UserFilesFolder), NULL) || GetLastError() == ERROR_ALREADY_EXISTS) {

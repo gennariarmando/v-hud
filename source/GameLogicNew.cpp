@@ -9,9 +9,9 @@ using namespace plugin;
 CGameLogicNew GameLogicNew;
 
 static LateStaticInit InstallHooks([]() {
-    CdeclEvent<AddressList<0x442128, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void()> OnResurrection;
+    CdeclEvent<AddressList<0x442128, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void()> onResurrection;
 
-    OnResurrection += [] {
+    onResurrection += [] {
         CHudNew::ReInit();
         MenuNew.Clear();
     };

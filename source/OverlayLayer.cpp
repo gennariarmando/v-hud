@@ -40,12 +40,17 @@ static LateStaticInit InstallHooks([]() {
             _rwD3D9SetPixelShader(im2dPixelShader);
     };
 
-    CdeclEvent<AddressList<0x53EAD3, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> OnRenderEffects;
-
-    OnRenderEffects += [] {
+    auto renderEffects = []() {
         COverlayLayer::RenderEffects();
         COverlayLayer::SetEffect(EFFECT_NONE);
     };
+
+    if (VHud::bUG)
+        VHud::UG_RegisterEventCallback(UG_EVENT_AFTER_RENDERSCENE, (void(__cdecl*)())renderEffects);
+    else {
+        CdeclEvent<AddressList<0x53EAD3, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> onRenderEffects;
+        onRenderEffects += renderEffects;
+    }
 });
 
 void COverlayLayer::Init() {
@@ -124,7 +129,7 @@ void COverlayLayer::RenderEffects() {
 
     CRect rect = { SCREEN_COORD(-5.0f), SCREEN_COORD(-5.0f), SCREEN_COORD_RIGHT(-5.0f), SCREEN_COORD_BOTTOM(-5.0f) };
     CRGBA c = { 255, 255, 255, 255 };
-    CRGBA fc = HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255);
+    CRGBA fc = HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255);
 
     switch (CurrentEffect) {
     case EFFECT_BLUR_COLOR:

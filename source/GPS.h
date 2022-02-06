@@ -1,4 +1,8 @@
 #pragma once
+#define NODE_MULTIPLIER 10
+#define MAX_PATH_NODES 5000 * NODE_MULTIPLIER
+#define MAX_SEARCH_RADIUS 6000.0f
+
 #define MAX_NODE_POINTS 2000
 #define MAX_TARGET_DISTANCE 10.0f
 
@@ -21,7 +25,6 @@ struct CLocalization {
     CVector2D nodePoints[MAX_NODE_POINTS];
     unsigned int pathColor;
 
-public:
     void Clear();
 };
 

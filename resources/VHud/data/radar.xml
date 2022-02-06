@@ -2,6 +2,8 @@
 <Radar>
 	<RadarMapSize value="6000" />
 	<UseOriginalTiles value="false" />
+	<UseOriginalBlips value="false" />
 	<RadarMapNamePrefix value="radar%02d" />
 	<RadarMapFileFormat value="dds" />
+	<RadarTraces value="175" />
 </Radar>

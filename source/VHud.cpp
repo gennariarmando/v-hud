@@ -18,7 +18,10 @@
 
 #include "VHudAPI.h"
 
+#include "pugixml.hpp"
+
 using namespace plugin;
+using namespace pugi;
 
 int& gGameState = *(int*)0xC8D4C0;
 
@@ -27,10 +30,15 @@ HANDLE VHud::pThread = NULL;
 bool VHud::bRwInitialized = false;
 bool VHud::bRwQuit = false;
 bool VHud::bSAMP = false;
+bool VHud::bUG = false;
+
+VHudSettings VHud::Settings;
 
 bool VHud::Init() {
     if (bInitialised)
         return false;
+
+    ReadPluginSettings();
 
 #ifdef DEBUG
     OpenConsole();
@@ -45,7 +53,7 @@ bool VHud::Init() {
         std::function<bool()> b([] { return true; });
         LateStaticInit::TryApplyWithPredicate(b);
 
-        Events::initRwEvent += [] {
+        auto init = []() {
             Audio.Init();
             HudColourNew.ReadColorsFromFile();
             CFontNew::Init();
@@ -58,7 +66,15 @@ bool VHud::Init() {
             bRwInitialized = true;
         };
 
-        Events::initGameEvent += [] {
+        if (bUG) {
+            CdeclEvent<AddressList<0x619D4E, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> initRw;
+            initRw += init;
+        }
+        else {
+            Events::initRwEvent += init;
+        }
+
+        auto initAfterRw = []() {
             CGPS::Init();
             CHudNew::Init();
             CellPhone.Init();
@@ -67,20 +83,24 @@ bool VHud::Init() {
             CMenuPanels::Init();
         };
 
-        Events::reInitGameEvent += [] {
+        if (bUG) {
+            UG_RegisterEventCallback(UG_EVENT_AFTER_GAMEINIT1, (void(__cdecl*)())initAfterRw);
+        }
+        else {
+            Events::initGameEvent += initAfterRw;
+        }
+
+        auto reInitForRestart = []() {
             CHudNew::ReInit();
             CWeaponSelector::ReInit();
         };
 
-        CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_BEFORE, ArgPickNone, void()> beforeFading;
-        beforeFading += [] {
-            CHudNew::Draw();
-        };
-
-        CdeclEvent<AddressList<0x53EB9D, H_CALL>, PRIORITY_AFTER, ArgPickNone, void()> afterFading;
-        afterFading += [] {
-            CHudNew::DrawAfterFade();
-        };
+        if (bUG) {
+            UG_RegisterEventCallback(UG_EVENT_SHUTDOWNFORRESTART, (void(__cdecl*)())reInitForRestart);
+        }
+        else {
+            Events::reInitGameEvent += reInitForRestart;
+        }
 
         Events::d3dLostEvent += [] {
             CFontNew::Lost();
@@ -90,7 +110,7 @@ bool VHud::Init() {
             CFontNew::Reset();
         };
 
-        Events::shutdownRwEvent += [] {
+        auto shutdown = []() {
             MenuNew.Shutdown();
             CGPS::Shutdown();
             CRadarNew::Shutdown();
@@ -107,6 +127,13 @@ bool VHud::Init() {
 
             bRwQuit = true;
         };
+
+        if (bUG) {
+            UG_RegisterEventCallback(UG_EVENT_SHUTDOWNGAME, (void(__cdecl*)())shutdown);
+        }
+        else {
+            Events::shutdownRwEvent += shutdown;
+        }
     
         bInitialised = true;
     }
@@ -126,6 +153,7 @@ void VHud::Run() {
 
     while (!bRwQuit) {
         CheckForMP();
+        CheckForUG();
 
         if (bRwInitialized) {
             if (gGameState && !bSAMP) {
@@ -153,6 +181,7 @@ void VHud::Run() {
         }
     }
     CPadNew::GInputRelease();
+    Shutdown();
 
     CloseHandle(pThread);
 };
@@ -162,7 +191,39 @@ void VHud::CheckForMP() {
         return;
 
     if (const HMODULE h = ModuleList().Get(L"SAMP")) {
+        printf("SAMP has been detected.\n");
         bSAMP = true;
+    }
+}
+
+void VHud::CheckForUG() {
+    if (bUG)
+        return;
+
+    if (HMODULE h = ModuleList().Get(L"Underground_Core")) {
+        printf("GTA Underground has been detected.\n");
+        bUG = true;
+    }
+}
+
+void VHud::UG_RegisterEventCallback(int e, void* func) {
+    if (HMODULE h = ModuleList().Get(L"Underground_Core")) {
+        const char* eventsNamesList[] = {
+            "EVENT_BEFORE_RENDER2DSTUFF", "EVENT_AFTER_RENDER2DSTUFF",
+            "EVENT_BEFORE_RENDERSCENE", "EVENT_AFTER_RENDERSCENE",
+            "EVENT_SHUTDOWNFORRESTART", "EVENT_BEFORE_PROCESSGAME",
+            "EVENT_AFTER_PROCESSGAME", "EVENT_SHUTDOWNGAME",
+            "EVENT_BEFORE_GAMEINIT1", "EVENT_AFTER_GAMEINIT1",
+            "EVENT_BEFORE_GAMEINIT2", "EVENT_AFTER_GAMEINIT2",
+            "EVENT_BEFORE_GAMEINIT3", "EVENT_AFTER_GAMEINIT3",
+            "EVENT_STARTTESTSCRIPT", "EVENT_UPDATEPOPULATION",
+            "EVENT_INITPOSTEFFECTS", "EVENT_CLOSEPOSTEFFECTS",
+            "EVENT_PROCESSCARGENERATORS", "EVENT_BEFORE_RENDERFADINGINENTITIES",
+            "EVENT_AFTER_RENDERFADINGINENTITIES",
+        };
+
+        auto a = (void* (*)())GetProcAddress(h, "RegisterEventCallback");
+        reinterpret_cast<void(__cdecl*)(const char*, void*)>(a)(eventsNamesList[e], func);
     }
 }
 
@@ -171,6 +232,12 @@ bool VHud::CheckCompatibility() {
         Error("This version of GTA: San Andreas is not supported by this plugin.");
         return false;
     }
+
+    CheckForMP();
+    CheckForUG();
+
+    CRadarNew::GetRadarTrace() = patch::Get<tRadarTrace*>(0x5838B0 + 2);
+    CRadarNew::GetRadarBlipsSprites() = patch::Get<CSprite2d*>(0x5827EA + 1);
 
     return true;
 }
@@ -182,6 +249,18 @@ bool VHud::OpenConsole() {
     freopen("conout$", "w", stderr);
 
     return true;
+}
+
+void VHud::ReadPluginSettings() {
+    xml_document doc;
+    xml_parse_result file = doc.load_file(PLUGIN_PATH("VHud\\data\\plugin.xml"));
+    VHudSettings& s = Settings;
+
+    if (file) {
+        if (auto plugin = doc.child("Plugin")) {
+            strcpy(s.UIMainColor, plugin.child("UIMainColor").attribute("value").as_string());
+        }
+    }
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {

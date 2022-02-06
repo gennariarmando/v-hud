@@ -5,77 +5,80 @@
 # up to 256 blips
 
 # ----------------------------------------------------------------- 	
-# -TEXTURE NAME-                  -COLOUR-
+# -ID- -TEXTURE NAME-                  -COLOUR-
 # -----------------------------------------------------------------
-blank                       HUD_COLOUR_PURE_WHITE
-blank                       HUD_COLOUR_PURE_WHITE
-radar_player                HUD_COLOUR_PURE_WHITE
-blank                       HUD_COLOUR_PURE_WHITE
-radar_north                 HUD_COLOUR_PURE_WHITE
-radar_airyard               HUD_COLOUR_PURE_WHITE
-radar_ammugun               HUD_COLOUR_PURE_WHITE
-radar_barbers               HUD_COLOUR_PURE_WHITE
-radar_bigsmoke              -
-radar_boatyard              HUD_COLOUR_PURE_WHITE
-radar_burgershot            HUD_COLOUR_PURE_WHITE
-radar_bulldozer             HUD_COLOUR_PURE_WHITE
-radar_catalina              HUD_COLOUR_PINK
-radar_cesarvialpando        -
-radar_chicken               HUD_COLOUR_PURE_WHITE
-radar_cj                    -
-radar_crash                 HUD_COLOUR_PURE_WHITE
-radar_diner                 HUD_COLOUR_PURE_WHITE
-radar_emmetgun              HUD_COLOUR_PURE_WHITE
-radar_enemyattack           HUD_COLOUR_PURE_WHITE
-radar_fire                  HUD_COLOUR_PURE_WHITE
-radar_girlfriend            HUD_COLOUR_PURE_WHITE
-radar_hospital              HUD_COLOUR_PURE_WHITE
-radar_locosyndicate         HUD_COLOUR_PURE_WHITE
-radar_maddog                -
-radar_mafiacasino           HUD_COLOUR_PURE_WHITE
-radar_mcstrap               -
-radar_modgarage             HUD_COLOUR_PURE_WHITE
-radar_ogloc                 -
-radar_pizza                 HUD_COLOUR_PURE_WHITE
-radar_police                HUD_COLOUR_PURE_WHITE
-radar_property              HUD_COLOUR_GREEN
-radar_property              HUD_COLOUR_RED
-radar_race                  HUD_COLOUR_PURE_WHITE
-radar_ryder                 -
-radar_savegame              HUD_COLOUR_PURE_WHITE
-radar_school                HUD_COLOUR_PURE_WHITE
-radar_qmark                 HUD_COLOUR_PURE_WHITE
-radar_sweet                 -
-radar_tattoo                HUD_COLOUR_PURE_WHITE
-radar_thetruth              -
-radar_waypoint              HUD_COLOUR_WAYPOINT
-radar_toreno                -
-radar_triads                HUD_COLOUR_RED
-radar_triads                HUD_COLOUR_YELLOW
-radar_tshirt                HUD_COLOUR_PURE_WHITE
-radar_woozie                -
-radar_zero                  -
-radar_datedisco             HUD_COLOUR_PURE_WHITE
-radar_datedrink             HUD_COLOUR_PURE_WHITE
-radar_datefood              HUD_COLOUR_PURE_WHITE
-radar_truck                 HUD_COLOUR_PURE_WHITE
-radar_cash                  HUD_COLOUR_GREEN
-radar_flag                  HUD_COLOUR_PURE_WHITE
-radar_gym                   HUD_COLOUR_PURE_WHITE
-radar_impound               HUD_COLOUR_PURE_WHITE
-radar_light                 HUD_COLOUR_YELLOW
-radar_runway                HUD_COLOUR_YELLOW
-radar_gang                  HUD_COLOUR_BLUELIGHT
-radar_gang                  HUD_COLOUR_PURPLE
-radar_gang                  HUD_COLOUR_ORANGE
-radar_gang                  HUD_COLOUR_BLUE
-radar_gang                  HUD_COLOUR_GREEN
-radar_spray                 HUD_COLOUR_PURE_WHITE
-radar_cop                   HUD_COLOUR_PURE_WHITE
-radar_cop_heli              HUD_COLOUR_PURE_WHITE
-radar_vcone                 HUD_COLOUR_PURE_WHITE
-radar_level                 HUD_COLOUR_PURE_WHITE
-radar_lower                 HUD_COLOUR_PURE_WHITE
-radar_higher                HUD_COLOUR_PURE_WHITE
+0  blank                       HUD_COLOUR_PURE_WHITE
+1  blank                       HUD_COLOUR_PURE_WHITE
+2  radar_player                HUD_COLOUR_PURE_WHITE
+3  blank                       HUD_COLOUR_PURE_WHITE
+4  radar_north                 HUD_COLOUR_PURE_WHITE
+5  radar_airyard               HUD_COLOUR_PURE_WHITE
+6  radar_ammugun               HUD_COLOUR_PURE_WHITE
+7  radar_barbers               HUD_COLOUR_PURE_WHITE
+8  radar_bigsmoke              -
+9  radar_boatyard              HUD_COLOUR_PURE_WHITE
+10 radar_burgershot            HUD_COLOUR_PURE_WHITE
+11 radar_bulldozer             HUD_COLOUR_PURE_WHITE
+12 radar_catalina              HUD_COLOUR_PINK
+13 radar_cesarvialpando        -
+14 radar_chicken               HUD_COLOUR_PURE_WHITE
+15 radar_cj                    -
+16 radar_crash                 HUD_COLOUR_PURE_WHITE
+17 radar_diner                 HUD_COLOUR_PURE_WHITE
+18 radar_emmetgun              HUD_COLOUR_PURE_WHITE
+19 radar_enemyattack           HUD_COLOUR_PURE_WHITE
+20 radar_fire                  HUD_COLOUR_PURE_WHITE
+21 radar_girlfriend            HUD_COLOUR_PURE_WHITE
+22 radar_hospital              HUD_COLOUR_PURE_WHITE
+23 radar_locosyndicate         HUD_COLOUR_PURE_WHITE
+24 radar_maddog                -
+25 radar_mafiacasino           HUD_COLOUR_PURE_WHITE
+26 radar_mcstrap               -
+27 radar_modgarage             HUD_COLOUR_PURE_WHITE
+28 radar_ogloc                 -
+29 radar_pizza                 HUD_COLOUR_PURE_WHITE
+30 radar_police                HUD_COLOUR_PURE_WHITE
+31 radar_property              HUD_COLOUR_GREEN
+32 radar_property              HUD_COLOUR_RED
+33 radar_race                  HUD_COLOUR_PURE_WHITE
+34 radar_ryder                 -
+35 radar_savegame              HUD_COLOUR_PURE_WHITE
+36 radar_school                HUD_COLOUR_PURE_WHITE
+37 radar_qmark                 HUD_COLOUR_PURE_WHITE
+38 radar_sweet                 -
+39 radar_tattoo                HUD_COLOUR_PURE_WHITE
+40 radar_thetruth              -
+41 radar_waypoint              HUD_COLOUR_WAYPOINT
+42 radar_toreno                -
+43 radar_triads                HUD_COLOUR_RED
+44 radar_triads                HUD_COLOUR_YELLOW
+45 radar_tshirt                HUD_COLOUR_PURE_WHITE
+46 radar_woozie                -
+47 radar_zero                  -
+48 radar_datedisco             HUD_COLOUR_PURE_WHITE
+49 radar_datedrink             HUD_COLOUR_PURE_WHITE
+50 radar_datefood              HUD_COLOUR_PURE_WHITE
+51 radar_truck                 HUD_COLOUR_PURE_WHITE
+52 radar_cash                  HUD_COLOUR_GREEN
+53 radar_flag                  HUD_COLOUR_PURE_WHITE
+54 radar_gym                   HUD_COLOUR_PURE_WHITE
+55 radar_impound               HUD_COLOUR_PURE_WHITE
+56 radar_light                 HUD_COLOUR_YELLOW
+57 radar_runway                HUD_COLOUR_YELLOW
+58 radar_gang                  HUD_COLOUR_BLUELIGHT
+59 radar_gang                  HUD_COLOUR_PURPLE
+60 radar_gang                  HUD_COLOUR_ORANGE
+61 radar_gang                  HUD_COLOUR_BLUE
+62 radar_gang                  HUD_COLOUR_GREEN
+63 radar_spray                 HUD_COLOUR_PURE_WHITE
+
+# ADD NEW BLIPS HERE
+
+250 radar_cop                   HUD_COLOUR_PURE_WHITE
+251 radar_cop_heli              HUD_COLOUR_PURE_WHITE
+252 radar_vcone                 HUD_COLOUR_PURE_WHITE
+253 radar_level                 HUD_COLOUR_PURE_WHITE
+254 radar_lower                 HUD_COLOUR_PURE_WHITE
+255 radar_higher                HUD_COLOUR_PURE_WHITE
 
 # eof

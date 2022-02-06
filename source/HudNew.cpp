@@ -101,8 +101,8 @@ int CHudNew::nTimersCount;
 void* simple_mask_fxc;
 
 static LateStaticInit InstallHooks([]() {
-    patch::PutRetn(0x58FAE0); // CHud::Draw
-    patch::PutRetn(0x58D490); // CHud::DrawAfterFade
+    patch::RedirectJump(0x58FAE0, CHudNew::Draw);
+    patch::RedirectJump(0x58D490, CHudNew::DrawAfterFade);
     patch::Nop(0x53E4F5, 10); // CAudioEngine::DisplayRadioStationName
     patch::PutRetn(0x60BA80); // CPlayerPed::DrawTriangleForMouseRecruitPed
 
@@ -1066,16 +1066,16 @@ void CHudNew::DrawPlayerPortrait(int id, float x, float y, float w, float h) {
     if (id == CWorld::PlayerInFocus) {
         switch (id) {
             case 0:
-                StatsSprites[PLRSTAT_PLAYER1_ACTIVE]->Draw(HUD_RIGHT(x), HUD_BOTTOM(y), SCREEN_COORD(64.0f * 0.75f), SCREEN_COORD(h), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+                StatsSprites[PLRSTAT_PLAYER1_ACTIVE]->Draw(HUD_RIGHT(x), HUD_BOTTOM(y), SCREEN_COORD(64.0f * 0.75f), SCREEN_COORD(h), HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255));
                 break;
             case 1:
-                StatsSprites[PLRSTAT_PLAYER2_ACTIVE]->Draw(HUD_RIGHT(x), HUD_BOTTOM(y), SCREEN_COORD(w), SCREEN_COORD(64.0f * 0.75f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+                StatsSprites[PLRSTAT_PLAYER2_ACTIVE]->Draw(HUD_RIGHT(x), HUD_BOTTOM(y), SCREEN_COORD(w), SCREEN_COORD(64.0f * 0.75f), HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255));
                 break;
             case 2:
-                StatsSprites[PLRSTAT_PLAYER3_ACTIVE]->Draw(HUD_RIGHT(x - w + (64.0f * 0.75f)), HUD_BOTTOM(y), SCREEN_COORD(64.0f * 0.75f), SCREEN_COORD(h), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+                StatsSprites[PLRSTAT_PLAYER3_ACTIVE]->Draw(HUD_RIGHT(x - w + (64.0f * 0.75f)), HUD_BOTTOM(y), SCREEN_COORD(64.0f * 0.75f), SCREEN_COORD(h), HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255));
                 break;
             case 3:
-                StatsSprites[PLRSTAT_PLAYER4_ACTIVE]->Draw(HUD_RIGHT(x), HUD_BOTTOM(y - h + (64.0f * 0.75f)), SCREEN_COORD(w), SCREEN_COORD(64.0f * 0.75f), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+                StatsSprites[PLRSTAT_PLAYER4_ACTIVE]->Draw(HUD_RIGHT(x), HUD_BOTTOM(y - h + (64.0f * 0.75f)), SCREEN_COORD(w), SCREEN_COORD(64.0f * 0.75f), HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255));
                 break;
         }
     }
@@ -1164,7 +1164,7 @@ void CHudNew::DrawStats() {
             unsigned int savedFilter;
             RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, (void*)&savedFilter);
             RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
-            DrawProgressBarWithSprite(StatsSprites[PLRSTAT_PROGRESS_BAR], HUD_RIGHT((x - 12.0f)), HUD_BOTTOM(spacing + (y - 34.0f)), SCREEN_COORD(164.0f), SCREEN_COORD(8.0f), CStats::GetStatValue(stat[i]) / 1000, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+            DrawProgressBarWithSprite(StatsSprites[PLRSTAT_PROGRESS_BAR], HUD_RIGHT((x - 12.0f)), HUD_BOTTOM(spacing + (y - 34.0f)), SCREEN_COORD(164.0f), SCREEN_COORD(8.0f), CStats::GetStatValue(stat[i]) / 1000, HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255));
             RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
 
             char buff[16];
@@ -1422,7 +1422,7 @@ void CHudNew::DrawMissionTimers() {
                         w = SCREEN_COORD(156.0f);
                         h = SCREEN_COORD(10.0f);
                         p = ((float)(atoi(MissionTimersString[i][0]))) * 0.01f;
-                        DrawProgressBar((x + SCREEN_COORD(-10.0f)) - w, y - ((h * 0.5f) + (rectHeight * 0.52f)), w, h, p, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+                        DrawProgressBar((x + SCREEN_COORD(-10.0f)) - w, y - ((h * 0.5f) + (rectHeight * 0.52f)), w, h, p, HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255));
                     }
                     else {
                         w = CFontNew::GetStringWidth(MissionTimersString[i][0], true);
@@ -1658,7 +1658,7 @@ void CHudNew::PrintSmallHelpText(int alpha) {
         unsigned int savedFilter;
         RwRenderStateGet(rwRENDERSTATETEXTUREFILTER, (void*)&savedFilter);
         RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)rwFILTERNEAREST);
-        DrawProgressBarWithSprite(StatsSprites[PLRSTAT_PROGRESS_BAR], HUD_X(96.0f), r.bottom, SCREEN_COORD(270.0f), SCREEN_COORD(15.0f), progress / 1000, HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+        DrawProgressBarWithSprite(StatsSprites[PLRSTAT_PROGRESS_BAR], HUD_X(96.0f), r.bottom, SCREEN_COORD(270.0f), SCREEN_COORD(15.0f), progress / 1000, HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255));
         RwRenderStateSet(rwRENDERSTATETEXTUREFILTER, (void*)savedFilter);
     }
     else if (ShowTripSkipMessage) {
@@ -2192,7 +2192,7 @@ void CHudNew::DrawMissionTitle() {
         CFontNew::SetDropShadow(SCREEN_MULTIPLIER(2.0f));
         CFontNew::SetDropColor(CRGBA(0, 0, 0, alpha));
 
-        CRGBA col = HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255);
+        CRGBA col = HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255);
         CFontNew::SetColor(CRGBA(col.r, col.g, col.b, alpha));
         CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_MISSION_TITLE).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_MISSION_TITLE).h));
         CFontNew::PrintString(HUD_RIGHT(GET_SETTING(HUD_MISSION_TITLE).x), HUD_BOTTOM(GET_SETTING(HUD_MISSION_TITLE).y), m_LastMissionName);

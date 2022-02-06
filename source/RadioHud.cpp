@@ -27,11 +27,16 @@ bool CRadioHud::m_bChangeRadioStation = false;
 bool CRadioHud::m_bJustEnteredAVehicle = false;
 
 static LateStaticInit InstallHooks([]() {
-    patch::PutRetn(0x4EB660);
+    if (VHud::bUG)
+        return;
 
+    patch::PutRetn(0x4EB660);
 });
 
 void CRadioHud::Init() {
+    if (VHud::bUG)
+        return;
+
     if (m_bInitialised)
         return;
 
@@ -47,6 +52,9 @@ void CRadioHud::Init() {
 }
 
 void CRadioHud::Clear() {
+    if (VHud::bUG)
+        return;
+
     m_nTimeToDisplay = 0;
     m_bJustEnteredAVehicle = false;
 }
@@ -61,6 +69,9 @@ bool CRadioHud::CanRetuneRadioStation() {
 }
 
 void CRadioHud::Process() {
+    if (VHud::bUG)
+        return;
+
     if (FindPlayerVehicle(-1, false)) {
         if (!m_bJustEnteredAVehicle) {
             m_nCurrentRadioId = AudioEngine.GetCurrentRadioStationID();
@@ -106,6 +117,9 @@ void CRadioHud::Process() {
 }
 
 void CRadioHud::Draw() {
+    if (VHud::bUG)
+        return;
+
     float x = 0.0f;
     float y = 173.0f;
     float w = 112.0f;
@@ -117,7 +131,7 @@ void CRadioHud::Draw() {
 
     if (m_nTimeToDisplay > CTimer::m_snTimeInMilliseconds) {
         m_RadioIcons[i]->Draw(SCREEN_COORD_CENTER_LEFT(x + (w / 2)), HUD_Y(y), SCREEN_COORD(w), SCREEN_COORD(h), CRGBA(255, 255, 255, 255));
-        m_RadioIcons[14]->Draw(SCREEN_COORD_CENTER_LEFT(x + (w / 2)), HUD_Y(y), SCREEN_COORD(w), SCREEN_COORD(h), HudColourNew.GetRGB(MenuNew.Settings.uiMainColor, 255));
+        m_RadioIcons[14]->Draw(SCREEN_COORD_CENTER_LEFT(x + (w / 2)), HUD_Y(y), SCREEN_COORD(w), SCREEN_COORD(h), HudColourNew.GetRGB(VHud::Settings.UIMainColor, 255));
 
         CFontNew::SetBackground(false);
         CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
@@ -144,6 +158,9 @@ void CRadioHud::Draw() {
 }
 
 void CRadioHud::Shutdown() { 
+    if (VHud::bUG)
+        return;
+
     if (!m_bInitialised)
         return;
 

@@ -24,7 +24,7 @@ enum eRadarNewSprites {
 };
 
 enum eBlipsNewSprites {
-    RADAR_SPRITE_COP = 64,
+    RADAR_SPRITE_COP = 250,
     RADAR_SPRITE_COP_HELI,
     RADAR_SPRITE_VCONE,
     RADAR_SPRITE_LEVEL,
@@ -98,10 +98,14 @@ struct CRadarLegend {
     CVector pos;
 };
 
+struct tRadarTrace;
+class CSprite2d;
+
 class CRadarNew {
 public:
+    static tRadarTrace* m_RadarTrace;
     static CSprite2d* m_RadarSprites[NUM_RADAR_SPRITES];
-    static CSprite2d* m_BlipsSprites[NUM_BLIPS_SPRITES];
+    static CSprite2d m_BlipsSprites[NUM_BLIPS_SPRITES];
     static CSprite2d** m_MiniMapSprites;
     static CSprite2d* m_PickupsSprites[NUM_PICKUPS_BLIPS_SPRITES];
     static CRadarAnim Anim;
@@ -116,7 +120,7 @@ public:
     static RwRaster* m_pFrameBuffer3;
     static RwRaster* m_pFrameBuffer4;
     static int m_nMapLegendBlipCount;
-    static CRadarLegend m_MapLegendBlipList[175];
+    static CRadarLegend m_MapLegendBlipList[512];
     static unsigned int m_nActualTraceIdToPass;
     static bool m_bCopPursuit;
     static bool m_b3dRadar;
@@ -126,7 +130,9 @@ public:
     static char m_NamePrefix[16];
     static char m_FileFormat[4];
     static bool m_bUseOriginalTiles;
+    static bool m_bUseOriginalBlips;
     static int* m_nOriginalMiniMapId;
+    static int m_nMaxRadarTrace;
 
 public:
     static void InitBeforeGame();
@@ -176,5 +182,9 @@ public:
     static bool Is3dRadar();
     static void SetBlipSprite(int i, unsigned short icon);
     static unsigned int GetRadarTraceColour(unsigned int c, bool bright, bool friendly);
+    static tRadarTrace*& GetRadarTrace();
+    static CSprite2d*& GetRadarBlipsSprites();
+    static CSprite2d* GetBlipsSprites(int id);
+    static CRGBA GetBlipColor(int id);
 };
 
