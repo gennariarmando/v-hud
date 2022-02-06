@@ -4743,8 +4743,7 @@ void CMenuNew::ChangeVideoMode(int mode, int msaa) {
     RwEngineSetVideoMode(mode);
     RwD3D9ChangeVideoMode(mode);
 
-    plugin::Call<0x7043D0>(); // CreateCameraSubraster
-    plugin::Call<0x7046D0>();
+    ReloadCameraStuffAfterScreenChange();
 
     int w = Scene.m_pRwCamera->frameBuffer->width;
     int h = Scene.m_pRwCamera->frameBuffer->height;
@@ -4756,6 +4755,11 @@ void CMenuNew::ChangeVideoMode(int mode, int msaa) {
     RwD3D9EngineSetRefreshRate(refreshRate);
 
     ps->fullScreen = true;
+}
+
+void CMenuNew::ReloadCameraStuffAfterScreenChange() {
+    plugin::Call<0x7043D0>(); // CreateCameraSubraster
+    plugin::Call<0x7046D0>();
 }
 
 void CMenuNew::ChangeVideoModeBorderlessWindowed(int mode, int msaa) {
@@ -4785,8 +4789,7 @@ void CMenuNew::ChangeVideoModeBorderlessWindowed(int mode, int msaa) {
     SetWindowLong(wnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
     SetWindowPos(wnd, HWND_NOTOPMOST, rect.left, rect.top, rect.right, rect.bottom, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
 
-    plugin::Call<0x7043D0>(); // CreateCameraSubraster
-    plugin::Call<0x7046D0>();
+    ReloadCameraStuffAfterScreenChange();
 
     int w = info.width;
     int h = info.height;
@@ -4829,8 +4832,7 @@ void CMenuNew::ChangeVideoModeWindowed(int mode, int msaa) {
     SetWindowLong(wnd, GWL_STYLE, WS_VISIBLE | (WS_OVERLAPPEDWINDOW & ~WS_SIZEBOX));
     SetWindowPos(wnd, HWND_NOTOPMOST, rect.left, rect.top, rect.right, rect.bottom, 0);
 
-    plugin::Call<0x7043D0>(); // CreateCameraSubraster
-    plugin::Call<0x7046D0>();
+    ReloadCameraStuffAfterScreenChange();
 
     int w = info.width;
     int h = info.height;
@@ -4858,8 +4860,7 @@ void CMenuNew::ProcessFullscreenToggle() {
     static int previousWidth = RsGlobal.maximumWidth;
     static int previousHeight = RsGlobal.maximumHeight;
     if ((RsGlobal.maximumWidth != previousWidth || RsGlobal.maximumHeight != previousHeight)) {
-        plugin::Call<0x7043D0>(); // CreateCameraSubraster
-        plugin::Call<0x7046D0>();
+        ReloadCameraStuffAfterScreenChange();
 
         int w = Scene.m_pRwCamera->frameBuffer->width;
         int h = Scene.m_pRwCamera->frameBuffer->height;

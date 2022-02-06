@@ -238,7 +238,8 @@ bool VHud::CheckCompatibility() {
 
     CRadarNew::GetRadarTrace() = patch::Get<tRadarTrace*>(0x5838B0 + 2);
     CRadarNew::GetRadarBlipsSprites() = patch::Get<CSprite2d*>(0x5827EA + 1);
-
+    CRadarNew::GetRadarTexturesSlot() = patch::Get<int*>(0x584C5B + 1);
+    CRadarNew::GetTxdStreamingShiftValue() = patch::Get<int>(0x408858 + 2);
     return true;
 }
 

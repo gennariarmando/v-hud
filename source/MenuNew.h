@@ -578,6 +578,7 @@ public:
     static void PassSettingsToCurrentGame(const CMenuSettings* s);
     void FindOutUsedMemory();
     void ChangeVideoMode(int mode, int msaa);
+    void ReloadCameraStuffAfterScreenChange();
     void ChangeVideoModeBorderlessWindowed(int mode, int msaa);
     void ChangeVideoModeWindowed(int mode, int msaa);
     void ProcessFullscreenToggle();

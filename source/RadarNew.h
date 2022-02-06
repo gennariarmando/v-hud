@@ -131,8 +131,8 @@ public:
     static char m_FileFormat[4];
     static bool m_bUseOriginalTiles;
     static bool m_bUseOriginalBlips;
-    static int* m_nOriginalMiniMapId;
     static int m_nMaxRadarTrace;
+    static int m_nTxdStreamingShiftValue;
 
 public:
     static void InitBeforeGame();
@@ -182,9 +182,11 @@ public:
     static bool Is3dRadar();
     static void SetBlipSprite(int i, unsigned short icon);
     static unsigned int GetRadarTraceColour(unsigned int c, bool bright, bool friendly);
+    static int*& GetRadarTexturesSlot();
     static tRadarTrace*& GetRadarTrace();
     static CSprite2d*& GetRadarBlipsSprites();
     static CSprite2d* GetBlipsSprites(int id);
+    static int& GetTxdStreamingShiftValue();
     static CRGBA GetBlipColor(int id);
 };
 

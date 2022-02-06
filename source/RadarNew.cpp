@@ -15,6 +15,7 @@
 #include "CRadar.h"
 #include "CMenuManager.h"
 #include "CStreaming.h"
+#include "CStreamingInfo.h"
 #include "CTimer.h"
 #include "CScene.h"
 #include "CPedIntelligence.h"
@@ -72,8 +73,8 @@ char CRadarNew::m_NamePrefix[16];
 char CRadarNew::m_FileFormat[4];
 bool CRadarNew::m_bUseOriginalTiles;
 bool CRadarNew::m_bUseOriginalBlips;
-int* CRadarNew::m_nOriginalMiniMapId;
 int CRadarNew::m_nMaxRadarTrace;
+int CRadarNew::m_nTxdStreamingShiftValue;
 
 bool bShowWeaponPickupsOnRadar = false;
 
@@ -133,6 +134,8 @@ static LateStaticInit InstallHooks([]() {
     patch::RedirectJump(0x584770, CRadarNew::GetRadarTraceColour);
 
     //patch::RedirectJump(0x5853D0, CRadarNew::DrawAreaOnRadar);
+
+    patch::Nop(0x40EC92, 5);
 });
 
 void CRadarNew::InitBeforeGame() {
@@ -149,7 +152,7 @@ void CRadarNew::Init() {
         m_RadarSprites[i]->m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\radar"), RadarSpriteNames[i]);
     }
 
-    for (int i = 0; i < m_BlipsCount; i++) {
+    for (int i = 0; i < m_BlipsCount + 1; i++) {
         m_BlipsSprites[i].m_pTexture = CTextureMgr::LoadDDSTextureCB(PLUGIN_PATH("VHud\\blips"), m_BlipsList[i].texName);
     }
 
@@ -159,12 +162,6 @@ void CRadarNew::Init() {
     if (m_bUseOriginalTiles) {
         possibleW = 256;
         possibleH = 256;
-
-        m_nOriginalMiniMapId = new int[RADAR_NUM_TILES * RADAR_NUM_TILES];
-
-        for (int i = 0; i < RADAR_NUM_TILES * RADAR_NUM_TILES; i++) {
-            m_nOriginalMiniMapId[i] = -1;
-        }
     }
     else {
         m_MiniMapSprites = new CSprite2d * [RADAR_NUM_TILES * RADAR_NUM_TILES];
@@ -224,7 +221,7 @@ void CRadarNew::Shutdown() {
     }
 
     if (m_bUseOriginalTiles) {
-        delete[] m_nOriginalMiniMapId;
+        //delete[] m_nOriginalMiniMapId;
     }
     else {
         for (int i = 0; i < RADAR_NUM_TILES * RADAR_NUM_TILES; i++) {
@@ -375,6 +372,10 @@ unsigned int CRadarNew::GetRadarTraceColour(unsigned int c, bool bright, bool fr
     return color.ToInt();
 }
 
+int*& CRadarNew::GetRadarTexturesSlot() {
+    return gRadarTextures;
+}
+
 tRadarTrace*& CRadarNew::GetRadarTrace() {
     return m_RadarTrace;
 }
@@ -385,6 +386,9 @@ CSprite2d*& CRadarNew::GetRadarBlipsSprites() {
 
 CSprite2d* CRadarNew::GetBlipsSprites(int id) {
     switch (id) {
+    case RADAR_SPRITE_CENTRE:
+    case RADAR_SPRITE_NORTH:
+    case RADAR_SPRITE_WAYPOINT:
     case RADAR_SPRITE_COP:
     case RADAR_SPRITE_COP_HELI:
     case RADAR_SPRITE_VCONE:
@@ -392,28 +396,38 @@ CSprite2d* CRadarNew::GetBlipsSprites(int id) {
     case RADAR_SPRITE_LOWER:
     case RADAR_SPRITE_HIGHER:
         return &m_BlipsSprites[id];
-
     }
 
-    if (GetRadarBlipsSprites() && m_bUseOriginalBlips)
+    if (GetRadarBlipsSprites() && GetRadarBlipsSprites()[id].m_pTexture && m_bUseOriginalBlips)
         return &GetRadarBlipsSprites()[id];
 
     return &m_BlipsSprites[id];
 }
 
 CRGBA CRadarNew::GetBlipColor(int id) {
-    CRGBA col = { 255, 255, 255, 255 };
+    CRGBA originalCol = { 255, 255, 255, 255 };
+    CRGBA blipsCol = CRadarNew::m_BlipsList[id].color;
 
     if (m_bUseOriginalBlips) {
         switch (id) {
+        case RADAR_SPRITE_CENTRE:
+        case RADAR_SPRITE_NORTH:
         case RADAR_SPRITE_WAYPOINT:
-            col = HudColourNew.GetRGB(HUD_COLOUR_RED, 255);
-            break;
+        case RADAR_SPRITE_COP:
+        case RADAR_SPRITE_COP_HELI:
+        case RADAR_SPRITE_VCONE:
+        case RADAR_SPRITE_LEVEL:
+        case RADAR_SPRITE_LOWER:
+        case RADAR_SPRITE_HIGHER:
+            return blipsCol;
         }
-
-        return col;
+        return originalCol;
     }
-    return CRadarNew::m_BlipsList[id].color;
+    return blipsCol;
+}
+
+int& CRadarNew::GetTxdStreamingShiftValue() {
+    return m_nTxdStreamingShiftValue;
 }
 
 void CRadarNew::DrawBlips() {
@@ -1406,7 +1420,7 @@ void CRadarNew::DrawRadarSectionMap(int x, int y, CRect const& rect, CRGBA const
     index = clamp(index, 0, (RADAR_NUM_TILES * RADAR_NUM_TILES) - 1);
 
     if (m_bUseOriginalTiles) {
-        int r = m_nOriginalMiniMapId[index];
+        int r = GetRadarTexturesSlot()[index];
 
         RwTexDictionary* txd = CTxdStore::ms_pTxdPool->GetAt(r)->m_pRwDictionary;
 
@@ -1457,7 +1471,7 @@ void CRadarNew::DrawRadarSection(int x, int y) {
     index = clamp(index, 0, (RADAR_NUM_TILES * RADAR_NUM_TILES) - 1);
 
     if (m_bUseOriginalTiles) {
-        int r = m_nOriginalMiniMapId[index];
+        int r = GetRadarTexturesSlot()[index];
         RwTexDictionary* txd = CTxdStore::ms_pTxdPool->GetAt(r)->m_pRwDictionary;
 
         if (txd)
@@ -1814,7 +1828,7 @@ void CRadarNew::ShowRadarTraceWithHeight(float x, float y, unsigned int size, un
         }
     }
 
-    DrawRotatingRadarSprite(&m_BlipsSprites[id], x, y, M_PI, w, h, CRGBA(red, green, blue, alpha));
+    DrawRotatingRadarSprite(GetBlipsSprites(id), x, y, M_PI, w, h, CRGBA(red, green, blue, alpha));
     AddBlipToLegendList(true, id);
 }
 
@@ -1879,26 +1893,22 @@ void CRadarNew::StreamRadarSection(int x, int y) {
     if (!m_bUseOriginalTiles)
         return;
 
+    if (CStreaming::ms_disableStreaming)
+        return;
+
     for (int i = 0; i < RADAR_NUM_TILES; ++i) {
         for (int j = 0; j < RADAR_NUM_TILES; ++j) {
             int index = i + RADAR_NUM_TILES * j;
+            int r = GetRadarTexturesSlot()[index];
 
-            if (m_nOriginalMiniMapId[index] == -1) {
-                char name[32];
-                sprintf(name, "radar%02d", index);
-                m_nOriginalMiniMapId[index] = CTxdStore::FindTxdSlot(name);
+            if (MenuNew.bDrawMenuMap || ((i >= x - 1 && i <= x + 1) && (j >= y - 1 && j <= y + 1))) {
+                CStreaming::RequestModel(r + GetTxdStreamingShiftValue(), GAME_REQUIRED | KEEP_IN_MEMORY);
+                CStreaming::LoadRequestedModels();
             }
-
-            if (m_nOriginalMiniMapId[index] != -1) {
-                if (MenuNew.bDrawMenuMap || ((i >= x - 1 && i <= x + 1) && (j >= y - 1 && j <= y + 1))) {
-                    CStreaming::RequestTxdModel(m_nOriginalMiniMapId[index], 10);
-                    CStreaming::LoadRequestedModels();
-                }
-                else
-                    CStreaming::RemoveModel(m_nOriginalMiniMapId[index] + 20000);
-            }
+            else
+                CStreaming::RemoveModel(r + GetTxdStreamingShiftValue());
         };
-    };
+    }
 }
 
 bool CRadarNew::IsPlayerInVehicle() {
