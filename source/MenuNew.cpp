@@ -3885,7 +3885,7 @@ void CMenuNew::PrintBrief() {
     CFontNew::SetBackground(false);
     CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
     CFontNew::SetAlignment(CFontNew::ALIGN_LEFT);
-    CFontNew::SetWrapX(SCREEN_COORD(1920.0f));
+    CFontNew::SetWrapX(SCREEN_COORD(1280.0f));
     CFontNew::SetFontStyle(CFontNew::FONT_1);
     CFontNew::SetDropShadow(0.0f);
     CFontNew::SetOutline(0.0f);
