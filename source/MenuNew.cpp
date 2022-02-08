@@ -170,9 +170,16 @@ static LateStaticInit InstallHooks([]() {
 
     auto loadSettings = []() {
         MenuNew.Settings.Load();
+
+        if (VHud::bENB)
+            return plugin::CallAndReturn<int, 0x746190>();
+
         return 1;
     };
-    patch::RedirectJump(0x746190, (int(__cdecl*)())loadSettings);
+    patch::RedirectJump(0x6194B0, (int(__cdecl*)())loadSettings);
+    patch::RedirectCall(0x619BA6, (int(__cdecl*)())loadSettings);
+    patch::RedirectCall(0x619D10, (int(__cdecl*)())loadSettings);
+
     patch::Nop(0x747540, 10);
 
     auto saveSettings = [](int, int) {
@@ -4747,10 +4754,11 @@ void CMenuNew::ChangeVideoMode(int mode, int msaa) {
     RwEngineSetVideoMode(mode);
     RwD3D9ChangeVideoMode(mode);
 
-    ReloadCameraStuffAfterScreenChange();
+    if (mode > 0)
+        ReloadCameraStuffBeforeScreenChange();
 
-    int w = Scene.m_pRwCamera->frameBuffer->width;
-    int h = Scene.m_pRwCamera->frameBuffer->height;
+    int w = info.width;
+    int h = info.height;
 
     RsGlobal.maximumWidth = w;
     RsGlobal.maximumHeight = h;
@@ -4758,11 +4766,16 @@ void CMenuNew::ChangeVideoMode(int mode, int msaa) {
     unsigned int refreshRate = plugin::CallAndReturn<unsigned int, 0x7460A0>(w, h, 32);
     RwD3D9EngineSetRefreshRate(refreshRate);
 
+    ReloadCameraStuffAfterScreenChange();
+
     ps->fullScreen = true;
 }
 
+void CMenuNew::ReloadCameraStuffBeforeScreenChange() {
+    plugin::Call<0x7043D0>();
+}
+
 void CMenuNew::ReloadCameraStuffAfterScreenChange() {
-    plugin::Call<0x7043D0>(); // CreateCameraSubraster
     plugin::Call<0x7046D0>();
 }
 
@@ -4793,13 +4806,15 @@ void CMenuNew::ChangeVideoModeBorderlessWindowed(int mode, int msaa) {
     SetWindowLong(wnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
     SetWindowPos(wnd, HWND_NOTOPMOST, rect.left, rect.top, rect.right, rect.bottom, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
 
-    ReloadCameraStuffAfterScreenChange();
+    ReloadCameraStuffBeforeScreenChange();
 
     int w = info.width;
     int h = info.height;
 
     RsGlobal.maximumWidth = w;
     RsGlobal.maximumHeight = h;
+
+    ReloadCameraStuffAfterScreenChange();
 
     ps->fullScreen = false;
 }
@@ -4836,13 +4851,15 @@ void CMenuNew::ChangeVideoModeWindowed(int mode, int msaa) {
     SetWindowLong(wnd, GWL_STYLE, WS_VISIBLE | (WS_OVERLAPPEDWINDOW & ~WS_SIZEBOX));
     SetWindowPos(wnd, HWND_NOTOPMOST, rect.left, rect.top, rect.right, rect.bottom, 0);
 
-    ReloadCameraStuffAfterScreenChange();
+    ReloadCameraStuffBeforeScreenChange();
 
     int w = info.width;
     int h = info.height;
 
     RsGlobal.maximumWidth = w;
     RsGlobal.maximumHeight = h;
+
+    ReloadCameraStuffAfterScreenChange();
 
     ps->fullScreen = false;
 }
@@ -5115,6 +5132,9 @@ void CMenuSettings::Load() {
                     screenType = 0;
                 }
 
+                if (VHud::bENB)
+                    screenType = 0;
+               
                 screenWidth = graphics.child("ScreenWidth").attribute("value").as_int(screenWidth);
                 screenHeight = graphics.child("ScreenHeight").attribute("value").as_int(screenHeight);
                 videoMode = MenuNew.ResToIndex(screenWidth, screenHeight);
@@ -5202,8 +5222,10 @@ void CMenuSettings::Save() {
     display.append_child("MeasurementSystem").append_attribute("value").set_value(measurementSys);
 
     // Graphics
+    if (VHud::bENB)
+        screenType = 0;
+
     auto graphics = settings.append_child("graphics");   
-    
     char* st = NULL;
     switch (screenType) {
     case 2:

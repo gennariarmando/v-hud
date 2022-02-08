@@ -31,6 +31,7 @@ bool VHud::bRwInitialized = false;
 bool VHud::bRwQuit = false;
 bool VHud::bSAMP = false;
 bool VHud::bUG = false;
+bool VHud::bENB = false;
 
 VHudSettings VHud::Settings;
 
@@ -152,6 +153,7 @@ void VHud::Run() {
     CPadNew::Init();
 
     while (!bRwQuit) {
+        CheckForENB();
         CheckForMP();
         CheckForUG();
 
@@ -186,12 +188,23 @@ void VHud::Run() {
     CloseHandle(pThread);
 };
 
+void VHud::CheckForENB() {
+    if (bENB)
+        return;
+
+    if (const HMODULE h = ModuleList().Get(L"enbseries")) {
+        printf("ENB detected.\n");
+        printf("Windowed modes unavailable.\n");
+        bENB = true;
+    }
+}
+
 void VHud::CheckForMP() {
     if (bSAMP)
         return;
 
     if (const HMODULE h = ModuleList().Get(L"SAMP")) {
-        printf("SAMP has been detected.\n");
+        printf("SAMP detected.\n");
         bSAMP = true;
     }
 }
@@ -201,7 +214,7 @@ void VHud::CheckForUG() {
         return;
 
     if (HMODULE h = ModuleList().Get(L"Underground_Core")) {
-        printf("GTA Underground has been detected.\n");
+        printf("GTA Underground detected.\n");
         bUG = true;
     }
 }
@@ -233,6 +246,7 @@ bool VHud::CheckCompatibility() {
         return false;
     }
 
+    CheckForENB();
     CheckForMP();
     CheckForUG();
 
