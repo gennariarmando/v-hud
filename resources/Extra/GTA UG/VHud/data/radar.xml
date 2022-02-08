@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Radar>
+	<RadarMapSize value="48000" />
+	<UseOriginalTiles value="true" />
+	<UseOriginalBlips value="true" />
+	<RadarMapNamePrefix value="radar%02d" />
+	<RadarMapFileFormat value="dds" />
+</Radar>
