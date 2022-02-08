@@ -971,6 +971,9 @@ void CMenuNew::RemoveUnusedControllerSettings() {
 }
 
 void CMenuNew::ProcessGoThrough(int input) {
+    if (IsLoading())
+        return;
+
     if (input == -99)
         input = nCurrentInputType;
 

@@ -141,6 +141,7 @@ public:
     static void Clear();
     static void ReadBlipsFromFile();
     static void ReadRadarInfoFromFile();
+    static void ReadTileMapFromFile();
     static void CreateCamera();
     static void DestroyCamera();
     static int CalculateBlipAlpha(float dist);

@@ -77,8 +77,10 @@ char CHudNew::m_LastMissionName[128];
 bool CHudNew::m_bShowWastedBusted;
 bool CHudNew::m_bShowSuccessFailed;
 int CHudNew::m_nBigMessageTime;
+int CHudNew::m_nBigMessageTime2;
 float CHudNew::m_fBigMessageOffset;
-char* CHudNew::m_SuccessFailedText[2];
+CRGBA CHudNew::m_BigMessageColor;
+char CHudNew::m_SuccessFailedText[2][128];
 int CHudNew::m_nMiddleTopMessageTime;
 char CHudNew::m_MiddleTopMessage[16][128];
 char CHudNew::m_MiddleTopSubMessage[128];
@@ -227,9 +229,11 @@ void CHudNew::ReInit() {
     m_bShowWastedBusted = false;
     m_bShowSuccessFailed = false;
     m_nBigMessageTime = -1;
+    m_nBigMessageTime2 = -1;
     m_fBigMessageOffset = 0.0f;
-    m_SuccessFailedText[0] = NULL;
-    m_SuccessFailedText[1] = NULL;
+    m_SuccessFailedText[0][0] = NULL;
+    m_SuccessFailedText[1][0] = NULL;
+    m_BigMessageColor = { 255, 255, 255, 255 };
 
     m_nMiddleTopMessageTime = 0;
 
@@ -1838,50 +1842,54 @@ void CHudNew::DrawOddJobMessage() {
 }
 
 void CHudNew::DrawSuccessFailedMessage() {
-    bool slide = false;
-    CRGBA col;
-
     SetHUDSafeZone(false);
 
-    m_SuccessFailedText[0] = NULL;
-    m_SuccessFailedText[1] = NULL;
-    m_bShowSuccessFailed = false;
-    if (CHud::m_BigMessage[0][0] && !strncmp(CHud::m_BigMessage[0], TheText.Get("M_PASS"), 5)) {
-        m_SuccessFailedText[0] = TextNew.GetText("M_PASS").text;
-        m_SuccessFailedText[1] = m_LastMissionName;
-        col = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 150);
-        slide = true;
-        m_bShowSuccessFailed = true;
-    }
-    else if (CHud::m_BigMessage[0][0] && !strcmp(CHud::m_BigMessage[0], TheText.Get("M_FAIL"))) {
-        m_SuccessFailedText[0] = TextNew.GetText("M_FAIL").text;
+    if (!m_bShowSuccessFailed) {
+        if (CHud::m_BigMessage[0][0] && !strncmp(CHud::m_BigMessage[0], TheText.Get("M_PASS"), 5)) {
+            strcpy(m_SuccessFailedText[0], TextNew.GetText("M_PASS").text);
+            strcpy(m_SuccessFailedText[1], m_LastMissionName);
+            m_BigMessageColor = HudColourNew.GetRGB(HUD_COLOUR_YELLOW, 150);
+            m_bShowSuccessFailed = true;
+            m_nBigMessageTime = CTimer::m_snTimeInMilliseconds + 5000;
+            m_nBigMessageTime2 = CTimer::m_snTimeInMilliseconds + 1500;
+            CHud::m_BigMessage[0][0] = '\0';
+            Audio.PlayChunk(CHUNK_SCREEN_PULSE1, 1.0f);
+        }
+        else if (CHud::m_BigMessage[0][0] && !strcmp(CHud::m_BigMessage[0], TheText.Get("M_FAIL"))) {
+            strcpy(m_SuccessFailedText[0], TextNew.GetText("M_FAIL").text);
 
-        switch (FindPlayerPed(0)->m_nPedState) {
-        case PEDSTATE_DEAD:
-            m_SuccessFailedText[1] = TextNew.GetText("WASTED").text;
-            break;
-        case PEDSTATE_ARRESTED:
-            m_SuccessFailedText[1] = TextNew.GetText("BUSTED").text;
-            break;
-        default:
-            m_SuccessFailedText[1] = "";
-            break;
+            switch (FindPlayerPed(0)->m_nPedState) {
+            case PEDSTATE_DEAD:
+                strcpy(m_SuccessFailedText[1], TextNew.GetText("WASTED").text);
+                break;
+            case PEDSTATE_ARRESTED:
+                strcpy(m_SuccessFailedText[1], TextNew.GetText("BUSTED").text);
+                break;
+            default:
+                m_SuccessFailedText[1][0] = '\0';
+                break;
+            }
+
+            m_BigMessageColor = HudColourNew.GetRGB(HUD_COLOUR_RED, 150);
+            m_bShowSuccessFailed = true;
+            m_nBigMessageTime = CTimer::m_snTimeInMilliseconds + 5000;
+            m_nBigMessageTime2 = -1;
+            CHud::m_BigMessage[0][0] = '\0';
+            Audio.PlayChunk(CHUNK_SCREEN_PULSE1, 1.0f);
+        }
+    }
+    else {
+        if (m_nBigMessageTime2 != -1 && m_nBigMessageTime2 < CTimer::m_snTimeInMilliseconds) {
+            if (m_fBigMessageOffset > -256.0f)
+                m_fBigMessageOffset -= CTimer::ms_fTimeStep * 0.02f * 512.0f;
         }
 
-        col = HudColourNew.GetRGB(HUD_COLOUR_RED, 150);
-        m_bShowSuccessFailed = true;
-    }
-
-    if (m_bShowSuccessFailed && m_SuccessFailedText[0]) {
-        if (slide) {
-            if (m_nBigMessageTime == -1)
-                m_nBigMessageTime = CTimer::m_snTimeInMilliseconds + 1500;
-
-            if (m_nBigMessageTime < CTimer::m_snTimeInMilliseconds) {
-                m_nBigMessageTime = 0;
-                if (m_fBigMessageOffset > -256.0f)
-                    m_fBigMessageOffset -= CTimer::ms_fTimeStep * 0.02f * 512.0f;
-            }
+        if (m_nBigMessageTime < CTimer::m_snTimeInMilliseconds) {
+            m_nBigMessageTime = -1;
+            m_nBigMessageTime2 = -1;
+            m_bShowSuccessFailed = false;
+            m_SuccessFailedText[0][0] = NULL;
+            m_SuccessFailedText[1][0] = NULL;
         }
 
         CFontNew::SetBackground(false);
@@ -1893,7 +1901,7 @@ void CHudNew::DrawSuccessFailedMessage() {
         CFontNew::SetOutline(0.0f);
         CFontNew::SetDropColor(CRGBA(0, 0, 0, 0));
 
-        CFontNew::SetColor(col);
+        CFontNew::SetColor(m_BigMessageColor);
         CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_BIG_MESSAGE).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_BIG_MESSAGE).h));
 
         float left = HUD_X(0.0f);
@@ -1905,7 +1913,7 @@ void CHudNew::DrawSuccessFailedMessage() {
 
         DrawSimpleRectGradCentered(left, top1, right, top2, left, bottom1, right, bottom2, CRGBA(0, 0, 0, 150));
 
-        if (m_SuccessFailedText[0])
+        if (m_SuccessFailedText[0][0])
             CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(HUD_BIG_MESSAGE).x), SCREEN_COORD_CENTER_DOWN(m_fBigMessageOffset + GET_SETTING(HUD_BIG_MESSAGE).y), m_SuccessFailedText[0]);
 
         CFontNew::SetDropShadow(0.0f);
@@ -1915,7 +1923,7 @@ void CHudNew::DrawSuccessFailedMessage() {
         CFontNew::SetColor(HudColourNew.GetRGB(HUD_COLOUR_WHITE, 255));
         CFontNew::SetScale(SCREEN_MULTIPLIER(0.9f), SCREEN_MULTIPLIER(1.6f));
 
-        if (m_SuccessFailedText[1])
+        if (m_SuccessFailedText[1][0])
             CFontNew::PrintString(SCREEN_COORD_CENTER_LEFT(GET_SETTING(HUD_BIG_MESSAGE).x), SCREEN_COORD_CENTER_DOWN(m_fBigMessageOffset + GET_SETTING(HUD_BIG_MESSAGE).y + 114.0f), m_SuccessFailedText[1]);
     }
 

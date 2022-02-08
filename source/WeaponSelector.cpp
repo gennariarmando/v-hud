@@ -300,7 +300,6 @@ bool CWeaponSelector::IsAbleToSwitchWeapon() {
         && !CMenuPanels::bActive
         && !CHudNew::m_bShowWastedBusted
         && !CHudNew::m_bShowSuccessFailed
-        && !playa->m_nPedFlags.bTestForShotInVehicle
         && !playa->m_nPedFlags.bUsingMobilePhone
         && !CPadNew::GetPad(0)->bDisablePlayerCycleWeapon
         && playa->IsPedInControl()

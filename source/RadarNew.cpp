@@ -113,6 +113,8 @@ const char* PickupsBlipsFileNames[]{
     "pickup_weapon_up",
 };
 
+char* radarMapTileToStream = NULL;
+
 static LateStaticInit InstallHooks([]() {
     patch::RedirectJump(0x583480, CRadarNew::TransformRadarPointToScreenSpace);
     patch::RedirectJump(0x583530, CRadarNew::TransformRealWorldPointToRadarSpace);
@@ -141,6 +143,7 @@ static LateStaticInit InstallHooks([]() {
 void CRadarNew::InitBeforeGame() {
     ReadBlipsFromFile();
     ReadRadarInfoFromFile();
+    ReadTileMapFromFile();
 }
 
 void CRadarNew::Init() {
@@ -296,6 +299,28 @@ void CRadarNew::ReadRadarInfoFromFile() {
             strcpy(m_NamePrefix, radar.child("RadarMapNamePrefix").attribute("value").as_string());
             strcpy(m_FileFormat, radar.child("RadarMapFileFormat").attribute("value").as_string());
         }
+    }
+}
+
+void CRadarNew::ReadTileMapFromFile() {
+    if (radarMapTileToStream)
+        return;
+
+    std::ifstream file(PLUGIN_PATH("VHud\\data\\radar_tilemap.dat"));
+
+    if (file.is_open()) {
+        radarMapTileToStream = new char[RADAR_NUM_TILES * RADAR_NUM_TILES];
+
+        int index = 0;
+        for (char tile; file.get(tile);) {
+            if (tile == '0' || tile == '1') {
+                if (index > RADAR_NUM_TILES * RADAR_NUM_TILES)
+                    break;
+                radarMapTileToStream[index] = atoi(&tile);
+                index++;
+            }
+        }
+        file.close();
     }
 }
 
@@ -1904,7 +1929,8 @@ void CRadarNew::StreamRadarSection(int x, int y) {
             int index = i + RADAR_NUM_TILES * j;
             int r = GetRadarTexturesSlot()[index];
 
-            if (MenuNew.bDrawMenuMap || ((i >= x - 1 && i <= x + 1) && (j >= y - 1 && j <= y + 1))) {
+            if ((radarMapTileToStream ? radarMapTileToStream[index] == 1 : true) &&
+                (MenuNew.bDrawMenuMap || ((i >= x - 1 && i <= x + 1) && (j >= y - 1 && j <= y + 1)))) {
                 CStreaming::RequestModel(r + GetTxdStreamingShiftValue(), GAME_REQUIRED | KEEP_IN_MEMORY);
                 CStreaming::LoadRequestedModels();
             }

@@ -125,8 +125,10 @@ public:
     static bool m_bShowWastedBusted;
     static bool m_bShowSuccessFailed;
     static int m_nBigMessageTime;
+    static int m_nBigMessageTime2;
     static float m_fBigMessageOffset;
-    static char* m_SuccessFailedText[2];
+    static CRGBA m_BigMessageColor;
+    static char m_SuccessFailedText[2][128];
     static int m_nMiddleTopMessageTime;
     static char m_MiddleTopMessage[16][128];
     static char m_MiddleTopSubMessage[128];
