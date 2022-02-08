@@ -17,7 +17,7 @@ Project has been made in order to replicate accurately most of the UI elements p
 
 ## System Requirements:
 - Requires 2GB or more of RAM
-- DirectX 9 compatible GPU with Pixel Shader 2.0
+- DirectX 9 compatible GPU with Pixel Shader 3.0
 - Minimum screen resolution: 800x600
 
 ## Compiling:
