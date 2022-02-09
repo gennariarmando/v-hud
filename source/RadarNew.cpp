@@ -10,6 +10,7 @@
 #include "resource.h"
 #include "MenuNew.h"
 #include "CellPhone.h"
+#include "FontNew.h"
 
 #include "CCamera.h"
 #include "CRadar.h"
@@ -1243,7 +1244,70 @@ void CRadarNew::DrawRadarRectangle() {
 
     // Bars
     if (playa.m_pPed) {
+        bool p2UseAlternativeArmourValues = false;
+        bool p1UseAlternativeArmourValues = false;
+        bool nitroBar = false;
         float progress = 0.0f;
+
+        if (playa.m_pPed->m_nPedFlags.bInVehicle &&
+            playa.m_pPed->m_pVehicle &&
+            playa.m_pPed->m_pVehicle->m_nVehicleClass == VEHICLE_AUTOMOBILE &&
+            playa.m_pPed->m_pVehicle->m_pDriver == playa.m_pPed &&
+            playa.m_pPed->m_pVehicle->m_nNitroBoosts > 0) {
+            nitroBar = true;
+            p1UseAlternativeArmourValues = true;
+        }
+  
+        // Breath bar
+        col = GET_SETTING(HUD_BREATH_BAR).col;
+        if (CHud::m_ItemToFlash != 10 || CTimer::m_FrameCounter & 8) {
+            if (playa.m_pPed->m_nPhysicalFlags.bSubmergedInWater) {
+                progress = playa.m_pPed->m_pPlayerData->m_fBreath / CStats::GetFatAndMuscleModifier(STAT_MOD_AIR_IN_LUNG);
+                DrawProgressBar(HUD_X(GET_SETTING(HUD_BREATH_BAR).x), HUD_BOTTOM(GET_SETTING(HUD_BREATH_BAR).y), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR).w), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR).h), progress,
+                    col);
+
+                nitroBar = false;
+                p1UseAlternativeArmourValues = true;
+            }
+        }
+
+        // Nitro bar
+        if (nitroBar) {
+            CAutomobile* veh = (CAutomobile*)playa.m_pPed->m_pVehicle;
+
+            progress = (veh->m_fNitroValue < 0.0f) ? (1.0f - fabsf(veh->m_fNitroValue)) : veh->m_fNitroValue;
+            col = GET_SETTING(HUD_NITRO_BAR).col;
+            DrawProgressBar(HUD_X(GET_SETTING(HUD_NITRO_BAR).x), HUD_BOTTOM(GET_SETTING(HUD_NITRO_BAR).y), SCREEN_COORD(GET_SETTING(HUD_NITRO_BAR).w), SCREEN_COORD(GET_SETTING(HUD_NITRO_BAR).h), progress, col);
+
+            CFontNew::SetBackground(false);
+            CFontNew::SetBackgroundColor(CRGBA(0, 0, 0, 0));
+            CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
+            CFontNew::SetWrapX(SCREEN_COORD(640.0f));
+            CFontNew::SetFontStyle(CFontNew::FONT_4);
+            CFontNew::SetOutline(0.0f);
+            CFontNew::SetDropShadow(SCREEN_MULTIPLIER(1.0f));
+            CFontNew::SetDropColor(CRGBA(0, 0, 0, 255));
+            CFontNew::SetColor(GET_SETTING(HUD_NITRO_TEXT).col);
+
+            CFontNew::SetScale(SCREEN_MULTIPLIER(GET_SETTING(HUD_NITRO_TEXT).w), SCREEN_MULTIPLIER(GET_SETTING(HUD_NITRO_TEXT).h));
+
+            char str[16];
+            sprintf(str, veh->m_nNitroBoosts != 101 ? "X%d" : "INF", veh->m_nNitroBoosts);
+            CFontNew::PrintString(HUD_X(GET_SETTING(HUD_NITRO_TEXT).x), HUD_BOTTOM(GET_SETTING(HUD_NITRO_TEXT).y), str);
+        }
+
+        // Armour bar
+        col = GET_SETTING(HUD_ARMOUR_BAR).col;
+        if (CHud::m_ItemToFlash != 3 || CTimer::m_FrameCounter & 8) {
+            progress = playa.m_pPed->m_fArmour / static_cast<float>(playa.m_nMaxArmour);
+
+            int value = HUD_ARMOUR_BAR;
+            if (p1UseAlternativeArmourValues)
+                value = HUD_ARMOUR_BAR_B;
+
+            DrawProgressBar(HUD_X(GET_SETTING(value).x), HUD_BOTTOM(GET_SETTING(value).y), SCREEN_COORD(GET_SETTING(value).w), SCREEN_COORD(GET_SETTING(value).h), progress,
+                col);
+        }
 
         // Health bar
         col = GET_SETTING(HUD_HEALTH_BAR).col;
@@ -1253,51 +1317,40 @@ void CRadarNew::DrawRadarRectangle() {
                 (playa.m_pPed->m_fHealth <= 20.0f && CTimer::m_FrameCounter & 8) ? HudColourNew.GetRGB(HUD_COLOUR_RED, col.a) : col);
         }
 
-        // Armour bar
-        col = GET_SETTING(HUD_ARMOUR_BAR).col;
-        if (CHud::m_ItemToFlash != 3 || CTimer::m_FrameCounter & 8) {
-            progress = playa.m_pPed->m_fArmour / static_cast<float>(playa.m_nMaxArmour);
-            DrawProgressBar(HUD_X(GET_SETTING(HUD_ARMOUR_BAR).x), HUD_BOTTOM(GET_SETTING(HUD_ARMOUR_BAR).y), SCREEN_COORD(playa.m_pPed->m_nPhysicalFlags.bSubmergedInWater ? GET_SETTING(HUD_ARMOUR_BAR_B).w : GET_SETTING(HUD_ARMOUR_BAR).w), SCREEN_COORD(GET_SETTING(HUD_ARMOUR_BAR).h), progress,
-                col);
-        }
-
-        // Breath bar
-        col = GET_SETTING(HUD_BREATH_BAR).col;
-        if (CHud::m_ItemToFlash != 10 || CTimer::m_FrameCounter & 8) {
-            if (playa.m_pPed->m_nPhysicalFlags.bSubmergedInWater) {
-                progress = playa.m_pPed->m_pPlayerData->m_fBreath / CStats::GetFatAndMuscleModifier(STAT_MOD_AIR_IN_LUNG);
-                DrawProgressBar(HUD_X(GET_SETTING(HUD_BREATH_BAR).x), HUD_BOTTOM(GET_SETTING(HUD_BREATH_BAR).y), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR).w), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR).h), progress,
-                    col);
-            }
-        }
 
         // Second player
         if (InTwoPlayersMode() && playa2.m_pPed) {
-            col = GET_SETTING(HUD_HEALTH_BAR).col;
+            // Breath bar
+            col = GET_SETTING(HUD_BREATH_BAR_P2).col;
+            if (CHud::m_ItemToFlash != 10 || CTimer::m_FrameCounter & 8) {
+                if (playa2.m_pPed->m_nPhysicalFlags.bSubmergedInWater) {
+                    progress = playa2.m_pPed->m_pPlayerData->m_fBreath / CStats::GetFatAndMuscleModifier(STAT_MOD_AIR_IN_LUNG);
+                    DrawProgressBar(HUD_X(GET_SETTING(HUD_BREATH_BAR_P2).x), HUD_BOTTOM(GET_SETTING(HUD_BREATH_BAR_P2).y), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR_P2).w), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR_P2).h), progress,
+                        col);
 
-            // Health bar
-            if (CHud::m_ItemToFlash != 4 || CTimer::m_FrameCounter & 8) {
-                progress = playa2.m_pPed->m_fHealth / static_cast<float>(playa2.m_nMaxHealth);
-                DrawProgressBar(HUD_X(GET_SETTING(HUD_HEALTH_BAR_P2).x), HUD_BOTTOM(GET_SETTING(HUD_HEALTH_BAR_P2).y), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR_P2).w), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR_P2).h), progress,
-                    (playa2.m_pPed->m_fHealth <= 20.0f && CTimer::m_FrameCounter & 8) ? HudColourNew.GetRGB(HUD_COLOUR_RED, col.a) : col);
+                    p2UseAlternativeArmourValues = true;
+                }
             }
 
             // Armour bar
             col = GET_SETTING(HUD_ARMOUR_BAR_P2).col;
             if (CHud::m_ItemToFlash != 3 || CTimer::m_FrameCounter & 8) {
                 progress = playa2.m_pPed->m_fArmour / static_cast<float>(playa2.m_nMaxArmour);
-                DrawProgressBar(HUD_X(GET_SETTING(HUD_ARMOUR_BAR_P2).x), HUD_BOTTOM(GET_SETTING(HUD_ARMOUR_BAR_P2).y), SCREEN_COORD(playa2.m_pPed->m_nPhysicalFlags.bSubmergedInWater ? GET_SETTING(HUD_ARMOUR_BAR_B_P2).w : GET_SETTING(HUD_ARMOUR_BAR_P2).w), SCREEN_COORD(GET_SETTING(HUD_ARMOUR_BAR_P2).h), progress,
+
+                int value = HUD_ARMOUR_BAR_P2;
+                if (p2UseAlternativeArmourValues)
+                    value = HUD_ARMOUR_BAR_B_P2;
+
+                DrawProgressBar(HUD_X(GET_SETTING(value).x), HUD_BOTTOM(GET_SETTING(value).y), SCREEN_COORD(GET_SETTING(value).w), SCREEN_COORD(GET_SETTING(value).h), progress,
                     col);
             }
 
-            // Breath bar
-            col = GET_SETTING(HUD_BREATH_BAR_P2).col;
-            if (CHud::m_ItemToFlash != 10 || CTimer::m_FrameCounter & 8) {
-                if (playa2.m_pPed->m_nPhysicalFlags.bSubmergedInWater) {
-                    progress = playa2.m_pPed->m_pPlayerData->m_fBreath / CStats::GetFatAndMuscleModifier(STAT_MOD_AIR_IN_LUNG);
-                    DrawProgressBar(HUD_X(GET_SETTING(HUD_BREATH_BAR_P2).x), HUD_BOTTOM(GET_SETTING(HUD_BREATH_BAR_P2).y), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR_P2).w), SCREEN_COORD(GET_SETTING(HUD_BREATH_BAR_P2).h), progress, 
-                        col);
-                }
+            // Health bar
+            col = GET_SETTING(HUD_HEALTH_BAR).col;
+            if (CHud::m_ItemToFlash != 4 || CTimer::m_FrameCounter & 8) {
+                progress = playa2.m_pPed->m_fHealth / static_cast<float>(playa2.m_nMaxHealth);
+                DrawProgressBar(HUD_X(GET_SETTING(HUD_HEALTH_BAR_P2).x), HUD_BOTTOM(GET_SETTING(HUD_HEALTH_BAR_P2).y), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR_P2).w), SCREEN_COORD(GET_SETTING(HUD_HEALTH_BAR_P2).h), progress,
+                    (playa2.m_pPed->m_fHealth <= 20.0f && CTimer::m_FrameCounter & 8) ? HudColourNew.GetRGB(HUD_COLOUR_RED, col.a) : col);
             }
         }
     }

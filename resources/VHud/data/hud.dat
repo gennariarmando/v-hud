@@ -28,6 +28,8 @@ HUD_HEALTH_BAR                 96.0   68.0     134.0   9.0     HUD_COLOUR_RADAR_
 HUD_ARMOUR_BAR                233.0   68.0     133.0   9.0     HUD_COLOUR_RADAR_ARMOUR    205
 HUD_ARMOUR_BAR_B              233.0   68.0      65.0   9.0     HUD_COLOUR_RADAR_ARMOUR    205
 HUD_BREATH_BAR                301.0   68.0      65.0   9.0     HUD_COLOUR_BLUELIGHT       205
+HUD_NITRO_BAR                 301.0   68.0      65.0   9.0     HUD_COLOUR_YELLOW          205
+HUD_NITRO_TEXT                390.0   74.0       0.6   0.9     HUD_COLOUR_WHITE           255
 
 HUD_HEALTH_BAR_P2              96.0  257.0     134.0   9.0     HUD_COLOUR_RADAR_HEALTH    205
 HUD_ARMOUR_BAR_P2             233.0  257.0     133.0   9.0     HUD_COLOUR_RADAR_ARMOUR    205
@@ -73,7 +75,6 @@ HUD_BIG_MESSAGE                  0.0  -78.0      3.4   6.6     HUD_COLOUR_WHITE 
 HUD_MISSION_TITLE               96.0   88.0      1.1   2.3     HUD_COLOUR_WHITE           255 
 
 HUD_MISSION_TIMERS              96.0   54.0    378.0  39.0     HUD_COLOUR_WHITE           180
-
 
 # ----------------------------------------------------------------------------------------------------------
 

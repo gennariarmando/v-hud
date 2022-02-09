@@ -105,7 +105,6 @@ void* simple_mask_fxc;
 static LateStaticInit InstallHooks([]() {
     patch::RedirectJump(0x58FAE0, CHudNew::Draw);
     patch::RedirectJump(0x58D490, CHudNew::DrawAfterFade);
-    patch::Nop(0x53E4F5, 10); // CAudioEngine::DisplayRadioStationName
     patch::PutRetn(0x60BA80); // CPlayerPed::DrawTriangleForMouseRecruitPed
 
     // No sniper/rocket borders.
@@ -402,11 +401,6 @@ void CHudNew::Draw() {
                     }
 
                     DrawMissionTimers();
-                }
-
-                if (FindPlayerVehicle(-1, 0) && AERadioTrackManager.IsVehicleRadioActive()) {
-                    CRadioHud::Process();
-                    CRadioHud::Draw();
                 }
             }
             DrawStats();
