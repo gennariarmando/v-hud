@@ -1,5 +1,6 @@
 <p align="center"><img src="https://i.imgur.com/Gp5g7l2.png" width="512" height="128"></p>
 
+[<p align="center"><img src="https://discordapp.com/api/guilds/941825090717356053/widget.png?style=banner2" alt="Tw@"/>](https://discord.gg/xAvbhp63sg)
 
 # V Hud:
 A work-in-progress user interface overhaul, for Grand Theft Auto: San Andreas, based on Grand Theft Auto: V.\
