@@ -200,6 +200,17 @@ static LateStaticInit InstallHooks([]() {
         CRenderer::PreRender();
     };
     patch::RedirectCall(0x53E9FE, (void(__cdecl*)())preRenderEntity);
+
+    auto originalMenuStringRight = [](float x, float y, char* str) {
+        strcpy(MenuNew.OriginalRightTextString[MenuNew.OriginalMenuLoopCount - 1], str);
+    };
+    patch::RedirectCall(0x57A405, (void(__cdecl*)(float, float, char*))originalMenuStringRight);
+
+    auto originalMenuStringLeft = [](float x, float y, char* str) {
+        MenuNew.OriginalMenuLoopCount++;
+    };
+    patch::RedirectCall(0x57A1FA, (void(__cdecl*)(float, float, char*))originalMenuStringLeft);
+
 });
 
 void CMenuNew::Init() {
@@ -377,6 +388,16 @@ void CMenuNew::Clear() {
     nLoadingTimeInMs = 0;
     bLoad = false;
     nSlot = 0;
+
+    bApplyGraphicsChanges = false;
+
+    OriginalMenuLoopCount = 0;
+    for (int i = 0; i < 12; i++) {
+        OriginalLeftTextString[i][0] = '\0';
+        OriginalRightTextString[i][0] = '\0';
+    }
+
+    bPopulateOriginals = true;
 }
 
 void CMenuNew::BuildMenuBar() {
@@ -474,6 +495,17 @@ void CMenuNew::BuildMenuScreen() {
 
         if (auto startup = AddNewTab(settings, MENUENTRY_CHANGETAB, "FE_SAS", NULL, false)) {
             AddNewEntry(startup, MENUENTRY_LANDINGPAGE, "FE_LAND", 0, 0);
+        }
+
+        if (VHud::bModLoader) {
+            if (auto modLoader = AddNewTab(settings, MENUENTRY_CHANGETAB, "FE_ML", NULL, false)) {
+                AddNewEntry(modLoader, MENUENTRY_MODLOADER, "FE_ML1", 0, 0);
+                AddNewEntry(modLoader, MENUENTRY_MODLOADER, "FE_ML2", 0, 0);
+                AddNewEntry(modLoader, MENUENTRY_MODLOADER, "FE_ML3", 0, 0);
+                AddNewEntry(modLoader, MENUENTRY_MODLOADER, "FE_ML4", 0, 0);
+                AddNewEntry(modLoader, MENUENTRY_MODLOADER, "FE_ML5", 0, 0);
+                AddNewEntry(modLoader, MENUENTRY_MODLOADER, "FE_ML6", 0, 0);
+            }
         }
     }
 
@@ -1084,6 +1116,20 @@ void CMenuNew::ProcessGoBack(int input) {
     }
 }
 
+void CMenuNew::PopulateOriginalMenuStrings(int menupage) {
+    ProcessOriginalOptions(MENUPAGE_OPTIONS, 4, false, true);
+
+    OriginalMenuLoopCount = 0;
+
+    for (int i = 0; i < 12; i++) {
+        OriginalLeftTextString[i][0] = '\0';
+        OriginalRightTextString[i][0] = '\0';
+    }
+
+    FrontEndMenuManager.SwitchToNewScreen(menupage);
+    FrontEndMenuManager.DrawStandardMenu(false);
+}
+
 void CMenuNew::Process() {
     if (nTimePassedSinceLastKeyBind > CTimer::m_snTimeInMillisecondsPauseMode)
         return;
@@ -1216,6 +1262,13 @@ void CMenuNew::Process() {
                 nSaveSlotsDate[i][0] = NULL;
             }
             bSaveSlotsPopulated = false;
+        }
+
+        if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_ML")) {
+            if (bPopulateOriginals) {
+                PopulateOriginalMenuStrings(MENUPAGE_MODLOADER);
+                bPopulateOriginals = false;
+            }
         }
 
         tabItemBeforeScreenChange = nCurrentTabItem;
@@ -2177,6 +2230,9 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
         }
         ApplyChanges();
         break;
+    case MENUENTRY_MODLOADER:
+        ProcessOriginalOptions(MENUPAGE_MODLOADER, nCurrentEntryItem, input, enter);
+        break;
     
         // Sliders
     case MENUENTRY_DRAWDISTANCE:
@@ -2191,6 +2247,13 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
         ApplyChanges();
         break;
     }
+}
+
+void CMenuNew::ProcessOriginalOptions(int m, int i, char input, char enter) {
+    FrontEndMenuManager.m_nCurrentMenuPage = m;
+    FrontEndMenuManager.m_nSelectedMenuItem = i;
+    FrontEndMenuManager.ProcessMenuOptions(input, NULL, enter);
+    bPopulateOriginals = true;
 }
 
 void CMenuNew::RetuneRadio(char id) {
@@ -3206,6 +3269,11 @@ void CMenuNew::DrawDefault() {
                 case MENUENTRY_LANGUAGE:
                     sprintf(rightTextTmp, "LANG_%d", TempSettings.language);
                     rightText = TextNew.GetText(rightTextTmp).text;
+                    break;
+                case MENUENTRY_MODLOADER:
+                    if (OriginalRightTextString[i][0]) {
+                        rightText = OriginalRightTextString[i];
+                    }
                     break;
 
                     // Sliders

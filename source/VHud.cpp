@@ -32,6 +32,7 @@ bool VHud::bRwQuit = false;
 bool VHud::bSAMP = false;
 bool VHud::bUG = false;
 bool VHud::bENB = false;
+bool VHud::bModLoader = false;
 
 VHudSettings VHud::Settings;
 
@@ -156,6 +157,7 @@ void VHud::Run() {
         CheckForENB();
         CheckForMP();
         CheckForUG();
+        CheckForModLoader();
 
         if (bRwInitialized) {
             if (gGameState && !bSAMP) {
@@ -196,6 +198,16 @@ void VHud::CheckForENB() {
         printf("ENB detected.\n");
         printf("Windowed modes unavailable.\n");
         bENB = true;
+    }
+}
+
+void VHud::CheckForModLoader() {
+    if (bModLoader)
+        return;
+
+    if (const HMODULE h = ModuleList().Get(L"modloader")) {
+        printf("Mod Loader detected.\n");
+        bModLoader = true;
     }
 }
 
@@ -249,6 +261,7 @@ bool VHud::CheckCompatibility() {
     CheckForENB();
     CheckForMP();
     CheckForUG();
+    CheckForModLoader();
 
     CRadarNew::GetRadarTrace() = patch::Get<tRadarTrace*>(0x5838B0 + 2);
     CRadarNew::GetRadarBlipsSprites() = patch::Get<CSprite2d*>(0x5827EA + 1);

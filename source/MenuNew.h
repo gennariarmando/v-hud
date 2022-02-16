@@ -13,6 +13,11 @@
 
 typedef void (*funcCall)();
 
+enum eOriginalMenuPages {
+    MENUPAGE_MODLOADER = 44,
+    NUM_ORIGINAL_MENUPAGES,
+};
+
 enum eMouseType : char {
     MOUSE_ARROW,
     MOUSE_FUCKU,
@@ -143,6 +148,7 @@ enum eMenuEntries {
     MENUENTRY_REDEFINEKEY,
     MENUENTRY_KEYBINDING,
     MENUENTRY_LANGUAGE,
+    MENUENTRY_MODLOADER,
 };
 
 enum eMenuMessages {
@@ -476,6 +482,11 @@ public:
 
     bool bApplyGraphicsChanges;
 
+    int OriginalMenuLoopCount;
+    char OriginalLeftTextString[12][128];
+    char OriginalRightTextString[12][128];
+    bool bPopulateOriginals;
+
 public:
     void Init();
     void Shutdown();
@@ -518,6 +529,7 @@ public:
     void RemoveUnusedControllerSettings();
     void ProcessGoThrough(int input);
     void ProcessGoBack(int input);
+    void PopulateOriginalMenuStrings(int menupage);
     void Process();
     void ScanGalleryPictures(bool force);
     unsigned char FadeIn(unsigned char alpha);
@@ -530,6 +542,7 @@ public:
     int ResToIndex(int w, int h);
     char** GetVideoModeList();
     void ProcessEntryStuff(int enter, int input);
+    void ProcessOriginalOptions(int m, int i, char input, char enter);
     void RetuneRadio(char id);
     void StartRadio();
     void StopRadio();

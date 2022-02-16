@@ -44,6 +44,7 @@ public:
     static bool bSAMP;
     static bool bUG;
     static bool bENB;
+    static bool bModLoader;
 
     static VHudSettings Settings;
 
@@ -52,6 +53,7 @@ public:
     static void Shutdown();
     static void Run();
     static void CheckForENB();
+    static void CheckForModLoader();
     static void CheckForMP();
     static void CheckForUG();
     static void UG_RegisterEventCallback(int e, void* func);
