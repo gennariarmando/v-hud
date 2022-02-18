@@ -527,9 +527,12 @@ public:
     void CenterCursor();
     void DoMapZoomInOut(bool out);
     void RemoveUnusedControllerSettings();
+    void ProcessGoUp(int input);
+    void ProcessGoDown(int input);
     void ProcessGoThrough(int input);
     void ProcessGoBack(int input);
     void PopulateOriginalMenuStrings(int menupage);
+    void BuildMenuEntriesFromOriginals();
     void Process();
     void ScanGalleryPictures(bool force);
     unsigned char FadeIn(unsigned char alpha);

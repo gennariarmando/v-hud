@@ -201,12 +201,13 @@ static LateStaticInit InstallHooks([]() {
     };
     patch::RedirectCall(0x53E9FE, (void(__cdecl*)())preRenderEntity);
 
-    auto originalMenuStringRight = [](float x, float y, char* str) {
+    auto originalMenuStringRight = [](float x, float y, char* str) {     
         strcpy(MenuNew.OriginalRightTextString[MenuNew.OriginalMenuLoopCount - 1], str);
     };
     patch::RedirectCall(0x57A405, (void(__cdecl*)(float, float, char*))originalMenuStringRight);
 
     auto originalMenuStringLeft = [](float x, float y, char* str) {
+        strcpy(MenuNew.OriginalLeftTextString[MenuNew.OriginalMenuLoopCount], str);
         MenuNew.OriginalMenuLoopCount++;
     };
     patch::RedirectCall(0x57A1FA, (void(__cdecl*)(float, float, char*))originalMenuStringLeft);
@@ -320,6 +321,8 @@ void CMenuNew::Clear() {
 
     nPreviousScreen = MENUSCREEN_NONE;
     nCurrentScreen = MENUSCREEN_NONE;
+
+    fMenuEntryScrollOffset = 0.0f;
 
     bRequestScreenUpdate = false;
     fScreenAlpha = 0;
@@ -498,13 +501,11 @@ void CMenuNew::BuildMenuScreen() {
         }
 
         if (VHud::bModLoader) {
-            if (auto modLoader = AddNewTab(settings, MENUENTRY_CHANGETAB, "FE_ML", NULL, false)) {
-                AddNewEntry(modLoader, MENUENTRY_MODLOADER, "FE_ML1", 0, 0);
-                AddNewEntry(modLoader, MENUENTRY_MODLOADER, "FE_ML2", 0, 0);
-                AddNewEntry(modLoader, MENUENTRY_MODLOADER, "FE_ML3", 0, 0);
-                AddNewEntry(modLoader, MENUENTRY_MODLOADER, "FE_ML4", 0, 0);
-                AddNewEntry(modLoader, MENUENTRY_MODLOADER, "FE_ML5", 0, 0);
-                AddNewEntry(modLoader, MENUENTRY_MODLOADER, "FE_ML6", 0, 0);
+            char* mlText = TheText.Get("ML_F0HH");
+            if (mlText[0] != '\0') {
+                if (auto modLoader = AddNewTab(settings, MENUENTRY_CHANGETAB, "FE_ML", NULL, false)) {
+
+                }
             }
         }
     }
@@ -805,6 +806,7 @@ void CMenuNew::SetInputTypeAndClear(int input, int n) {
                 nCurrentEntryItem = n;
                 nCurrentEntryItemHover = MENU_HOVER_NONE;
                 nPreviousEntryItemHover = MENU_HOVER_NONE;
+                fMenuEntryScrollOffset = 0.0f;
                 break;
             default:
                 break;
@@ -1009,6 +1011,155 @@ void CMenuNew::RemoveUnusedControllerSettings() {
     }
 }
 
+void CMenuNew::ProcessGoUp(int input) {
+    if (input == -99)
+        input = nCurrentInputType;
+
+    bool resetOffset = false;
+    switch (input) {
+    case MENUINPUT_BAR:
+        if (GetLastMenuBarItem() > 0)
+            Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+
+        nPreviousBarItem = nCurrentBarItem;
+        nCurrentBarItem--;
+
+        if (nCurrentBarItem < 0)
+            nCurrentBarItem = GetLastMenuBarItem() - 1;
+
+        SetInputTypeAndClear(MENUINPUT_TAB);
+        SetInputTypeAndClear(MENUINPUT_ENTRY);
+        SetInputTypeAndClear(MENUINPUT_BAR, nCurrentBarItem);
+
+        bRequestScreenUpdate = true;
+        break;
+    case MENUINPUT_TAB:
+        if (GetLastMenuScreenTab() > 0)
+            Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+
+        nPreviousTabItem = nCurrentTabItem;
+        nCurrentTabItem--;
+
+        if (nCurrentTabItem < 0) {
+            nCurrentTabItem = GetLastMenuScreenTab() - 1;
+
+            if (nCurrentScreen == MENUSCREEN_GALLERY) {
+                nPreviousGalleryPage = nCurrentGalleryPage;
+                nCurrentGalleryPage--;
+
+                if (nCurrentGalleryPage < 0)
+                    nCurrentGalleryPage = MAX_GALLERY_PAGES - 1;
+
+                bRequestScreenUpdate = true;
+            }
+        }
+
+        SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
+        SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
+        break;
+    case MENUINPUT_ENTRY:
+        Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+        while (true) {
+            nPreviousEntryItem = nCurrentEntryItem;
+            nCurrentEntryItem--;
+
+            if (nCurrentEntryItem < 0) {
+                nCurrentEntryItem = MAX_MENU_ENTRIES - 1;
+                resetOffset = true;
+            }
+
+            if (HasToContinueLoopInverse(nCurrentEntryItem))
+                break;
+        }
+
+        if (resetOffset) {
+            float add = (GetMenuEntryRect().bottom + GetMenuHorSpacing());
+            fMenuEntryScrollOffset = add * (GetLastMenuScreenEntry() - VISIBLE_ENTRIES);
+        }
+        break;
+    case MENUINPUT_MESSAGE:
+        break;
+    case MENUINPUT_GALLERYPIC:
+        break;
+    }
+}
+
+void CMenuNew::ProcessGoDown(int input) {
+    if (input == -99)
+        input = nCurrentInputType;
+
+    bool resetOffset = false;
+    switch (input) {
+    case MENUINPUT_BAR:
+        if (GetLastMenuBarItem() > 0)
+            Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+
+        nPreviousBarItem = nCurrentBarItem;
+        nCurrentBarItem++;
+
+        if (nCurrentBarItem > GetLastMenuBarItem() - 1)
+            nCurrentBarItem = 0;
+
+        SetInputTypeAndClear(MENUINPUT_TAB);
+        SetInputTypeAndClear(MENUINPUT_ENTRY);
+        SetInputTypeAndClear(MENUINPUT_BAR, nCurrentBarItem);
+
+        bRequestScreenUpdate = true;
+        break;
+    case MENUINPUT_TAB:
+        if (GetLastMenuScreenTab() > 0)
+            Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+
+        nPreviousTabItem = nCurrentTabItem;
+        nCurrentTabItem++;
+
+        if (nCurrentTabItem > GetLastMenuScreenTab() - 1) {
+            nCurrentTabItem = 0;
+
+            if (nCurrentScreen == MENUSCREEN_GALLERY) {
+                nPreviousGalleryPage = nCurrentGalleryPage;
+                nCurrentGalleryPage++;
+
+                if (nCurrentGalleryPage > MAX_GALLERY_PAGES - 1)
+                    nCurrentGalleryPage = 0;
+
+                bRequestScreenUpdate = true;
+            }
+        }
+
+        SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
+        SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
+        break;
+    case MENUINPUT_ENTRY:
+        Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
+
+        while (true) {
+            nPreviousEntryItem = nCurrentEntryItem;
+            nCurrentEntryItem++;
+
+            if (nCurrentEntryItem > MAX_MENU_ENTRIES - 1) {
+                nCurrentEntryItem = 0;
+                resetOffset = true;
+            }
+
+            if (HasToContinueLoopInverse(nCurrentEntryItem))
+                break;
+        }
+
+        if (resetOffset) {
+            float add = (GetMenuEntryRect().bottom + GetMenuHorSpacing());
+            fMenuEntryScrollOffset = add * (GetFirstMenuScreenEntry());
+        }
+        break;
+    case MENUINPUT_MESSAGE:
+
+        break;
+    case MENUINPUT_GALLERYPIC:
+
+        break;
+    }
+}
+
 void CMenuNew::ProcessGoThrough(int input) {
     if (IsLoading())
         return;
@@ -1128,6 +1279,21 @@ void CMenuNew::PopulateOriginalMenuStrings(int menupage) {
 
     FrontEndMenuManager.SwitchToNewScreen(menupage);
     FrontEndMenuManager.DrawStandardMenu(false);
+
+    BuildMenuEntriesFromOriginals();
+}
+
+void CMenuNew::BuildMenuEntriesFromOriginals() {
+    CMenuScreen* s = &MenuScreen[nCurrentScreen];
+    CMenuTab* t = &s->Tab[nCurrentTabItem];
+
+    for (int i = 0; i < OriginalMenuLoopCount - 1; i++) {
+        if (OriginalLeftTextString[i][0] != '\0') {
+            t->Entries[i].AddEntry(MENUENTRY_MODLOADER, "BLANK", 0, 0);
+        }
+        else
+            t->Entries[i].RemoveEntry();
+    }
 }
 
 void CMenuNew::Process() {
@@ -1277,36 +1443,10 @@ void CMenuNew::Process() {
         case MENUINPUT_BAR:
             if (bShowMenuBar) {
                 if (Left) {
-                    if (GetLastMenuBarItem() > 0)
-                        Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
-
-                    nPreviousBarItem = nCurrentBarItem;
-                    nCurrentBarItem--;
-
-                    if (nCurrentBarItem < 0)
-                        nCurrentBarItem = GetLastMenuBarItem() - 1;
-
-                    SetInputTypeAndClear(MENUINPUT_TAB);
-                    SetInputTypeAndClear(MENUINPUT_ENTRY);
-                    SetInputTypeAndClear(MENUINPUT_BAR, nCurrentBarItem);
-
-                    bRequestScreenUpdate = true;
+                    ProcessGoUp(-99);
                 }
                 else if (Right) {
-                    if (GetLastMenuBarItem() > 0)
-                        Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
-
-                    nPreviousBarItem = nCurrentBarItem;
-                    nCurrentBarItem++;
-
-                    if (nCurrentBarItem > GetLastMenuBarItem() - 1)
-                        nCurrentBarItem = 0;
-
-                    SetInputTypeAndClear(MENUINPUT_TAB);
-                    SetInputTypeAndClear(MENUINPUT_ENTRY);
-                    SetInputTypeAndClear(MENUINPUT_BAR, nCurrentBarItem);
-
-                    bRequestScreenUpdate = true;
+                    ProcessGoDown(-99);
                 }
                 else if (Enter) {
                     ProcessGoThrough(-99);
@@ -1325,52 +1465,10 @@ void CMenuNew::Process() {
         case MENUINPUT_TAB:
             if (!IsLoading()) {
                 if (Up) {
-                    if (GetLastMenuScreenTab() > 0)
-                        Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
-
-                    nPreviousTabItem = nCurrentTabItem;
-                    nCurrentTabItem--;
-
-                    if (nCurrentTabItem < 0) {
-                        nCurrentTabItem = GetLastMenuScreenTab() - 1;
-
-                        if (nCurrentScreen == MENUSCREEN_GALLERY) {
-                            nPreviousGalleryPage = nCurrentGalleryPage;
-                            nCurrentGalleryPage--;
-
-                            if (nCurrentGalleryPage < 0)
-                                nCurrentGalleryPage = MAX_GALLERY_PAGES - 1;
-
-                            bRequestScreenUpdate = true;
-                        }
-                    }
-
-                    SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
-                    SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
+                    ProcessGoUp(-99);                   
                 }
                 else if (Down) {
-                    if (GetLastMenuScreenTab() > 0)
-                        Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
-
-                    nPreviousTabItem = nCurrentTabItem;
-                    nCurrentTabItem++;
-
-                    if (nCurrentTabItem > GetLastMenuScreenTab() - 1) {
-                        nCurrentTabItem = 0;
-
-                        if (nCurrentScreen == MENUSCREEN_GALLERY) {
-                            nPreviousGalleryPage = nCurrentGalleryPage;
-                            nCurrentGalleryPage++;
-
-                            if (nCurrentGalleryPage > MAX_GALLERY_PAGES - 1)
-                                nCurrentGalleryPage = 0;
-
-                            bRequestScreenUpdate = true;
-                        }
-                    }
-
-                    SetInputTypeAndClear(MENUINPUT_ENTRY, 0);
-                    SetInputTypeAndClear(MENUINPUT_TAB, nCurrentTabItem);
+                    ProcessGoDown(-99);               
                 }
                 else if (Enter) {
                     ProcessGoThrough(-99);
@@ -1461,33 +1559,13 @@ void CMenuNew::Process() {
             break;
         case MENUINPUT_ENTRY:
             if (!IsLoading()) {
+                bool rsetScrollOffset = false;
+
                 if (Up) {
-                    Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
-
-                    while (true) {
-                        nPreviousEntryItem = nCurrentEntryItem;
-                        nCurrentEntryItem--;
-
-                        if (nCurrentEntryItem < 0)
-                            nCurrentEntryItem = MAX_MENU_ENTRIES - 1;
-
-                        if (HasToContinueLoopInverse(nCurrentEntryItem))
-                            break;
-                    }
+                    ProcessGoUp(-99);             
                 }
                 else if (Down) {
-                    Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f);
-
-                    while (true) {
-                        nPreviousEntryItem = nCurrentEntryItem;
-                        nCurrentEntryItem++;
-
-                        if (nCurrentEntryItem > MAX_MENU_ENTRIES - 1)
-                            nCurrentEntryItem = 0;
-
-                        if (HasToContinueLoopInverse(nCurrentEntryItem))
-                            break;
-                    }
+                    ProcessGoDown(-99);                
                 }
                 else if (Back) {
                     ProcessGoBack(-99);
@@ -2981,6 +3059,7 @@ void CMenuNew::DrawDefault() {
 
         if (GetLastMenuScreenEntry() > VISIBLE_ENTRIES) {
             menuEntry.top -= fMenuEntryScrollOffset;
+
             CRect r = GetMenuEntryRect();
             r.top += (r.bottom + GetMenuHorSpacing()) * VISIBLE_ENTRIES;
             r.top += (r.bottom + GetMenuHorSpacing()) * MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[0].y;
@@ -2996,6 +3075,40 @@ void CMenuNew::DrawDefault() {
             s.bottom = s.top + is;
             s.left -= is;
             s.top -= is;
+
+            CRect sel;
+            float off = SCREEN_COORD(4.0f);
+            sel.left = r.left;
+            sel.top = r.top;
+            sel.top += off;
+            sel.right = r.right;
+            sel.bottom = r.bottom / 2;
+            sel.bottom -= off;
+
+            if (nCurrentInputType == MENUINPUT_ENTRY) {
+                if (bDrawMouse) {
+                    if (nCurrentEntryItem > GetFirstMenuScreenEntry()) {
+                        if (CheckHover(sel.left, sel.left + sel.right, sel.top, sel.top + sel.bottom)) {
+                            CSprite2d::DrawRect(CRect(sel.left, sel.top, sel.left + sel.right, sel.top + sel.bottom), CRGBA(150, 150, 150, FadeIn(180)));
+
+                            if (pad->GetLeftMouseJustUp()) {
+                                ProcessGoUp(-99);
+                            }
+                        }
+                    }
+                    if (nCurrentEntryItem < GetLastMenuScreenEntry() - 1) {
+                        sel.top += sel.bottom;
+
+                        if (CheckHover(sel.left, sel.left + sel.right, sel.top, sel.top + sel.bottom)) {
+                            CSprite2d::DrawRect(CRect(sel.left, sel.top, sel.left + sel.right, sel.top + sel.bottom), CRGBA(150, 150, 150, FadeIn(180)));
+
+                            if (pad->GetLeftMouseJustUp()) {
+                                ProcessGoDown(-99);
+                            }
+                        }
+                    }
+                }
+            }
 
             MenuSprites[MENU_SELECTOR]->Draw(s, CRGBA(255, 255, 255, 255));
         }
@@ -3023,6 +3136,9 @@ void CMenuNew::DrawDefault() {
 
             const int entryType = MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].type;
             switch (entryType) {
+            case MENUENTRY_MODLOADER:
+                leftText = OriginalLeftTextString[i];
+                break;
             case MENUENTRY_LOADGAME:
                 leftText = nSaveSlots[i];
                 sprintf(leftTextTmp, "%02d - %s", i + 1, leftText ? leftText : TextNew.GetText("FE_UNK").text);
@@ -3093,12 +3209,8 @@ void CMenuNew::DrawDefault() {
                 }
 
                 if (!insideMenuBoundaries) {
-                    if (nCurrentEntryItem > VISIBLE_ENTRIES - 1) {
-                        fMenuEntryScrollOffset = (menuEntry.bottom + GetMenuHorSpacing()) * (nCurrentEntryItem - VISIBLE_ENTRIES + 1);
-                    }
-                    else {
-                        fMenuEntryScrollOffset = (menuEntry.bottom + GetMenuHorSpacing()) * (nCurrentEntryItem);
-                    }
+                    float add = (menuEntry.bottom + GetMenuHorSpacing());
+                    fMenuEntryScrollOffset += add * (nCurrentEntryItem - nPreviousEntryItem);
                 }
             }
 
