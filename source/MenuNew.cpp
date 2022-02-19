@@ -506,6 +506,10 @@ void CMenuNew::BuildMenuScreen() {
                 if (auto modLoader = AddNewTab(settings, MENUENTRY_CHANGETAB, "FE_ML", NULL, false)) {
 
                 }
+
+                if (auto modLoaderModList = AddNewTab(settings, MENUENTRY_CHANGETAB, "FE_MODS", NULL, false)) {
+
+                }
             }
         }
     }
@@ -565,6 +569,23 @@ void CMenuNew::BuildMenuScreen() {
         }
         if (auto foot = AddNewTab(key, MENUENTRY_RESTOREDEFAULTS, "FE_RDEF", NULL, false)) {
 
+        }
+    }
+
+    // MENUSCREEN_LOADING
+    if (auto mod = AddNewScreen("BLANK")) {
+
+    }
+
+    // MENUSCREEN_MODLOADER_MOD_OPTION
+    if (VHud::bModLoader) {
+        char* mlText = TheText.Get("ML_F0HH");
+        if (mlText[0] != '\0') {
+            if (auto mod = AddNewScreen("FE_SELMOD")) {
+                if (auto modName = AddNewTab(mod, MENUENTRY_CHANGETAB, "FE_MLSET", NULL, false)) {
+
+                }
+            }
         }
     }
 }
@@ -779,6 +800,9 @@ void CMenuNew::SetInputTypeAndClear(int input, int n) {
                 //bShowMenu = true;
             }
 
+            bPopulateOriginals = true;
+            fMenuEntryScrollOffset = 0.0f;
+
             switch (input) {
             case MENUINPUT_BAR:
                 nPreviousBarItem = nCurrentBarItem;
@@ -806,7 +830,6 @@ void CMenuNew::SetInputTypeAndClear(int input, int n) {
                 nCurrentEntryItem = n;
                 nCurrentEntryItemHover = MENU_HOVER_NONE;
                 nPreviousEntryItemHover = MENU_HOVER_NONE;
-                fMenuEntryScrollOffset = 0.0f;
                 break;
             default:
                 break;
@@ -1212,6 +1235,7 @@ void CMenuNew::ProcessGoBack(int input) {
 
         switch (nCurrentScreen) {
         case MENUSCREEN_KEYBIND:
+        case MENUSCREEN_MODLOADER_MOD_OPTION:
             if (int p = nPreviousScreen) {
                 nPreviousScreen = nCurrentScreen;
                 nCurrentScreen = p;
@@ -1267,8 +1291,9 @@ void CMenuNew::ProcessGoBack(int input) {
     }
 }
 
-void CMenuNew::PopulateOriginalMenuStrings(int menupage) {
-    ProcessOriginalOptions(MENUPAGE_OPTIONS, 4, false, true);
+void CMenuNew::PopulateOriginalMenuStrings(int prev, int i, int curr, int s, int e, int type) {
+    if (prev != -1 && i != -1)
+        ProcessOriginalOptions(prev, i, false, true);
 
     OriginalMenuLoopCount = 0;
 
@@ -1277,19 +1302,19 @@ void CMenuNew::PopulateOriginalMenuStrings(int menupage) {
         OriginalRightTextString[i][0] = '\0';
     }
 
-    FrontEndMenuManager.SwitchToNewScreen(menupage);
+    FrontEndMenuManager.SwitchToNewScreen(curr);
     FrontEndMenuManager.DrawStandardMenu(false);
 
-    BuildMenuEntriesFromOriginals();
+    BuildMenuEntriesFromOriginals(s, e, type);
 }
 
-void CMenuNew::BuildMenuEntriesFromOriginals() {
+void CMenuNew::BuildMenuEntriesFromOriginals(int start, int end, int type) {
     CMenuScreen* s = &MenuScreen[nCurrentScreen];
     CMenuTab* t = &s->Tab[nCurrentTabItem];
 
-    for (int i = 0; i < OriginalMenuLoopCount - 1; i++) {
+    for (int i = start; i < end; i++) {
         if (OriginalLeftTextString[i][0] != '\0') {
-            t->Entries[i].AddEntry(MENUENTRY_MODLOADER, "BLANK", 0, 0);
+            t->Entries[i].AddEntry(type, "BLANK", 0, 0);
         }
         else
             t->Entries[i].RemoveEntry();
@@ -1432,12 +1457,22 @@ void CMenuNew::Process() {
 
         if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_ML")) {
             if (bPopulateOriginals) {
-                PopulateOriginalMenuStrings(MENUPAGE_MODLOADER);
+                PopulateOriginalMenuStrings(MENUPAGE_OPTIONS, 4, MENUPAGE_MODLOADER, 0, 5, MENUENTRY_ORIGINAL);
                 bPopulateOriginals = false;
             }
         }
-
-        tabItemBeforeScreenChange = nCurrentTabItem;
+        else if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_MODS")) {
+            if (bPopulateOriginals) {
+                PopulateOriginalMenuStrings(MENUPAGE_MODLOADER, 5, MENUPAGE_MODLOADER_MODS, 0, 9, MENUENTRY_ORIGINAL);
+                bPopulateOriginals = false;
+            }
+        }
+        else if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_MLSET")) {
+            if (bPopulateOriginals) {
+                PopulateOriginalMenuStrings(-1, -1, MENUPAGE_MODLOADER_SELECTED_MOD, 0, 2, MENUENTRY_ORIGINAL);
+                bPopulateOriginals = false;
+            }
+        }
 
         switch (nCurrentInputType) {
         case MENUINPUT_BAR:
@@ -2308,8 +2343,41 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
         }
         ApplyChanges();
         break;
-    case MENUENTRY_MODLOADER:
-        ProcessOriginalOptions(MENUPAGE_MODLOADER, nCurrentEntryItem, input, enter);
+    case MENUENTRY_ORIGINAL:
+        {
+        bool process = false;
+            if (int page = MENUPAGE_EMPTY) {
+                if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_ML")) {
+                    process = true;
+                    if (process) {
+                        page = MENUPAGE_MODLOADER;
+                    }
+                }
+                else if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_MODS")) {
+                    if (enter)
+                        process = true;
+
+                    if (process) {
+                        page = MENUPAGE_MODLOADER_MODS;
+
+                        nPreviousScreen = nCurrentScreen;
+                        nCurrentScreen = MENUSCREEN_MODLOADER_MOD_OPTION;
+                        bRequestScreenUpdate = true;
+                        SetInputTypeAndClear(MENUINPUT_TAB);
+                    }
+                }
+                else if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_MLSET")) {
+                    process = true;
+                    if (process) {
+                        page = MENUPAGE_MODLOADER_SELECTED_MOD;
+                        strcpy(SavedOriginalLeftText, OriginalLeftTextString[nCurrentEntryItem]);
+                    }
+                }
+
+                if (process)
+                    ProcessOriginalOptions(page, nCurrentEntryItem, input, enter);
+            }
+        }
         break;
     
         // Sliders
@@ -3133,10 +3201,11 @@ void CMenuNew::DrawDefault() {
                 continue;
 
             CFontNew::SetIgnoreGamePadSymbols(false);
+            CFontNew::SetClipX(SCREEN_WIDTH);
 
             const int entryType = MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].type;
             switch (entryType) {
-            case MENUENTRY_MODLOADER:
+            case MENUENTRY_ORIGINAL:
                 leftText = OriginalLeftTextString[i];
                 break;
             case MENUENTRY_LOADGAME:
@@ -3382,7 +3451,7 @@ void CMenuNew::DrawDefault() {
                     sprintf(rightTextTmp, "LANG_%d", TempSettings.language);
                     rightText = TextNew.GetText(rightTextTmp).text;
                     break;
-                case MENUENTRY_MODLOADER:
+                case MENUENTRY_ORIGINAL:
                     if (OriginalRightTextString[i][0]) {
                         rightText = OriginalRightTextString[i];
                     }
@@ -3422,6 +3491,10 @@ void CMenuNew::DrawDefault() {
                     shiftText = 0.0f;
 
                 if (rightText) {
+                    if (nCurrentScreen == MENUSCREEN_MODLOADER_MOD_OPTION && i == 1) {
+                        rightText[2] = '\0';
+                    }
+
                     CFontNew::SetAlignment(CFontNew::ALIGN_RIGHT);
                     CFontNew::PrintString(menuEntry.left + menuEntry.right + SCREEN_COORD(-12.0f - shiftText), menuEntry.top + SCREEN_COORD(5.0f), rightText);
 

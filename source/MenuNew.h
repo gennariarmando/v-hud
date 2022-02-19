@@ -15,6 +15,8 @@ typedef void (*funcCall)();
 
 enum eOriginalMenuPages {
     MENUPAGE_MODLOADER = 44,
+    MENUPAGE_MODLOADER_MODS = 45,
+    MENUPAGE_MODLOADER_SELECTED_MOD = 46,
     NUM_ORIGINAL_MENUPAGES,
 };
 
@@ -85,6 +87,7 @@ enum eMenuScreens {
     MENUSCREEN_SAVE,
     MENUSCREEN_KEYBIND,
     MENUSCREEN_LOADING,
+    MENUSCREEN_MODLOADER_MOD_OPTION,
     NUM_MENUSCREENS
 };
 
@@ -148,7 +151,7 @@ enum eMenuEntries {
     MENUENTRY_REDEFINEKEY,
     MENUENTRY_KEYBINDING,
     MENUENTRY_LANGUAGE,
-    MENUENTRY_MODLOADER,
+    MENUENTRY_ORIGINAL,
 };
 
 enum eMenuMessages {
@@ -165,7 +168,7 @@ enum eMenuMessages {
 
 enum {
     MAX_MENU_BAR_ITEMS = 12,
-    MAX_MENU_SCREENS = 12,
+    MAX_MENU_SCREENS = 16,
     MAX_MENU_TABS = 128,
     MAX_MENU_ENTRIES = 128,
     MAX_HELP_TEXT = 8,
@@ -485,6 +488,7 @@ public:
     int OriginalMenuLoopCount;
     char OriginalLeftTextString[12][128];
     char OriginalRightTextString[12][128];
+    char SavedOriginalLeftText[128];
     bool bPopulateOriginals;
 
 public:
@@ -531,8 +535,8 @@ public:
     void ProcessGoDown(int input);
     void ProcessGoThrough(int input);
     void ProcessGoBack(int input);
-    void PopulateOriginalMenuStrings(int menupage);
-    void BuildMenuEntriesFromOriginals();
+    void PopulateOriginalMenuStrings(int prev, int i, int page, int s, int e, int type);
+    void BuildMenuEntriesFromOriginals(int start, int end, int type);
     void Process();
     void ScanGalleryPictures(bool force);
     unsigned char FadeIn(unsigned char alpha);
