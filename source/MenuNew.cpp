@@ -116,6 +116,8 @@ auto HelpText_ShowHideLegend = []() { MenuNew.bShowLegend = MenuNew.bShowLegend 
 auto HelpText_DeleteSave = []() { MenuNew.SetMenuMessage(MENUMESSAGE_DELETE_GAME); Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f); };
 auto HelpText_ApplyChanges = []() { if (MenuNew.nMenuAlert == MENUALERT_PENDINGCHANGES) MenuNew.ApplyGraphicsChanges(); Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f); };
 auto HelpText_UnSetKey = []() { MenuNew.SetMenuMessage(MENUMESSAGE_SETKEYTONULL); Audio.PlayChunk(CHUNK_MENU_SELECT, 1.0f); };
+auto HelpText_MLPrevPage = []() { MenuNew.ProcessOriginalOptions(MENUPAGE_MODLOADER_MODS, 11, false, true); MenuNew.SetInputTypeAndClear(MenuNew.nCurrentInputType); Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f); };
+auto HelpText_MLNextPage = []() { MenuNew.ProcessOriginalOptions(MENUPAGE_MODLOADER_MODS, 9, false, true); MenuNew.SetInputTypeAndClear(MenuNew.nCurrentInputType); Audio.PlayChunk(CHUNK_MENU_SCROLL, 1.0f); };
 
 static LateStaticInit InstallHooks([]() {
     patch::Set<BYTE>(0x53E797, 0xEB);
@@ -1737,6 +1739,10 @@ void CMenuNew::Process() {
                 }
                 [[fallthrough]];
             default:
+                if (nCurrentInputType == MENUINPUT_ENTRY && !faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_MODS")) {
+                    AppendHelpText("H_MLPREV", HelpText_MLPrevPage);
+                    AppendHelpText("H_MLNEXT", HelpText_MLNextPage);
+                }
                 AppendHelpText("H_BAC", HelpText_GoBack);
                 AppendHelpText("H_SEL", HelpText_GoThrough);
                 break;
@@ -2357,13 +2363,22 @@ void CMenuNew::ProcessEntryStuff(int enter, int input) {
                     if (enter)
                         process = true;
 
-                    if (process) {
+                    if (process && nCurrentEntryItem < 9) {
                         page = MENUPAGE_MODLOADER_MODS;
 
                         nPreviousScreen = nCurrentScreen;
                         nCurrentScreen = MENUSCREEN_MODLOADER_MOD_OPTION;
                         bRequestScreenUpdate = true;
                         SetInputTypeAndClear(MENUINPUT_TAB);
+                    }
+
+                    if (input > 0) {
+                        ProcessOriginalOptions(MENUPAGE_MODLOADER_MODS, 11, false, true);
+                        SetInputTypeAndClear(nCurrentInputType);
+                    }
+                    else if (input < 0) {
+                        ProcessOriginalOptions(MENUPAGE_MODLOADER_MODS, 9, false, true);
+                        SetInputTypeAndClear(nCurrentInputType);
                     }
                 }
                 else if (!faststrcmp(MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].tabName, "FE_MLSET")) {
@@ -3206,7 +3221,11 @@ void CMenuNew::DrawDefault() {
             const int entryType = MenuScreen[nCurrentScreen].Tab[nCurrentTabItem].Entries[i].type;
             switch (entryType) {
             case MENUENTRY_ORIGINAL:
-                leftText = OriginalLeftTextString[i];
+                if (char* str = OriginalLeftTextString[i]) {
+
+                    if (str[0] != '\0')
+                        leftText = OriginalLeftTextString[i];
+                }
                 break;
             case MENUENTRY_LOADGAME:
                 leftText = nSaveSlots[i];

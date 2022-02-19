@@ -98,6 +98,8 @@ enum eControlsActions {
     MENU_BACK,
     MENU_SELECT,
     MENU_UNSETKEY,
+    MENU_ML_PREVPAGE,
+    MENU_ML_NEXTPAGE,
     NUM_CONTROL_ACTIONS
 };
 

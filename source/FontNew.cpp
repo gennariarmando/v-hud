@@ -381,7 +381,8 @@ void CFontNew::SetTokenToIgnore(char t1, char t2) {
 
 int CFontNew::PrintString(float x, float y, const char* s) {
     int n = 0;
-    if (*s != '*') {
+
+    if (s && *s != '*') {
         if (Details.background) {
             CRect rect;
             x += Details.backgroundBorder.left;
