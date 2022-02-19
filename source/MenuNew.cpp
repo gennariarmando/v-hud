@@ -4901,7 +4901,7 @@ void CMenuNew::PassSettingsToCurrentGame(const CMenuSettings* s) {
         else {
             m.m_bLanguageChanged = true;
             m.m_bReinitLanguageSettings = true;
-            m.InitialiseChangedLanguageSettings(0);
+            m.InitialiseChangedLanguageSettings(false);
         }
     }
 
