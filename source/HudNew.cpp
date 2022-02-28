@@ -122,7 +122,8 @@ static LateStaticInit InstallHooks([]() {
     };
     patch::RedirectJump(0x705331, (void*)0x7053AF);
 
-    patch::PutRetn(0x742CF0);
+    patch::Nop(0x7434F2, 5);
+    patch::Nop(0x7433A3, 5);
 
     // CMessages::InsertPlayerControlKeysInString
 

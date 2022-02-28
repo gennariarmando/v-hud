@@ -11,6 +11,10 @@
 
 #include "pugixml.hpp"
 
+#ifndef GTASA
+#include "rwd3d9.h"
+#endif
+
 using namespace plugin;
 using namespace pugi;
 
@@ -275,7 +279,7 @@ void CFontNew::Clear() {
 }
 
 long CFontNew::AddFont(CFontTT t, LPD3DXFONT* font) {
-    return D3DXCreateFontA(GetD3DDevice(), t.height, t.width, FW_NORMAL, 0, FALSE, t.charSet, OUT_DEFAULT_PRECIS, t.quality, DEFAULT_PITCH | FF_DONTCARE, t.fontName, font);
+    return D3DXCreateFontA((LPDIRECT3DDEVICE9)RwD3D9GetCurrentD3DDevice(), t.height, t.width, FW_NORMAL, 0, FALSE, t.charSet, OUT_DEFAULT_PRECIS, t.quality, DEFAULT_PITCH | FF_DONTCARE, t.fontName, font);
 }
 
 void CFontNew::Shutdown() {
@@ -939,10 +943,11 @@ float CFontNew::DrawChar(bool print, bool calc, float x, float y, char c, int st
                 IDirect3DVertexShader9* savedVertexShader = NULL;
                 IDirect3DPixelShader9* savedPixelShader = NULL;
 
-                GetD3DDevice()->GetRenderState(D3DRS_COLORWRITEENABLE, &savedColorWrite);
-                GetD3DDevice()->GetVertexDeclaration(&savedVertexDecl);
-                GetD3DDevice()->GetVertexShader(&savedVertexShader);
-                GetD3DDevice()->GetPixelShader(&savedPixelShader);
+                auto device = (LPDIRECT3DDEVICE9)RwD3D9GetCurrentD3DDevice();
+                device->GetRenderState(D3DRS_COLORWRITEENABLE, &savedColorWrite);
+                device->GetVertexDeclaration(&savedVertexDecl);
+                device->GetVertexShader(&savedVertexShader);
+                device->GetPixelShader(&savedPixelShader);
 
                 D3DXMatrixScaling(&S, w, h, 1.0f);
                 m_pSprite->GetTransform(&P);
@@ -952,10 +957,10 @@ float CFontNew::DrawChar(bool print, bool calc, float x, float y, char c, int st
                 m_pSprite->End();
                 m_pSprite->SetTransform(&P);
 
-                GetD3DDevice()->SetRenderState(D3DRS_COLORWRITEENABLE, savedColorWrite);
-                GetD3DDevice()->SetVertexDeclaration(savedVertexDecl);
-                GetD3DDevice()->SetVertexShader(savedVertexShader);
-                GetD3DDevice()->SetPixelShader(savedPixelShader);
+                device->SetRenderState(D3DRS_COLORWRITEENABLE, savedColorWrite);
+                device->SetVertexDeclaration(savedVertexDecl);
+                device->SetVertexShader(savedVertexShader);
+                device->SetPixelShader(savedPixelShader);
             }
 
             if (calc) {

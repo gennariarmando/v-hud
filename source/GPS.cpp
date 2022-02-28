@@ -31,6 +31,7 @@ static LateStaticInit InstallHooks([]() {
         pathNodes[i] = -1;
     }
     
+#ifdef GTASA
     patch::SetFloat(0x450ACD + 1, MAX_SEARCH_RADIUS);
     patch::SetPointer(0x451782, &pathNodes);
     patch::SetPointer(0x451904, &pathNodes);
@@ -38,6 +39,7 @@ static LateStaticInit InstallHooks([]() {
     patch::SetPointer(0x451B33, &pathNodes);
     patch::SetUInt(0x4518F8, MAX_PATH_NODES);
     patch::SetUInt(0x4519B0, MAX_PATH_NODES - 5);
+#endif
 });
 
 void CGPS::Init() {
@@ -150,15 +152,22 @@ void CGPS::DrawLine(CVector2D const&a, CVector2D const&b, float width, CRGBA col
 }
 
 void CGPS::ProcessPath(CLocalization& l) {
-    if (!FindPlayerPed(0))
+#ifdef GTASA
+    if (!FindPlayerPed(PLAYER_ID))
         return;
 
     CVector start = FindPlayerCentreOfWorld(0);
     CVector end = l.vecDest;
 
+#ifdef GTASA
     ThePaths.DoPathSearch(0, start, CNodeAddress(), end, l.resultNodes, &l.nNodesCount, MAX_NODE_POINTS, &l.fGPSDistance,
         999999.0f, NULL, 999999.0f, false, CNodeAddress(), false, false);
-
+#else
+    CVehicle* veh = FindPlayerPed(PLAYER_ID)->m_pVehicle;
+    if (!veh)
+        return;
+    ThePaths.DoPathSearch(0, start, -1, end, l.resultNodes, &l.nNodesCount, MAX_NODE_POINTS, veh, NULL, 999999.0f, -1);
+#endif
     if (l.nNodesCount > 0) {
         for (short i = 0; i < l.nNodesCount; i++) {
             CVector nodePosn = ThePaths.GetPathNode(l.resultNodes[i])->GetNodeCoors();
@@ -184,9 +193,11 @@ void CGPS::ProcessPath(CLocalization& l) {
             DrawLine(l.nodePoints[i], l.nodePoints[i + 1], w, col);
         }
     }
+#endif
 }
 
 void CGPS::DrawPathLine() {
+#ifdef GTASA
     if (!MenuNew.Settings.gpsRoute)
         return;
 
@@ -249,6 +260,7 @@ void CGPS::DrawPathLine() {
             }
         }
     }
+#endif
 }
 
 char CGPS::GetPathDirection(CVector start, CVector plr, CVector end) {

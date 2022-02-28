@@ -1,3 +1,4 @@
+#ifdef GTASA
 #include "VHud.h"
 #include "3dMarkersNew.h"
 #include "TextureMgr.h"
@@ -134,3 +135,5 @@ void C3dMarkersNew::Shutdown() {
 
     bInitialised = false;
 }
+
+#endif

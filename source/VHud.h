@@ -5,6 +5,12 @@
 #include "LateStaticInit.h"
 
 
+#ifdef GTASA
+#define PLAYER_ID 0
+#else
+#define PLAYER_ID
+#endif
+
 enum eUGEvents {
     UG_EVENT_BEFORE_RENDER2DSTUFF,
     UG_EVENT_AFTER_RENDER2DSTUFF,

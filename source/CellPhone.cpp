@@ -1,3 +1,4 @@
+#ifdef GTASA
 #include "VHud.h"
 #include "CellPhone.h"
 #include "HudNew.h"
@@ -544,3 +545,4 @@ void CCellPhone::Draw() {
     DrawPhone(HUD_RIGHT(382.0f), HUD_BOTTOM(offset));
 }
 
+#endif
