@@ -5026,14 +5026,14 @@ void CMenuNew::ChangeVideoMode(int mode, int msaa) {
     RwEngineSetVideoMode(mode);
     RwD3D9ChangeVideoMode(mode);
 
-    if (mode > 0)
-        ReloadCameraStuffAfterScreenChange();
-
     int w = info.width;
     int h = info.height;
 
     RsGlobal.maximumWidth = w;
     RsGlobal.maximumHeight = h;
+
+    if (mode > 0)
+        ReloadCameraStuffAfterScreenChange();
 
     unsigned int refreshRate = plugin::CallAndReturn<unsigned int, 0x7460A0>(w, h, 32);
     RwD3D9EngineSetRefreshRate(refreshRate);
@@ -5073,13 +5073,13 @@ void CMenuNew::ChangeVideoModeBorderlessWindowed(int mode, int msaa) {
     SetWindowLong(wnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
     SetWindowPos(wnd, HWND_NOTOPMOST, rect.left, rect.top, rect.right, rect.bottom, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
 
-    ReloadCameraStuffAfterScreenChange();
-
     int w = info.width;
     int h = info.height;
 
     RsGlobal.maximumWidth = w;
     RsGlobal.maximumHeight = h;
+
+    ReloadCameraStuffAfterScreenChange();
 
     ps->fullScreen = false;
 }
@@ -5116,13 +5116,13 @@ void CMenuNew::ChangeVideoModeWindowed(int mode, int msaa) {
     SetWindowLong(wnd, GWL_STYLE, WS_VISIBLE | (WS_OVERLAPPEDWINDOW & ~WS_SIZEBOX));
     SetWindowPos(wnd, HWND_NOTOPMOST, rect.left, rect.top, rect.right, rect.bottom, 0);
 
-    ReloadCameraStuffAfterScreenChange();
-
     int w = info.width;
     int h = info.height;
 
     RsGlobal.maximumWidth = w;
     RsGlobal.maximumHeight = h;
+
+    ReloadCameraStuffAfterScreenChange();
 
     ps->fullScreen = false;
 }
